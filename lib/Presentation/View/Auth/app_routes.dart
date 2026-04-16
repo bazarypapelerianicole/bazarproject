@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:bazarnicole/Presentation/View/Auth/Login.dart';
-import 'package:bazarnicole/Presentation/View/dashboard_view.dart';
-import 'package:bazarnicole/Presentation/View/product_management_view.dart';
-import 'package:bazarnicole/Presentation/View/inventory_view.dart';
+import 'package:bazarnicole/Presentation/View/Login/Login.dart';
+import 'package:bazarnicole/Presentation/View/Customers/customers_view.dart';
+import 'package:bazarnicole/Presentation/View/Dashboard/dashboard_page.dart';
+import 'package:bazarnicole/Presentation/View/Inventory/inventory_view.dart';
+import 'package:bazarnicole/Presentation/View/POS/pos_view.dart';
+import 'package:bazarnicole/Presentation/View/Product/product_management_view.dart';
+import 'package:bazarnicole/Presentation/View/Reports/reports_view.dart';
 
 class AppRoutes {
   // --- Rutas Públicas ---
@@ -13,15 +16,21 @@ class AppRoutes {
 
   // --- Rutas de la aplicación ---
   static const dashboard = '/dashboard';
+  static const pos = '/pos';
   static const products = '/products';
   static const inventory = '/inventory';
+  static const customers = '/customers';
+  static const reports = '/reports';
 
   /// Todas las rutas registradas
   static final routes = <String, WidgetBuilder>{
     login: (context) => const LoginPage(),
-    dashboard: (context) => DashboardView(),
-    products: (context) => ProductManagementView(),
-    inventory: (context) => InventoryView(),
+    dashboard: (context) => const DashboardPage(),
+    pos: (context) => const PosView(),
+    products: (context) => const ProductManagementView(),
+    inventory: (context) => const InventoryView(),
+    customers: (context) => const CustomersView(),
+    reports: (context) => const ReportsView(),
   };
 
   /// Map de roles con rutas permitidas
@@ -32,14 +41,18 @@ class AppRoutes {
       authenticate,
       contracts,
       dashboard,
+      pos,
       products,
       inventory,
+      customers,
+      reports,
     ],
     'cajero': [
       login,
       authenticate,
       dashboard,
-      // cajero no puede acceder a productos ni configuraciones sensibles
+      pos,
+      customers,
     ],
     'Inventario': [
       login,
@@ -52,6 +65,7 @@ class AppRoutes {
       login,
       authenticate,
       dashboard,
+      reports,
     ],
   };
 

@@ -133,8 +133,10 @@ class SessionService {
       final isLoggedIn = await isUserLoggedIn();
 
       if (isLoggedIn) {
-        final session = await getCurrentUserSession();
+        await getCurrentUserSession();
       }
-    } catch (e) {}
+    } catch (e) {
+      return;
+    }
   }
 }

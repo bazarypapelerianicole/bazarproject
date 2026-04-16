@@ -63,7 +63,7 @@ class BackupService {
       } else {
         return false;
       }
-    } catch (e, stackTrace) {
+    } catch (e) {
       return false;
     }
   }
@@ -92,14 +92,12 @@ class BackupService {
 
       // Verificar la restauración
       if (await DatabaseLocationService.databaseExists(dbPath)) {
-        final restoredSize = await DatabaseLocationService.getDatabaseSize(
-          dbPath,
-        );
+        await DatabaseLocationService.getDatabaseSize(dbPath);
         return true;
       } else {
         return false;
       }
-    } catch (e, stackTrace) {
+    } catch (e) {
       return false;
     }
   }
@@ -241,7 +239,9 @@ class BackupService {
 
       final jsonContent = const JsonEncoder.withIndent('  ').convert(config);
       await configFile.writeAsString(jsonContent);
-    } catch (e) {}
+    } catch (e) {
+      return;
+    }
   }
 
   /// Actualizar el tiempo del último respaldo
@@ -296,7 +296,9 @@ class BackupService {
           }
         }
       }
-    } catch (e) {}
+    } catch (e) {
+      return;
+    }
   }
 
   /// Obtener estadísticas de respaldos
@@ -349,13 +351,21 @@ class BackupService {
   }) async {
     final config = await _getBackupConfig();
 
-    if (autoBackupEnabled != null)
+    if (autoBackupEnabled != null) {
       config['autoBackupEnabled'] = autoBackupEnabled;
-    if (backupIntervalHours != null)
+    }
+    if (backupIntervalHours != null) {
       config['backupIntervalHours'] = backupIntervalHours;
-    if (maxBackupFiles != null) config['maxBackupFiles'] = maxBackupFiles;
-    if (backupOnStartup != null) config['backupOnStartup'] = backupOnStartup;
-    if (backupOnShutdown != null) config['backupOnShutdown'] = backupOnShutdown;
+    }
+    if (maxBackupFiles != null) {
+      config['maxBackupFiles'] = maxBackupFiles;
+    }
+    if (backupOnStartup != null) {
+      config['backupOnStartup'] = backupOnStartup;
+    }
+    if (backupOnShutdown != null) {
+      config['backupOnShutdown'] = backupOnShutdown;
+    }
 
     await _updateBackupConfig(config);
   }

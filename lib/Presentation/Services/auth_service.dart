@@ -1,5 +1,5 @@
-import 'package:bazarnicole/Presentation/View/Services/database_service.dart';
-import 'package:bazarnicole/Presentation/View/Services/session_service.dart';
+import 'package:bazarnicole/Presentation/Services/database_service.dart';
+import 'package:bazarnicole/Presentation/Services/session_service.dart';
 
 class AuthService {
   /// Login con verificación en SQLite y guardado de sesión

@@ -1,4 +1,4 @@
-import 'package:bazarnicole/Presentation/View/Utils/Colors.dart';
+import 'package:bazarnicole/Presentation/Utils/Colors.dart';
 import 'package:flutter/material.dart';
 
 class EmailInput extends StatelessWidget {

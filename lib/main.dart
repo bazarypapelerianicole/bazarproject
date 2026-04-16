@@ -1,15 +1,18 @@
 import 'dart:io';
 import 'package:bazarnicole/Presentation/View/Auth/app_routes.dart';
-import 'package:bazarnicole/Presentation/View/Auth/auth_service.dart';
-import 'package:bazarnicole/Presentation/View/Services/database_service.dart';
-import 'package:bazarnicole/Presentation/View/Utils/Colors.dart';
+import 'package:bazarnicole/Presentation/Services/auth_service.dart';
+import 'package:bazarnicole/Presentation/Services/database_service.dart';
+import 'package:bazarnicole/Presentation/Utils/Colors.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:bazarnicole/Presentation/Controller/auth_provider.dart';
 import 'package:bazarnicole/Presentation/Controller/product_management_controller.dart';
+import 'package:bazarnicole/Presentation/Controller/customers_controller.dart';
 import 'package:bazarnicole/Presentation/Controller/inventory_controller.dart';
+import 'package:bazarnicole/Presentation/Controller/pos_controller.dart';
+import 'package:bazarnicole/Presentation/Controller/reports_controller.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:path/path.dart';
 import 'package:window_manager/window_manager.dart';
@@ -133,7 +136,7 @@ Future<void> _initMobileDatabase() async {
     // Cerrar inmediatamente - solo verificamos que funcione
     await db.close();
   } catch (e) {
-    throw e;
+    rethrow;
   }
 }
 
@@ -193,8 +196,11 @@ class MyApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider()),
-        Provider(create: (_) => ProductManagementController()),
-        Provider(create: (_) => InventoryController()),
+        ChangeNotifierProvider(create: (_) => ProductManagementController()),
+        ChangeNotifierProvider(create: (_) => InventoryController()),
+        ChangeNotifierProvider(create: (_) => PosController()),
+        ChangeNotifierProvider(create: (_) => CustomersController()),
+        ChangeNotifierProvider(create: (_) => ReportsController()),
       ],
       child: MaterialApp(
         title: 'Bazar & Tienda',

@@ -7,7 +7,7 @@ import 'package:flutter/foundation.dart';
 /// Servicio para detectar automáticamente la ubicación de la base de datos
 /// según el sistema operativo y el contexto de ejecución (desarrollo vs ejecutable)
 class DatabaseLocationService {
-  static const String _databaseName = 'data.db';
+  static const String _databaseName = 'assets/database/bazarnicole.db';
 
   /// Obtener la ruta de la base de datos según el sistema operativo
   static Future<String> getDatabasePath() async {
@@ -39,7 +39,7 @@ class DatabaseLocationService {
       if (await _isRunningFromExecutable()) {
         // Ejecutable: usar directorio junto al .exe
         final executableDir = await _getExecutableDirectory();
-        final dbPath = join(executableDir, 'data', _databaseName);
+        final dbPath = join(executableDir, 'bazarnicole', _databaseName);
         return dbPath;
       } else {
         // Desarrollo: usar directorio de SQLite estándar
@@ -69,7 +69,7 @@ class DatabaseLocationService {
           appBundleDir,
           'Contents',
           'Resources',
-          'data',
+          'bazarnicole',
           _databaseName,
         );
         return dbPath;
@@ -89,7 +89,7 @@ class DatabaseLocationService {
       if (await _isRunningFromExecutable()) {
         // Ejecutable: usar directorio junto al binario
         final executableDir = await _getExecutableDirectory();
-        final dbPath = join(executableDir, 'data', _databaseName);
+        final dbPath = join(executableDir, 'bazarnicole', _databaseName);
         return dbPath;
       } else {
         // Desarrollo: usar directorio de SQLite estándar
