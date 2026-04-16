@@ -18,7 +18,8 @@ class _DashboardPageState extends State<DashboardPage> {
   final bool _hayCajaAbierta = false;
 
   final Map<String, String> _cardRoutes = {
-    'POS': AppRoutes.pos,
+    'Ventas': AppRoutes.pos,
+    'Compras': AppRoutes.purchases,
     'Inventario': AppRoutes.inventory,
     'Productos': AppRoutes.products,
     'Clientes': AppRoutes.customers,
@@ -229,8 +230,10 @@ class _DashboardPageState extends State<DashboardPage> {
 
   IconData _getIconForTitle(String titulo) {
     switch (titulo) {
-      case 'POS':
+      case 'Ventas':
         return Icons.point_of_sale;
+      case 'Compras':
+        return Icons.shopping_bag_outlined;
       case 'Productos':
         return Icons.inventory_2_outlined;
       case 'Inventario':
@@ -245,9 +248,7 @@ class _DashboardPageState extends State<DashboardPage> {
         return Icons.help_outline;
     }
   }
-
 }
-
 
 class _DashboardCard extends StatelessWidget {
   final String title;

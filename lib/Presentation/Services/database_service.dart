@@ -292,6 +292,38 @@ class DatabaseService {
     ''');
 
     await db.execute('''
+      CREATE TABLE IF NOT EXISTS suppliers (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL UNIQUE,
+        phone TEXT
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS purchases (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        store_id INTEGER NOT NULL,
+        supplier_id INTEGER,
+        total REAL NOT NULL DEFAULT 0,
+        date TEXT NOT NULL,
+        FOREIGN KEY (store_id) REFERENCES stores(id),
+        FOREIGN KEY (supplier_id) REFERENCES suppliers(id)
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS purchase_items (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        purchase_id INTEGER NOT NULL,
+        product_id INTEGER NOT NULL,
+        quantity INTEGER NOT NULL,
+        cost REAL NOT NULL,
+        FOREIGN KEY (purchase_id) REFERENCES purchases(id) ON DELETE CASCADE,
+        FOREIGN KEY (product_id) REFERENCES products(id)
+      )
+    ''');
+
+    await db.execute('''
       CREATE TABLE IF NOT EXISTS sales (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         store_id INTEGER NOT NULL,
@@ -521,6 +553,36 @@ class DatabaseService {
     );
 
     return (rows.first['id'] as num).toInt();
+  }
+
+  static Future<int?> _ensureSupplier(
+    DatabaseExecutor db,
+    String? supplierName, {
+    String? phone,
+  }) async {
+    final name = _cleanName(supplierName ?? '');
+    if (name.isEmpty) return null;
+
+    final cleanPhone = phone?.trim();
+
+    await db.rawInsert(
+      'INSERT OR IGNORE INTO suppliers (name, phone) VALUES (?, ?)',
+      [name, cleanPhone?.isEmpty == true ? null : cleanPhone],
+    );
+
+    if (cleanPhone != null && cleanPhone.isNotEmpty) {
+      await db.rawUpdate(
+        'UPDATE suppliers SET phone = ? WHERE lower(name) = ?',
+        [cleanPhone, name.toLowerCase()],
+      );
+    }
+
+    final rows = await db.rawQuery(
+      'SELECT id FROM suppliers WHERE lower(name) = ? LIMIT 1',
+      [name.toLowerCase()],
+    );
+
+    return rows.isEmpty ? null : (rows.first['id'] as num).toInt();
   }
 
   static Future<String> _uniqueSku(DatabaseExecutor db, String baseSku) async {
@@ -918,6 +980,193 @@ class DatabaseService {
     );
   }
 
+  static Future<List<Map<String, dynamic>>> getSuppliers({
+    String search = '',
+  }) async {
+    final db = await database;
+    final filter = '%${search.trim()}%';
+
+    return db.rawQuery(
+      '''
+      SELECT id, name, phone
+      FROM suppliers
+      WHERE name LIKE ? OR COALESCE(phone, '') LIKE ?
+      ORDER BY name COLLATE NOCASE
+      ''',
+      [filter, filter],
+    );
+  }
+
+  static Future<int> registerPurchase({
+    required int storeId,
+    required List<Map<String, dynamic>> items,
+    String? supplierName,
+    String? supplierPhone,
+  }) async {
+    if (items.isEmpty) {
+      throw Exception('La compra debe contener al menos un producto');
+    }
+
+    return transaction((txn) async {
+      double total = 0;
+
+      for (final item in items) {
+        final quantity = (item['quantity'] as num).toInt();
+        final cost = (item['cost'] as num).toDouble();
+
+        if (quantity <= 0) {
+          throw Exception('La cantidad de compra debe ser mayor que cero');
+        }
+
+        if (cost < 0) {
+          throw Exception('El costo no puede ser negativo');
+        }
+
+        total += quantity * cost;
+      }
+
+      final supplierId = await _ensureSupplier(
+        txn,
+        supplierName,
+        phone: supplierPhone,
+      );
+
+      final purchaseId = await txn.rawInsert(
+        'INSERT INTO purchases (store_id, supplier_id, total, date) VALUES (?, ?, ?, ?)',
+        [storeId, supplierId, total, DateTime.now().toIso8601String()],
+      );
+
+      for (final item in items) {
+        final productId = (item['product_id'] as num).toInt();
+        final quantity = (item['quantity'] as num).toInt();
+        final cost = (item['cost'] as num).toDouble();
+
+        await txn.rawInsert(
+          'INSERT OR IGNORE INTO inventory (product_id, store_id, stock) VALUES (?, ?, 0)',
+          [productId, storeId],
+        );
+
+        await txn.rawInsert(
+          'INSERT INTO purchase_items (purchase_id, product_id, quantity, cost) VALUES (?, ?, ?, ?)',
+          [purchaseId, productId, quantity, cost],
+        );
+
+        await txn.rawUpdate(
+          'UPDATE inventory SET stock = stock + ? WHERE product_id = ? AND store_id = ?',
+          [quantity, productId, storeId],
+        );
+      }
+
+      return purchaseId;
+    });
+  }
+
+  static Future<List<Map<String, dynamic>>> getSalesHistory({
+    int? storeId,
+    int? customerId,
+    DateTime? date,
+  }) async {
+    final db = await database;
+    final conditions = <String>[];
+    final args = <dynamic>[];
+
+    if (storeId != null) {
+      conditions.add('sa.store_id = ?');
+      args.add(storeId);
+    }
+    if (customerId != null) {
+      conditions.add('sa.client_id = ?');
+      args.add(customerId);
+    }
+    if (date != null) {
+      conditions.add('sa.date LIKE ?');
+      args.add('${date.toIso8601String().split('T').first}%');
+    }
+
+    final whereClause = conditions.isEmpty
+        ? ''
+        : 'WHERE ${conditions.join(' AND ')}';
+
+    return db.rawQuery('''
+      SELECT sa.id, sa.date, sa.total,
+             st.name AS store_name,
+             COALESCE(c.name, 'Consumidor final') AS client_name
+      FROM sales sa
+      INNER JOIN stores st ON st.id = sa.store_id
+      LEFT JOIN clients c ON c.id = sa.client_id
+      $whereClause
+      ORDER BY sa.date DESC, sa.id DESC
+      ''', args);
+  }
+
+  static Future<List<Map<String, dynamic>>> getSaleItems(int saleId) async {
+    final db = await database;
+    return db.rawQuery(
+      '''
+      SELECT si.id, p.name AS product_name, si.quantity, si.price
+      FROM sale_items si
+      INNER JOIN products p ON p.id = si.product_id
+      WHERE si.sale_id = ?
+      ORDER BY si.id ASC
+      ''',
+      [saleId],
+    );
+  }
+
+  static Future<List<Map<String, dynamic>>> getPurchaseHistory({
+    int? storeId,
+    int? supplierId,
+    DateTime? date,
+  }) async {
+    final db = await database;
+    final conditions = <String>[];
+    final args = <dynamic>[];
+
+    if (storeId != null) {
+      conditions.add('pu.store_id = ?');
+      args.add(storeId);
+    }
+    if (supplierId != null) {
+      conditions.add('pu.supplier_id = ?');
+      args.add(supplierId);
+    }
+    if (date != null) {
+      conditions.add('pu.date LIKE ?');
+      args.add('${date.toIso8601String().split('T').first}%');
+    }
+
+    final whereClause = conditions.isEmpty
+        ? ''
+        : 'WHERE ${conditions.join(' AND ')}';
+
+    return db.rawQuery('''
+      SELECT pu.id, pu.date, pu.total,
+             st.name AS store_name,
+             COALESCE(sp.name, 'Sin proveedor') AS supplier_name
+      FROM purchases pu
+      INNER JOIN stores st ON st.id = pu.store_id
+      LEFT JOIN suppliers sp ON sp.id = pu.supplier_id
+      $whereClause
+      ORDER BY pu.date DESC, pu.id DESC
+      ''', args);
+  }
+
+  static Future<List<Map<String, dynamic>>> getPurchaseItems(
+    int purchaseId,
+  ) async {
+    final db = await database;
+    return db.rawQuery(
+      '''
+      SELECT pi.id, p.name AS product_name, pi.quantity, pi.cost
+      FROM purchase_items pi
+      INNER JOIN products p ON p.id = pi.product_id
+      WHERE pi.purchase_id = ?
+      ORDER BY pi.id ASC
+      ''',
+      [purchaseId],
+    );
+  }
+
   static Future<Map<String, dynamic>> getReportsSnapshot() async {
     final db = await database;
     final now = DateTime.now();
@@ -1052,9 +1301,7 @@ class DatabaseService {
   // ─────────────────────────────────────────────
 
   /// Retorna la sesión activa para el local, o null si está cerrada.
-  static Future<Map<String, dynamic>?> getActiveCashSession(
-    int storeId,
-  ) async {
+  static Future<Map<String, dynamic>?> getActiveCashSession(int storeId) async {
     final db = await database;
     final rows = await db.rawQuery(
       '''
@@ -1264,8 +1511,9 @@ class DatabaseService {
           'SELECT stock FROM inventory WHERE product_id = ? AND store_id = ? LIMIT 1',
           [productId, storeId],
         );
-        final available =
-            stockRows.isEmpty ? 0 : (stockRows.first['stock'] as num).toInt();
+        final available = stockRows.isEmpty
+            ? 0
+            : (stockRows.first['stock'] as num).toInt();
         if (available < quantity) {
           throw Exception('Stock insuficiente para completar la venta');
         }
@@ -1321,17 +1569,14 @@ class DatabaseService {
 
       // Venta a crédito
       if (isCredit) {
-        final paidNow =
-            payments.fold<double>(0, (s, p) => s + (p['amount'] as num));
+        final paidNow = payments.fold<double>(
+          0,
+          (s, p) => s + (p['amount'] as num),
+        );
         await txn.rawInsert(
           '''INSERT INTO credit_sales (sale_id, total, paid, status)
              VALUES (?, ?, ?, ?)''',
-          [
-            saleId,
-            total,
-            paidNow,
-            paidNow >= total ? 'paid' : 'pending',
-          ],
+          [saleId, total, paidNow, paidNow >= total ? 'paid' : 'pending'],
         );
       }
 
@@ -1402,7 +1647,6 @@ class DatabaseService {
           ],
         );
       }
-
     });
   }
 }

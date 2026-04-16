@@ -6,13 +6,16 @@ class PosController extends ChangeNotifier {
   String? errorMessage;
   int? selectedStoreId;
   int? selectedCustomerId;
+  int? historyCustomerId;
   String search = '';
+  DateTime? historyDate;
 
   List<Map<String, dynamic>> stores = [];
   List<Map<String, dynamic>> customers = [];
   List<Map<String, dynamic>> paymentMethods = [];
   List<Map<String, dynamic>> products = [];
   List<Map<String, dynamic>> cart = [];
+  List<Map<String, dynamic>> salesHistory = [];
 
   double get total => cart.fold<double>(
     0,
@@ -20,10 +23,8 @@ class PosController extends ChangeNotifier {
         sum + ((item['quantity'] as int) * (item['price'] as double)),
   );
 
-  int get totalItems => cart.fold<int>(
-    0,
-    (sum, item) => sum + (item['quantity'] as int),
-  );
+  int get totalItems =>
+      cart.fold<int>(0, (sum, item) => sum + (item['quantity'] as int));
 
   Future<void> initialize() async {
     if (isLoading || stores.isNotEmpty) return;
@@ -43,6 +44,7 @@ class PosController extends ChangeNotifier {
         selectedStoreId ??= (stores.first['id'] as num).toInt();
       }
       await _loadProducts();
+      await loadSalesHistory();
     } catch (e) {
       errorMessage = 'No se pudo cargar el POS: $e';
     } finally {
@@ -56,6 +58,7 @@ class PosController extends ChangeNotifier {
     selectedStoreId = storeId;
     cart.clear();
     await _loadProducts();
+    await loadSalesHistory();
   }
 
   Future<void> updateSearch(String value) async {
@@ -71,6 +74,41 @@ class PosController extends ChangeNotifier {
   void selectCustomer(int? customerId) {
     selectedCustomerId = customerId;
     notifyListeners();
+  }
+
+  Future<void> selectHistoryCustomer(int? customerId) async {
+    historyCustomerId = customerId;
+    await loadSalesHistory();
+  }
+
+  Future<void> setHistoryDate(DateTime? value) async {
+    historyDate = value;
+    await loadSalesHistory();
+  }
+
+  Future<void> clearHistoryFilters() async {
+    historyCustomerId = null;
+    historyDate = null;
+    await loadSalesHistory();
+  }
+
+  Future<void> loadSalesHistory() async {
+    try {
+      salesHistory = await DatabaseService.getSalesHistory(
+        storeId: selectedStoreId,
+        customerId: historyCustomerId,
+        date: historyDate,
+      );
+      errorMessage = null;
+    } catch (e) {
+      errorMessage = 'No se pudo cargar el historial de ventas: $e';
+    }
+
+    notifyListeners();
+  }
+
+  Future<List<Map<String, dynamic>>> getSaleItems(int saleId) {
+    return DatabaseService.getSaleItems(saleId);
   }
 
   Future<void> _loadProducts() async {
@@ -181,24 +219,25 @@ class PosController extends ChangeNotifier {
     }
 
     final saleTotal = total;
-    final normalizedPayments =
-        (payments == null || payments.isEmpty)
-            ? [
-                {
-                  'method_id': (paymentMethods.firstWhere(
-                    (m) => (m['name'] ?? '').toString().toLowerCase() == 'efectivo',
-                    orElse: () => paymentMethods.first,
-                  )['id'] as num)
+    final normalizedPayments = (payments == null || payments.isEmpty)
+        ? [
+            {
+              'method_id':
+                  (paymentMethods.firstWhere(
+                            (m) =>
+                                (m['name'] ?? '').toString().toLowerCase() ==
+                                'efectivo',
+                            orElse: () => paymentMethods.first,
+                          )['id']
+                          as num)
                       .toInt(),
-                  'method_name': 'Efectivo',
-                  'amount': saleTotal,
-                },
-              ]
-            : payments
-                .where(
-                  (p) => ((p['amount'] as num?)?.toDouble() ?? 0) > 0,
-                )
-                .toList();
+              'method_name': 'Efectivo',
+              'amount': saleTotal,
+            },
+          ]
+        : payments
+              .where((p) => ((p['amount'] as num?)?.toDouble() ?? 0) > 0)
+              .toList();
 
     final paidAmount = normalizedPayments.fold<double>(
       0,
@@ -232,6 +271,7 @@ class PosController extends ChangeNotifier {
 
     cart.clear();
     await _loadProducts();
+    await loadSalesHistory();
     return saleId;
   }
 }

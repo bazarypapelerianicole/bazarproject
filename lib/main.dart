@@ -13,6 +13,7 @@ import 'package:bazarnicole/Presentation/Controller/cash_controller.dart';
 import 'package:bazarnicole/Presentation/Controller/customers_controller.dart';
 import 'package:bazarnicole/Presentation/Controller/inventory_controller.dart';
 import 'package:bazarnicole/Presentation/Controller/pos_controller.dart';
+import 'package:bazarnicole/Presentation/Controller/purchases_controller.dart';
 import 'package:bazarnicole/Presentation/Controller/reports_controller.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:path/path.dart';
@@ -201,6 +202,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => InventoryController()),
         ChangeNotifierProvider(create: (_) => CashController()),
         ChangeNotifierProvider(create: (_) => PosController()),
+        ChangeNotifierProvider(create: (_) => PurchasesController()),
         ChangeNotifierProvider(create: (_) => CustomersController()),
         ChangeNotifierProvider(create: (_) => ReportsController()),
       ],

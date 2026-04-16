@@ -6,6 +6,7 @@ import 'package:bazarnicole/Presentation/View/Dashboard/dashboard_page.dart';
 import 'package:bazarnicole/Presentation/View/Inventory/inventory_view.dart';
 import 'package:bazarnicole/Presentation/View/POS/pos_view.dart';
 import 'package:bazarnicole/Presentation/View/Product/product_management_view.dart';
+import 'package:bazarnicole/Presentation/View/Purchases/purchases_view.dart';
 import 'package:bazarnicole/Presentation/View/Reports/reports_view.dart';
 
 class AppRoutes {
@@ -19,6 +20,7 @@ class AppRoutes {
   static const dashboard = '/dashboard';
   static const pos = '/pos';
   static const products = '/products';
+  static const purchases = '/purchases';
   static const inventory = '/inventory';
   static const customers = '/customers';
   static const reports = '/reports';
@@ -30,6 +32,7 @@ class AppRoutes {
     dashboard: (context) => const DashboardPage(),
     pos: (context) => const PosView(),
     products: (context) => const ProductManagementView(),
+    purchases: (context) => const PurchasesView(),
     inventory: (context) => const InventoryView(),
     customers: (context) => const CustomersView(),
     reports: (context) => const ReportsView(),
@@ -46,31 +49,22 @@ class AppRoutes {
       dashboard,
       pos,
       products,
+      purchases,
       inventory,
       customers,
       reports,
       cash,
     ],
-    'cajero': [
-      login,
-      authenticate,
-      dashboard,
-      pos,
-      customers,
-    ],
+    'cajero': [login, authenticate, dashboard, pos, customers],
     'Inventario': [
       login,
       authenticate,
       dashboard,
       products,
+      purchases,
       inventory,
     ],
-    'Reportes': [
-      login,
-      authenticate,
-      dashboard,
-      reports,
-    ],
+    'Reportes': [login, authenticate, dashboard, reports],
   };
 
   /// Obtiene las rutas permitidas para un rol específico
@@ -78,4 +72,3 @@ class AppRoutes {
     return allowedRoutesByRole[role] ?? [login];
   }
 }
-

@@ -3,6 +3,7 @@ import 'package:bazarnicole/Presentation/Renders/responsive_helper.dart';
 import 'package:bazarnicole/Presentation/Utils/Colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 class PosView extends StatefulWidget {
@@ -225,7 +226,7 @@ class _PosViewState extends State<PosView> {
 
   @override
   Widget build(BuildContext context) {
-    final appBarHeight = ResponsiveHelper.getAppBarHeight(context);
+    final appBarHeight = ResponsiveHelper.getAppBarHeight(context) + 48;
     return CallbackShortcuts(
       bindings: {
         const SingleActivator(LogicalKeyboardKey.f2): () {
@@ -238,99 +239,350 @@ class _PosViewState extends State<PosView> {
       },
       child: Focus(
         autofocus: true,
-        child: Scaffold(
-          appBar: PreferredSize(
-            preferredSize: Size.fromHeight(appBarHeight),
-            child: ClipRRect(
-              clipBehavior: Clip.hardEdge,
-              borderRadius: const BorderRadius.vertical(
-                bottom: Radius.circular(25),
-              ),
-              child: Container(
-                decoration: BoxDecoration(
-                  color: AppColors.blackOverlay,
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [AppColors.blackOverlay, AppColors.blackOverlay],
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black26,
-                      blurRadius: 5,
-                      offset: Offset(0, 3),
-                    ),
-                  ],
+        child: DefaultTabController(
+          length: 2,
+          child: Scaffold(
+            appBar: PreferredSize(
+              preferredSize: Size.fromHeight(appBarHeight),
+              child: ClipRRect(
+                clipBehavior: Clip.hardEdge,
+                borderRadius: const BorderRadius.vertical(
+                  bottom: Radius.circular(25),
                 ),
-                child: AppBar(
-                  surfaceTintColor: Colors.transparent,
-                  backgroundColor: Colors.transparent,
-                  elevation: 0,
-                  leading: IconButton(
-                    icon: const Icon(
-                      Icons.arrow_back,
-                      color: Color(0xfff3ece7),
-                      size: 30,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: AppColors.blackOverlay,
+                    gradient: const LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [AppColors.blackOverlay, AppColors.blackOverlay],
                     ),
-                    onPressed: () {
-                      Navigator.pop(context);
-                    },
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Colors.black26,
+                        blurRadius: 5,
+                        offset: Offset(0, 3),
+                      ),
+                    ],
                   ),
-                  title: const Text('POS · Punto de venta'),
-                  actions: const [
-                    Padding(
-                      padding: EdgeInsets.only(right: 16),
-                      child: Center(
-                        child: Text('F2 Buscar · F9 Vender · ESC Limpiar'),
+                  child: AppBar(
+                    surfaceTintColor: Colors.transparent,
+                    backgroundColor: Colors.transparent,
+                    elevation: 4,
+                    leading: IconButton(
+                      icon: const Icon(
+                        Icons.arrow_back,
+                        color: AppColors.whiteOverlay,
+                        size: 30,
+                      ),
+                      onPressed: () {
+                        Navigator.pop(context);
+                      },
+                    ),
+                    title: const Text(
+                      'Ventas · Punto de venta',
+                      style: TextStyle(
+                        fontSize: 22,
+                        color: AppColors.whiteOverlay,
                       ),
                     ),
-                  ],
+                    actions: const [
+                      Padding(
+                        padding: EdgeInsets.only(right: 16),
+                        child: Center(
+                          child: Text(
+                            'F2 Buscar · F9 Vender · ESC Limpiar',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: AppColors.whiteOverlay,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                    bottom: TabBar(
+                      labelColor: _searchController.text.isEmpty
+                          ? AppColors.whiteOverlay
+                          : AppColors.mediumGray,
+                      unselectedLabelColor: _searchController.text.isEmpty
+                          ? AppColors.mediumGray
+                          : AppColors.whiteOverlay,
+                      unselectedLabelStyle: TextStyle(
+                        color: _searchController.text.isEmpty
+                            ? AppColors.mediumGray
+                            : AppColors.whiteOverlay,
+                      ),
+                      indicatorColor: AppColors.whiteOverlay,
+                      tabs: [
+                        Tab(
+                          text: 'Nueva venta',
+
+                          icon: Icon(Icons.point_of_sale_outlined),
+                        ),
+                        Tab(
+                          text: 'Historial de ventas',
+
+                          icon: Icon(Icons.history_outlined),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ),
             ),
-          ),
-          body: Consumer<PosController>(
-            builder: (context, controller, _) {
-              return LayoutBuilder(
-                builder: (context, constraints) {
-                  final isWide = constraints.maxWidth > 980;
-
-                  return Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: isWide
-                        ? Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Expanded(
-                                flex: 3,
-                                child: _CatalogPanel(
-                                  searchController: _searchController,
-                                  searchFocusNode: _searchFocusNode,
-                                ),
-                              ),
-                              const SizedBox(width: 16),
-                              const SizedBox(width: 360, child: _CartPanel()),
-                            ],
-                          )
-                        : Column(
-                            children: [
-                              Expanded(
-                                flex: 3,
-                                child: _CatalogPanel(
-                                  searchController: _searchController,
-                                  searchFocusNode: _searchFocusNode,
-                                ),
-                              ),
-                              const SizedBox(height: 16),
-                              const Expanded(flex: 2, child: _CartPanel()),
-                            ],
-                          ),
-                  );
-                },
-              );
-            },
+            body: TabBarView(
+              children: [
+                _SalesCheckoutTab(
+                  searchController: _searchController,
+                  searchFocusNode: _searchFocusNode,
+                ),
+                const _SalesHistoryTab(),
+              ],
+            ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _SalesCheckoutTab extends StatelessWidget {
+  final TextEditingController searchController;
+  final FocusNode searchFocusNode;
+
+  const _SalesCheckoutTab({
+    required this.searchController,
+    required this.searchFocusNode,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Consumer<PosController>(
+      builder: (context, controller, _) {
+        return LayoutBuilder(
+          builder: (context, constraints) {
+            final isWide = constraints.maxWidth > 980;
+
+            return Padding(
+              padding: const EdgeInsets.all(16),
+              child: isWide
+                  ? Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          flex: 3,
+                          child: _CatalogPanel(
+                            searchController: searchController,
+                            searchFocusNode: searchFocusNode,
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        const SizedBox(width: 360, child: _CartPanel()),
+                      ],
+                    )
+                  : Column(
+                      children: [
+                        Expanded(
+                          flex: 3,
+                          child: _CatalogPanel(
+                            searchController: searchController,
+                            searchFocusNode: searchFocusNode,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        const Expanded(flex: 2, child: _CartPanel()),
+                      ],
+                    ),
+            );
+          },
+        );
+      },
+    );
+  }
+}
+
+class _SalesHistoryTab extends StatelessWidget {
+  const _SalesHistoryTab();
+
+  @override
+  Widget build(BuildContext context) {
+    return Consumer<PosController>(
+      builder: (context, controller, _) {
+        return Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            children: [
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Wrap(
+                    spacing: 12,
+                    runSpacing: 12,
+                    children: [
+                      SizedBox(
+                        width: 220,
+                        child: DropdownButtonFormField<int>(
+                          value: controller.selectedStoreId,
+                          decoration: const InputDecoration(
+                            labelText: 'Local',
+                            border: OutlineInputBorder(),
+                          ),
+                          items: controller.stores
+                              .map(
+                                (store) => DropdownMenuItem<int>(
+                                  value: (store['id'] as num).toInt(),
+                                  child: Text(store['name'].toString()),
+                                ),
+                              )
+                              .toList(),
+                          onChanged: controller.selectStore,
+                        ),
+                      ),
+                      SizedBox(
+                        width: 240,
+                        child: DropdownButtonFormField<int?>(
+                          value: controller.historyCustomerId,
+                          decoration: const InputDecoration(
+                            labelText: 'Cliente',
+                            border: OutlineInputBorder(),
+                          ),
+                          items: [
+                            const DropdownMenuItem<int?>(
+                              value: null,
+                              child: Text('Todos'),
+                            ),
+                            ...controller.customers.map(
+                              (customer) => DropdownMenuItem<int?>(
+                                value: (customer['id'] as num).toInt(),
+                                child: Text(customer['name'].toString()),
+                              ),
+                            ),
+                          ],
+                          onChanged: controller.selectHistoryCustomer,
+                        ),
+                      ),
+                      OutlinedButton.icon(
+                        onPressed: () async {
+                          final picked = await showDatePicker(
+                            context: context,
+                            firstDate: DateTime(2024),
+                            lastDate: DateTime(2100),
+                            initialDate:
+                                controller.historyDate ?? DateTime.now(),
+                          );
+                          if (picked != null) {
+                            await controller.setHistoryDate(picked);
+                          }
+                        },
+                        icon: const Icon(Icons.calendar_month_outlined),
+                        label: Text(
+                          controller.historyDate == null
+                              ? 'Filtrar por fecha'
+                              : DateFormat(
+                                  'dd/MM/yyyy',
+                                ).format(controller.historyDate!),
+                        ),
+                      ),
+                      TextButton.icon(
+                        onPressed: () => controller.clearHistoryFilters(),
+                        icon: const Icon(Icons.filter_alt_off_outlined),
+                        label: const Text('Limpiar filtros'),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Expanded(
+                child: Card(
+                  child: controller.salesHistory.isEmpty
+                      ? const Center(
+                          child: Text('Aún no hay ventas registradas.'),
+                        )
+                      : ListView.separated(
+                          padding: const EdgeInsets.all(12),
+                          itemCount: controller.salesHistory.length,
+                          separatorBuilder: (_, __) => const Divider(),
+                          itemBuilder: (context, index) {
+                            final sale = controller.salesHistory[index];
+                            final date = DateTime.tryParse(
+                              sale['date']?.toString() ?? '',
+                            );
+                            return ListTile(
+                              leading: const CircleAvatar(
+                                child: Icon(Icons.receipt_long_outlined),
+                              ),
+                              title: Text(
+                                'Venta #${sale['id']} · ${sale['store_name'] ?? ''}',
+                              ),
+                              subtitle: Text(
+                                '${sale['client_name'] ?? 'Consumidor final'} · ${date != null ? DateFormat('dd/MM/yyyy HH:mm').format(date) : ''}',
+                              ),
+                              trailing: Text(
+                                '\$${((sale['total'] as num?)?.toDouble() ?? 0).toStringAsFixed(2)}',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              onTap: () => _showSaleDetail(
+                                context,
+                                controller,
+                                (sale['id'] as num).toInt(),
+                              ),
+                            );
+                          },
+                        ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _showSaleDetail(
+    BuildContext context,
+    PosController controller,
+    int saleId,
+  ) async {
+    final items = await controller.getSaleItems(saleId);
+    if (!context.mounted) return;
+
+    await showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Detalle de venta #$saleId'),
+        content: SizedBox(
+          width: 420,
+          child: items.isEmpty
+              ? const Text('No hay productos en esta venta.')
+              : ListView.separated(
+                  shrinkWrap: true,
+                  itemCount: items.length,
+                  separatorBuilder: (_, __) => const Divider(),
+                  itemBuilder: (context, index) {
+                    final item = items[index];
+                    final subtotal =
+                        ((item['quantity'] as num?)?.toInt() ?? 0) *
+                        (((item['price'] as num?)?.toDouble()) ?? 0);
+                    return ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: Text(item['product_name']?.toString() ?? ''),
+                      subtitle: Text(
+                        'Cant: ${item['quantity']} · Precio: \$${((item['price'] as num?)?.toDouble() ?? 0).toStringAsFixed(2)}',
+                      ),
+                      trailing: Text('\$${subtotal.toStringAsFixed(2)}'),
+                    );
+                  },
+                ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cerrar'),
+          ),
+        ],
       ),
     );
   }
