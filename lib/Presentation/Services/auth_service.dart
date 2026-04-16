@@ -14,8 +14,13 @@ class AuthService {
       if (users.isNotEmpty) {
         final user = users.first;
 
-        // En un sistema real, aquí verificarías el password hasheado
-        // Por ahora, simulamos que el login es exitoso si el usuario existe
+        // Verificar contraseña y que el usuario esté activo
+        if (user['password'] != null && user['password'] != password) {
+          return null;
+        }
+        if ((user['is_active'] as int?) == 0) {
+          return null;
+        }
 
         // Guardar TODOS los datos del usuario en la sesión, no solo los básicos
         final userData = Map<String, dynamic>.from(user);

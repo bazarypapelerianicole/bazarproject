@@ -77,15 +77,22 @@ class InventoryProvider extends ChangeNotifier {
     }
   }
 
-  /// Carga datos de ventas para calcular rotación
+  /// Carga datos de ventas para calcular rotación (CONECTADO CON BD)
   Future<void> _loadSalesData() async {
     try {
-      // TODO: Conectar con getSalesHistory para obtener ventas del mes
-      // Por ahora, usando datos simulados
+      if (selectedStoreId == null) return;
+      
+      // Obtener unidades vendidas en los últimos 30 días
+      final unitsSold = await DatabaseService.getUnitsSoldByProduct(
+        storeId: selectedStoreId!,
+        dateFrom: DateTime.now().subtract(const Duration(days: 30)),
+      );
+      
       _unitsSoldByProduct.clear();
-      // _unitsSoldByProduct[productId] = unitsVendidos;
+      _unitsSoldByProduct.addAll(unitsSold);
     } catch (e) {
-      // Si falla, continuar sin datos de vendibilidad
+      // Si falla la carga de datos, continuar sin vendibilidad real
+      debugPrint('Error cargando datos de ventas: $e');
     }
   }
 
@@ -210,4 +217,138 @@ class InventoryProvider extends ChangeNotifier {
   List<InventoryItem> get highMarginLowStock => filteredItems
       .where((item) => item.isLowStock && item.marginPercent > 40)
       .toList();
+
+  // ──────────────────────────────────────────────────────────
+  // ANÁLISIS AVANZADO - FASE 5
+  // ──────────────────────────────────────────────────────────
+
+  /// Obtiene reporte completo de análisis de inventario para reportes
+  Future<Map<String, dynamic>> getAnalysisReport({
+    DateTime? dateFrom,
+    DateTime? dateTo,
+  }) async {
+    if (selectedStoreId == null) return {};
+    
+    try {
+      isLoading = true;
+      notifyListeners();
+      
+      final report = await DatabaseService.getInventoryAnalysisReport(
+        storeId: selectedStoreId!,
+        dateFrom: dateFrom,
+        dateTo: dateTo,
+      );
+      
+      return report;
+    } catch (e) {
+      errorMessage = 'Error generando reporte: $e';
+      notifyListeners();
+      return {};
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  /// Obtiene TOP sellers real desde BD
+  Future<List<Map<String, dynamic>>> getTopSellersFromDB({
+    int limit = 10,
+    DateTime? dateFrom,
+    DateTime? dateTo,
+  }) async {
+    if (selectedStoreId == null) return [];
+    
+    try {
+      return await DatabaseService.getTopSellingProducts(
+        storeId: selectedStoreId!,
+        topCount: limit,
+        dateFrom: dateFrom,
+        dateTo: dateTo,
+      );
+    } catch (e) {
+      debugPrint('Error en getTopSellersFromDB: $e');
+      return [];
+    }
+  }
+
+  /// Obtiene TOP margin products real desde BD
+  Future<List<Map<String, dynamic>>> getTopMarginFromDB({
+    int limit = 10,
+  }) async {
+    if (selectedStoreId == null) return [];
+    
+    try {
+      return await DatabaseService.getTopMarginProducts(
+        storeId: selectedStoreId!,
+        topCount: limit,
+      );
+    } catch (e) {
+      debugPrint('Error en getTopMarginFromDB: $e');
+      return [];
+    }
+  }
+
+  /// Obtiene rotación promedio de inventario (unidades/día)
+  Future<double> getAverageRotationValue({
+    int daysToAnalyze = 30,
+  }) async {
+    if (selectedStoreId == null) return 0.0;
+    
+    try {
+      return await DatabaseService.getAverageInventoryRotation(
+        storeId: selectedStoreId!,
+        daysToAnalyze: daysToAnalyze,
+      );
+    } catch (e) {
+      debugPrint('Error en getAverageRotationValue: $e');
+      return 0.0;
+    }
+  }
+
+  /// Obtiene tendencia de ventas últimos 7 días
+  Future<Map<String, double>> getSalesTrend() async {
+    if (selectedStoreId == null) return {};
+    
+    try {
+      return await DatabaseService.getSalesTrendLast7Days(
+        storeId: selectedStoreId!,
+      );
+    } catch (e) {
+      debugPrint('Error en getSalesTrend: $e');
+      return {};
+    }
+  }
+
+  /// Obtiene productos con inversión crítica desde BD
+  Future<List<Map<String, dynamic>>> getCriticalProducts({
+    double minInvestment = 500.0,
+    int maxStock = 2,
+  }) async {
+    if (selectedStoreId == null) return [];
+    
+    try {
+      return await DatabaseService.getCriticalInvestmentProducts(
+        storeId: selectedStoreId!,
+        minInvestmentValue: minInvestment,
+        maxStock: maxStock,
+      );
+    } catch (e) {
+      debugPrint('Error en getCriticalProducts: $e');
+      return [];
+    }
+  }
+
+  /// Obtiene resumen de inversión desde BD
+  Future<Map<String, dynamic>> getInvestmentSummary() async {
+    if (selectedStoreId == null) return {};
+    
+    try {
+      return await DatabaseService.getInventoryInvestmentSummary(
+        storeId: selectedStoreId!,
+      );
+    } catch (e) {
+      debugPrint('Error en getInvestmentSummary: $e');
+      return {};
+    }
+  }
 }

@@ -1,18 +1,27 @@
 import 'package:flutter/material.dart';
+import 'package:nested/nested.dart';
 import 'package:provider/provider.dart';
 import 'product_provider.dart';
 import 'customer_provider.dart';
 import 'sale_provider.dart';
 import 'purchase_provider.dart';
+import 'inventory_provider.dart';
+import 'reports_provider.dart';
+import 'package:bazarnicole/Presentation/Controller/users_controller.dart';
+import 'package:bazarnicole/Presentation/Controller/suppliers_controller.dart';
 
 /// Centro de control de todos los Providers
 /// Usar en main.dart con MultiProvider
 class AppProviders {
-  static List<ChangeNotifierProvider<ChangeNotifier>> getProviders() => [
-    ChangeNotifierProvider(create: (_) => ProductProvider()),
-    ChangeNotifierProvider(create: (_) => CustomerProvider()),
-    ChangeNotifierProvider(create: (_) => SaleProvider()),
-    ChangeNotifierProvider(create: (_) => PurchaseProvider()),
+  static List<SingleChildWidget> getProviders() => [
+    ChangeNotifierProvider<ProductProvider>(create: (_) => ProductProvider()),
+    ChangeNotifierProvider<CustomerProvider>(create: (_) => CustomerProvider()),
+    ChangeNotifierProvider<SaleProvider>(create: (_) => SaleProvider()),
+    ChangeNotifierProvider<PurchaseProvider>(create: (_) => PurchaseProvider()),
+    ChangeNotifierProvider<InventoryProvider>(create: (_) => InventoryProvider()),
+    ChangeNotifierProvider<ReportsProvider>(create: (_) => ReportsProvider()),
+    ChangeNotifierProvider<UsersController>(create: (_) => UsersController()),
+    ChangeNotifierProvider<SuppliersController>(create: (_) => SuppliersController()),
   ];
 }
 
@@ -30,6 +39,12 @@ extension ProviderAccess on BuildContext {
   PurchaseProvider get purchaseProvider =>
       read<PurchaseProvider>();
 
+  InventoryProvider get inventoryProvider =>
+      read<InventoryProvider>();
+
+  ReportsProvider get reportsProvider =>
+      read<ReportsProvider>();
+
   // Watchers (para rebuild automático)
   ProductProvider watchProductProvider() =>
       watch<ProductProvider>();
@@ -42,4 +57,10 @@ extension ProviderAccess on BuildContext {
 
   PurchaseProvider watchPurchaseProvider() =>
       watch<PurchaseProvider>();
+
+  InventoryProvider watchInventoryProvider() =>
+      watch<InventoryProvider>();
+
+  ReportsProvider watchReportsProvider() =>
+      watch<ReportsProvider>();
 }

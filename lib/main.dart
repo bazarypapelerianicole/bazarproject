@@ -11,10 +11,10 @@ import 'package:bazarnicole/Presentation/Controller/auth_provider.dart';
 import 'package:bazarnicole/Presentation/Controller/product_management_controller.dart';
 import 'package:bazarnicole/Presentation/Controller/cash_controller.dart';
 import 'package:bazarnicole/Presentation/Controller/customers_controller.dart';
-import 'package:bazarnicole/Presentation/Controller/inventory_controller.dart';
 import 'package:bazarnicole/Presentation/Controller/pos_controller.dart';
 import 'package:bazarnicole/Presentation/Controller/purchases_controller.dart';
 import 'package:bazarnicole/Presentation/Controller/reports_controller.dart';
+import 'package:bazarnicole/Presentation/Context/providers.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:path/path.dart';
 import 'package:window_manager/window_manager.dart';
@@ -199,12 +199,13 @@ class MyApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => ProductManagementController()),
-        ChangeNotifierProvider(create: (_) => InventoryController()),
         ChangeNotifierProvider(create: (_) => CashController()),
         ChangeNotifierProvider(create: (_) => PosController()),
         ChangeNotifierProvider(create: (_) => PurchasesController()),
         ChangeNotifierProvider(create: (_) => CustomersController()),
         ChangeNotifierProvider(create: (_) => ReportsController()),
+        // Providers de contexto
+        ...AppProviders.getProviders(),
       ],
       child: MaterialApp(
         title: 'Bazar & Tienda',

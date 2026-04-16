@@ -25,6 +25,9 @@ class _DashboardPageState extends State<DashboardPage> {
     'Clientes': AppRoutes.customers,
     'Caja': AppRoutes.cash,
     'Reportes': AppRoutes.reports,
+    'Usuarios': AppRoutes.users,
+    'Cajeros': AppRoutes.cajeros,
+    'Proveedores': AppRoutes.suppliers,
   };
 
   @override
@@ -244,6 +247,12 @@ class _DashboardPageState extends State<DashboardPage> {
         return Icons.account_balance_wallet_outlined;
       case 'Reportes':
         return Icons.bar_chart_outlined;
+      case 'Usuarios':
+        return Icons.manage_accounts_outlined;
+      case 'Cajeros':
+        return Icons.point_of_sale_outlined;
+      case 'Proveedores':
+        return Icons.local_shipping_outlined;
       default:
         return Icons.help_outline;
     }

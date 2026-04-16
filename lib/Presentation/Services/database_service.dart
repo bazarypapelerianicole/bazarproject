@@ -431,6 +431,34 @@ class DatabaseService {
       )
     ''');
 
+    // --- Módulo de Usuarios y Roles ---
+    // Si la tabla users existe pero es la del dump de Firebase (tiene columna _key),
+    // la renombramos a firebase_users para no entrar en conflicto.
+    try {
+      final cols = await db.rawQuery("PRAGMA table_info(users)");
+      if (cols.isNotEmpty) {
+        final hasKey = cols.any((c) => c['name'] == '_key');
+        if (hasKey) {
+          await db.execute('ALTER TABLE users RENAME TO firebase_users');
+        }
+      }
+    } catch (_) {}
+
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        uid TEXT NOT NULL UNIQUE,
+        email TEXT NOT NULL UNIQUE,
+        password TEXT NOT NULL,
+        name TEXT NOT NULL,
+        lastname TEXT NOT NULL,
+        role TEXT NOT NULL DEFAULT 'cajero',
+        is_active INTEGER NOT NULL DEFAULT 1,
+        created_at TEXT NOT NULL
+      )
+    ''');
+
+    await _seedAdminUser(db);
     await _seedPaymentMethods(db);
 
     await _ensureColumn(
@@ -445,9 +473,85 @@ class DatabaseService {
       column: 'client_id',
       definition: 'INTEGER',
     );
+    await _ensureColumn(
+      db,
+      table: 'suppliers',
+      column: 'email',
+      definition: 'TEXT',
+    );
+    await _ensureColumn(
+      db,
+      table: 'suppliers',
+      column: 'notes',
+      definition: 'TEXT',
+    );
+
+    // Migración de la tabla users (por si existía antes con menos columnas)
+    await _ensureColumn(
+      db,
+      table: 'users',
+      column: 'uid',
+      definition: "TEXT NOT NULL DEFAULT ''",
+    );
+    await _ensureColumn(
+      db,
+      table: 'users',
+      column: 'email',
+      definition: "TEXT NOT NULL DEFAULT ''",
+    );
+    await _ensureColumn(
+      db,
+      table: 'users',
+      column: 'password',
+      definition: "TEXT NOT NULL DEFAULT ''",
+    );
+    await _ensureColumn(
+      db,
+      table: 'users',
+      column: 'name',
+      definition: "TEXT NOT NULL DEFAULT ''",
+    );
+    await _ensureColumn(
+      db,
+      table: 'users',
+      column: 'lastname',
+      definition: "TEXT NOT NULL DEFAULT ''",
+    );
+    await _ensureColumn(
+      db,
+      table: 'users',
+      column: 'role',
+      definition: "TEXT NOT NULL DEFAULT 'cajero'",
+    );
+    await _ensureColumn(
+      db,
+      table: 'users',
+      column: 'is_active',
+      definition: 'INTEGER NOT NULL DEFAULT 1',
+    );
+    await _ensureColumn(
+      db,
+      table: 'users',
+      column: 'created_at',
+      definition: "TEXT NOT NULL DEFAULT ''",
+    );
 
     await _seedStores(db);
     await _seedCatalog(db);
+  }
+
+  static Future<void> _seedAdminUser(DatabaseExecutor db) async {
+    // Crear usuario administrador por defecto si no existen usuarios
+    final count = await db.rawQuery('SELECT COUNT(*) as c FROM users');
+    final total = (count.first['c'] as num).toInt();
+    if (total == 0) {
+      final uid = 'admin_${DateTime.now().millisecondsSinceEpoch}';
+      await db.rawInsert(
+        '''INSERT OR IGNORE INTO users (uid, email, password, name, lastname, role, is_active, created_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?)''',
+        [uid, 'admin@bazarnicole.com', 'admin123', 'Administrador', '', 'admin', 1, DateTime.now().toIso8601String()],
+      );
+    }
   }
 
   static Future<void> _seedPaymentMethods(DatabaseExecutor db) async {
@@ -1648,5 +1752,387 @@ class DatabaseService {
         );
       }
     });
+  }
+
+  // ─────────────────────────────────────────────
+  // ANÁLISIS DE INVENTARIO (FASE 5)
+  // ─────────────────────────────────────────────
+
+  /// Obtiene unidades vendidas por producto en un período
+  static Future<Map<int, int>> getUnitsSoldByProduct({
+    required int storeId,
+    DateTime? dateFrom,
+    DateTime? dateTo,
+  }) async {
+    try {
+      final db = await database;
+      
+      String whereClause = 'si.product_id IS NOT NULL AND s.store_id = ?';
+      List<dynamic> whereArgs = [storeId];
+      
+      if (dateFrom != null) {
+        whereClause += ' AND s.date >= ?';
+        whereArgs.add(dateFrom.toIso8601String());
+      }
+      
+      if (dateTo != null) {
+        whereClause += ' AND s.date <= ?';
+        whereArgs.add(dateTo.toIso8601String());
+      }
+      
+      final result = await db.rawQuery('''
+        SELECT 
+          si.product_id,
+          SUM(si.quantity) as totalSold
+        FROM sale_items si
+        JOIN sales s ON si.sale_id = s.id
+        WHERE $whereClause
+        GROUP BY si.product_id
+      ''', whereArgs);
+      
+      final Map<int, int> unitsSold = {};
+      for (var row in result) {
+        final productId = (row['product_id'] as num).toInt();
+        final quantity = (row['totalSold'] as num).toInt();
+        unitsSold[productId] = quantity;
+      }
+      
+      return unitsSold;
+    } catch (e) {
+      print('Error en getUnitsSoldByProduct: $e');
+      return {};
+    }
+  }
+
+  /// Obtiene TOP N productos más vendidos
+  static Future<List<Map<String, dynamic>>> getTopSellingProducts({
+    required int storeId,
+    int topCount = 5,
+    DateTime? dateFrom,
+    DateTime? dateTo,
+  }) async {
+    try {
+      final db = await database;
+      
+      String whereClause = 's.store_id = ?';
+      List<dynamic> whereArgs = [storeId];
+      
+      if (dateFrom != null) {
+        whereClause += ' AND s.date >= ?';
+        whereArgs.add(dateFrom.toIso8601String());
+      }
+      
+      if (dateTo != null) {
+        whereClause += ' AND s.date <= ?';
+        whereArgs.add(dateTo.toIso8601String());
+      }
+      
+      final result = await db.rawQuery('''
+        SELECT 
+          p.id,
+          p.name,
+          p.sku,
+          SUM(si.quantity) as totalSold,
+          AVG(si.price) as avgPrice,
+          COUNT(DISTINCT s.id) as saleTimes
+        FROM sale_items si
+        JOIN products p ON si.product_id = p.id
+        JOIN sales s ON si.sale_id = s.id
+        WHERE $whereClause
+        GROUP BY p.id
+        ORDER BY totalSold DESC
+        LIMIT ?
+      ''', [...whereArgs, topCount]);
+      
+      return result;
+    } catch (e) {
+      print('Error en getTopSellingProducts: $e');
+      return [];
+    }
+  }
+
+  /// Obtiene TOP N productos con mejor margen
+  static Future<List<Map<String, dynamic>>> getTopMarginProducts({
+    required int storeId,
+    int topCount = 5,
+  }) async {
+    try {
+      final db = await database;
+      
+      final result = await db.rawQuery('''
+        SELECT 
+          p.id,
+          p.name,
+          p.sku,
+          p.price as sellPrice,
+          COALESCE((SELECT cost FROM purchase_items 
+                    WHERE product_id = p.id 
+                    LIMIT 1), 0) as costPrice,
+          (p.price - COALESCE((SELECT cost FROM purchase_items 
+                               WHERE product_id = p.id 
+                               LIMIT 1), 0)) as marginPerUnit,
+          CASE 
+            WHEN COALESCE((SELECT cost FROM purchase_items 
+                          WHERE product_id = p.id 
+                          LIMIT 1), 0) > 0
+            THEN ((p.price - COALESCE((SELECT cost FROM purchase_items 
+                                      WHERE product_id = p.id 
+                                      LIMIT 1), 0)) / 
+                  COALESCE((SELECT cost FROM purchase_items 
+                           WHERE product_id = p.id 
+                           LIMIT 1), 1) * 100)
+            ELSE 0 
+          END as marginPercent,
+          i.stock as quantity
+        FROM products p
+        LEFT JOIN inventory i ON p.id = i.product_id AND i.store_id = ?
+        WHERE i.store_id = ?
+        ORDER BY marginPercent DESC
+        LIMIT ?
+      ''', [storeId, storeId, topCount]);
+      
+      return result;
+    } catch (e) {
+      print('Error en getTopMarginProducts: $e');
+      return [];
+    }
+  }
+
+  /// Obtiene información de inversión de bodega
+  static Future<Map<String, dynamic>> getInventoryInvestmentSummary({
+    required int storeId,
+  }) async {
+    try {
+      final db = await database;
+      
+      final result = await db.rawQuery('''
+        SELECT 
+          COUNT(DISTINCT p.id) as totalProducts,
+          SUM(i.stock) as totalUnits,
+          SUM(i.stock * COALESCE((SELECT cost FROM purchase_items 
+                                  WHERE product_id = p.id 
+                                  LIMIT 1), 0)) as totalInvested,
+          SUM(i.stock * p.price) as totalSellValue,
+          AVG(p.price - COALESCE((SELECT cost FROM purchase_items 
+                                  WHERE product_id = p.id 
+                                  LIMIT 1), 0)) as avgMarginPerUnit,
+          COUNT(CASE WHEN i.stock <= 2 THEN 1 END) as lowStockCount
+        FROM products p
+        LEFT JOIN inventory i ON p.id = i.product_id
+        WHERE i.store_id = ?
+      ''', [storeId]);
+      
+      if (result.isEmpty) {
+        return {
+          'totalProducts': 0,
+          'totalUnits': 0,
+          'totalInvested': 0.0,
+          'totalSellValue': 0.0,
+          'avgMarginPerUnit': 0.0,
+          'lowStockCount': 0,
+          'potentialGain': 0.0,
+          'potentialROI': 0.0,
+        };
+      }
+      
+      final row = result.first;
+      final totalInvested = (row['totalInvested'] as num?)?.toDouble() ?? 0.0;
+      final totalSellValue = (row['totalSellValue'] as num?)?.toDouble() ?? 0.0;
+      final potentialGain = totalSellValue - totalInvested;
+      final potentialROI = totalInvested > 0 ? (potentialGain / totalInvested) * 100 : 0.0;
+      
+      return {
+        'totalProducts': (row['totalProducts'] as num?)?.toInt() ?? 0,
+        'totalUnits': (row['totalUnits'] as num?)?.toInt() ?? 0,
+        'totalInvested': totalInvested,
+        'totalSellValue': totalSellValue,
+        'potentialGain': potentialGain,
+        'potentialROI': potentialROI,
+        'avgMarginPerUnit': (row['avgMarginPerUnit'] as num?)?.toDouble() ?? 0.0,
+        'lowStockCount': (row['lowStockCount'] as num?)?.toInt() ?? 0,
+      };
+    } catch (e) {
+      print('Error en getInventoryInvestmentSummary: $e');
+      return {};
+    }
+  }
+
+  /// Obtiene tendencia de ventas (últimos 7 días)
+  static Future<Map<String, double>> getSalesTrendLast7Days({
+    required int storeId,
+  }) async {
+    try {
+      final db = await database;
+      final Map<String, double> trend = {};
+      
+      // Inicializar con los últimos 7 días
+      for (int i = 6; i >= 0; i--) {
+        final date = DateTime.now().subtract(Duration(days: i));
+        final dateStr = '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+        trend[dateStr] = 0.0;
+      }
+      
+      final result = await db.rawQuery('''
+        SELECT 
+          DATE(s.date) as saleDate,
+          SUM(s.total) as dayTotal
+        FROM sales s
+        WHERE s.store_id = ?
+          AND s.date >= datetime('now', '-7 days')
+        GROUP BY DATE(s.date)
+        ORDER BY s.date
+      ''', [storeId]);
+      
+      // Actualizar trend con datos reales
+      for (var row in result) {
+        final dateStr = row['saleDate'] as String;
+        final dayTotal = (row['dayTotal'] as num).toDouble();
+        if (trend.containsKey(dateStr)) {
+          trend[dateStr] = dayTotal;
+        }
+      }
+      
+      return trend;
+    } catch (e) {
+      print('Error en getSalesTrendLast7Days: $e');
+      return {};
+    }
+  }
+
+  /// Obtiene rotación promedio de inventario (unidades/día)
+  static Future<double> getAverageInventoryRotation({
+    required int storeId,
+    int daysToAnalyze = 30,
+  }) async {
+    try {
+      final db = await database;
+      
+      final dateFrom = DateTime.now().subtract(Duration(days: daysToAnalyze));
+      
+      final result = await db.rawQuery('''
+        SELECT SUM(si.quantity) as totalSold
+        FROM sale_items si
+        JOIN sales s ON si.sale_id = s.id
+        WHERE s.store_id = ?
+          AND s.date >= ?
+      ''', [storeId, dateFrom.toIso8601String()]);
+      
+      if (result.isEmpty || result.first['totalSold'] == null) {
+        return 0.0;
+      }
+      
+      final totalSold = (result.first['totalSold'] as num).toDouble();
+      return totalSold / daysToAnalyze;
+    } catch (e) {
+      print('Error en getAverageInventoryRotation: $e');
+      return 0.0;
+    }
+  }
+
+  /// Obtiene productos con inversión crítica (bajo stock, alto valor)
+  static Future<List<Map<String, dynamic>>> getCriticalInvestmentProducts({
+    required int storeId,
+    double minInvestmentValue = 500.0,
+    int maxStock = 2,
+  }) async {
+    try {
+      final db = await database;
+      
+      final result = await db.rawQuery('''
+        SELECT 
+          p.id,
+          p.name,
+          p.sku,
+          p.price,
+          COALESCE((SELECT cost FROM purchase_items 
+                    WHERE product_id = p.id 
+                    LIMIT 1), 0) as costPrice,
+          i.stock,
+          (i.stock * COALESCE((SELECT cost FROM purchase_items 
+                              WHERE product_id = p.id 
+                              LIMIT 1), 0)) as investmentValue
+        FROM products p
+        JOIN inventory i ON p.id = i.product_id
+        WHERE i.store_id = ?
+          AND i.stock <= ?
+          AND (i.stock * COALESCE((SELECT cost FROM purchase_items 
+                                  WHERE product_id = p.id 
+                                  LIMIT 1), 0)) >= ?
+        ORDER BY investmentValue DESC
+      ''', [storeId, maxStock, minInvestmentValue]);
+      
+      return result;
+    } catch (e) {
+      print('Error en getCriticalInvestmentProducts: $e');
+      return [];
+    }
+  }
+
+  /// Obtiene reporte completo de análisis de inventario
+  static Future<Map<String, dynamic>> getInventoryAnalysisReport({
+    required int storeId,
+    DateTime? dateFrom,
+    DateTime? dateTo,
+  }) async {
+    try {
+      final now = DateTime.now();
+      final from = dateFrom ?? DateTime(now.year, now.month, 1);
+      final to = dateTo ?? now;
+      
+      // Obtener todos los datos en paralelo
+      final unitsSoldData = await getUnitsSoldByProduct(
+        storeId: storeId,
+        dateFrom: from,
+        dateTo: to,
+      );
+      
+      final topSellers = await getTopSellingProducts(
+        storeId: storeId,
+        topCount: 10,
+        dateFrom: from,
+        dateTo: to,
+      );
+      
+      final topMargin = await getTopMarginProducts(
+        storeId: storeId,
+        topCount: 10,
+      );
+      
+      final investment = await getInventoryInvestmentSummary(storeId: storeId);
+      
+      final trend = await getSalesTrendLast7Days(storeId: storeId);
+      
+      final rotation = await getAverageInventoryRotation(
+        storeId: storeId,
+        daysToAnalyze: 30,
+      );
+      
+      final critical = await getCriticalInvestmentProducts(storeId: storeId);
+      
+      // Calcular métricas adicionales
+      final totalSales = topSellers.fold<double>(
+        0,
+        (sum, item) => sum + ((item['totalSold'] as num?)?.toDouble() ?? 0),
+      );
+      
+      return {
+        'period': {
+          'from': from.toIso8601String(),
+          'to': to.toIso8601String(),
+        },
+        'investment': investment,
+        'unitsSoldByProduct': unitsSoldData,
+        'topSellers': topSellers,
+        'topMargin': topMargin,
+        'salesTrend': trend,
+        'averageRotation': rotation,
+        'criticalProducts': critical,
+        'totalSalesInPeriod': totalSales,
+        'generatedAt': now.toIso8601String(),
+      };
+    } catch (e) {
+      print('Error en getInventoryAnalysisReport: $e');
+      return {};
+    }
   }
 }

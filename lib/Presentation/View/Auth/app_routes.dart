@@ -8,6 +8,9 @@ import 'package:bazarnicole/Presentation/View/POS/pos_view.dart';
 import 'package:bazarnicole/Presentation/View/Product/product_management_view.dart';
 import 'package:bazarnicole/Presentation/View/Purchases/purchases_view.dart';
 import 'package:bazarnicole/Presentation/View/Reports/reports_view.dart';
+import 'package:bazarnicole/Presentation/View/Users/users_view.dart';
+import 'package:bazarnicole/Presentation/View/Users/cajeros_view.dart';
+import 'package:bazarnicole/Presentation/View/Suppliers/suppliers_view.dart';
 
 class AppRoutes {
   // --- Rutas Públicas ---
@@ -25,6 +28,9 @@ class AppRoutes {
   static const customers = '/customers';
   static const reports = '/reports';
   static const cash = '/cash';
+  static const users = '/users';
+  static const cajeros = '/cajeros';
+  static const suppliers = '/suppliers';
 
   /// Todas las rutas registradas
   static final routes = <String, WidgetBuilder>{
@@ -37,6 +43,9 @@ class AppRoutes {
     customers: (context) => const CustomersView(),
     reports: (context) => const ReportsView(),
     cash: (context) => const CashView(),
+    users: (context) => const UsersView(),
+    cajeros: (context) => const CajerosView(),
+    suppliers: (context) => const SuppliersView(),
   };
 
   /// Map de roles con rutas permitidas
@@ -54,8 +63,20 @@ class AppRoutes {
       customers,
       reports,
       cash,
+      users,
+      cajeros,
+      suppliers,
     ],
     'cajero': [login, authenticate, dashboard, pos, customers],
+    'bodega': [
+      login,
+      authenticate,
+      dashboard,
+      products,
+      purchases,
+      inventory,
+      suppliers,
+    ],
     'Inventario': [
       login,
       authenticate,
