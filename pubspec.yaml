@@ -103,7 +103,7 @@ flutter_launcher_icons:
   image_path: "assets/image/logobazasr.png"
   adaptive_icon_background: "#131a1f"
   adaptive_icon_foreground: "assets/image/logobazasr.png"
-  
+
 # The following section is specific to Flutter packages.
 flutter:
   # The following line ensures that the Material Icons font is
@@ -115,7 +115,8 @@ flutter:
   assets:
     - assets/database/bazarnicole.db
     - assets/image/logobazasr.png
-
+    - .env
+    - assets/env.txt
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
 
