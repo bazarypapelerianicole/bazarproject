@@ -1,6 +1,7 @@
 import 'package:bazarnicole/Presentation/Template/catalog_template.dart';
 import 'package:bazarnicole/Presentation/Utils/Colors.dart';
 import 'package:bazarnicole/Presentation/Widgets/catalog_card_widget.dart';
+import 'package:bazarnicole/Presentation/Widgets/legal_page_widget.dart';
 import 'package:flutter/material.dart';
 
 /// Vista pública del catálogo — solo para web.
@@ -129,12 +130,61 @@ class _WebCatalogViewState extends State<WebCatalogView>
           // Pie de página
           Container(
             color: AppColors.primaryLogo,
-            padding: const EdgeInsets.symmetric(vertical: 10),
+            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
             width: double.infinity,
-            child: const Text(
-              '© 2026 Bazar & Tienda Nicole — Todos los derechos reservados',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.white54, fontSize: 11),
+            child: Column(
+              children: [
+                const Text(
+                  '© 2026 Bazar & Tienda Nicole — Todos los derechos reservados',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: Colors.white54, fontSize: 11),
+                ),
+                const SizedBox(height: 6),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    TextButton(
+                      onPressed: () =>
+                          LegalPageWidget.show(context, LegalDocType.terms),
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 0),
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                      child: const Text(
+                        'Términos y Condiciones',
+                        style: TextStyle(
+                            color: Colors.white70,
+                            fontSize: 11,
+                            decoration: TextDecoration.underline,
+                            decorationColor: Colors.white54),
+                      ),
+                    ),
+                    const Text('·',
+                        style:
+                            TextStyle(color: Colors.white38, fontSize: 11)),
+                    TextButton(
+                      onPressed: () =>
+                          LegalPageWidget.show(context, LegalDocType.privacy),
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 0),
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                      child: const Text(
+                        'Política de Privacidad',
+                        style: TextStyle(
+                            color: Colors.white70,
+                            fontSize: 11,
+                            decoration: TextDecoration.underline,
+                            decorationColor: Colors.white54),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
           ),
         ],

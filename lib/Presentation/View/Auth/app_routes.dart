@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:bazarnicole/Presentation/View/Login/Login.dart';
 import 'package:bazarnicole/Presentation/View/Customers/customers_view.dart';
@@ -12,6 +13,7 @@ import 'package:bazarnicole/Presentation/View/Users/users_view.dart';
 import 'package:bazarnicole/Presentation/View/Suppliers/suppliers_view.dart';
 import 'package:bazarnicole/Presentation/admin/AdminDBPage.dart';
 import 'package:bazarnicole/Presentation/View/Catalog/web_catalog_view.dart';
+import 'package:bazarnicole/Presentation/Widgets/legal_page_widget.dart';
 
 class AppRoutes {
   // --- Rutas Públicas ---
@@ -33,6 +35,8 @@ class AppRoutes {
   static const suppliers = '/suppliers';
   static const adminDb = '/admin-db';
   static const catalog = '/catalog';
+  static const terms = '/terms';
+  static const privacy = '/privacy';
 
   /// Todas las rutas registradas
   static final routes = <String, WidgetBuilder>{
@@ -48,7 +52,12 @@ class AppRoutes {
     users: (context) => const UsersView(),
     suppliers: (context) => const SuppliersView(),
     adminDb: (context) => const AdminDBPage(),
-    catalog: (context) => const WebCatalogView(),
+    // El catálogo público solo se registra en web
+    if (kIsWeb) catalog: (context) => const WebCatalogView(),
+    if (kIsWeb)
+      terms: (context) => const LegalPageWidget(type: LegalDocType.terms),
+    if (kIsWeb)
+      privacy: (context) => const LegalPageWidget(type: LegalDocType.privacy),
   };
 
   /// Map de roles con rutas permitidas

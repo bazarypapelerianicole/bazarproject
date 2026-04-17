@@ -64,23 +64,18 @@ Future<void> main() async {
   // 🗄️ INICIALIZAR BASE DE DATOS DE FORMA SEGURA
   await _initDatabaseSafely();
 
-  // 🌐 En web, mostrar el catálogo público directamente
+  // 🌐 Web: siempre muestra el catálogo público, sin autenticación
   if (kIsWeb) {
     runApp(MyApp(initialRoute: AppRoutes.catalog));
     return;
   }
 
+  // 🖥️ Desktop / Móvil: flujo normal con login
   try {
-    // Verificar si hay sesión activa
     final authService = AuthService();
     final isLoggedIn = await authService.isLoggedIn();
 
-    String initialRoute;
-    if (isLoggedIn) {
-      initialRoute = AppRoutes.dashboard;
-    } else {
-      initialRoute = AppRoutes.login;
-    }
+    final initialRoute = isLoggedIn ? AppRoutes.dashboard : AppRoutes.login;
 
     runApp(MyApp(initialRoute: initialRoute));
   } catch (e) {
@@ -104,6 +99,7 @@ Future<void> _initializePlatformSpecific() async {
 
 // 🛡️ INICIALIZACIÓN SEGURA DE BASE DE DATOS
 Future<void> _initDatabaseSafely() async {
+  if (kIsWeb) return; // Web no usa SQLite local
   try {
     // Para iOS/Android, usar método directo sin servicios complejos
     if (Platform.isIOS || Platform.isAndroid) {
@@ -151,6 +147,7 @@ Future<void> _initMobileDatabase() async {
 // 🔧 MÉTODO FALLBACK MEJORADO Y SEGURO
 
 Future<void> _safeFallbackDatabaseInit() async {
+  if (kIsWeb) return; // Web no usa SQLite local
   try {
     // Solo para plataformas móviles, usar el método tradicional
     if (Platform.isIOS || Platform.isAndroid) {

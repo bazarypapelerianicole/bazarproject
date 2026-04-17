@@ -1,5 +1,6 @@
 // ignore_for_file: file_names, deprecated_member_use
 
+import 'dart:convert';
 import 'dart:io';
 import 'package:bazarnicole/Presentation/Utils/Colors.dart';
 import 'package:flutter/material.dart';
@@ -8,7 +9,9 @@ import 'package:path_provider/path_provider.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../services/database_location_service.dart';
+import '../services/google_drive_backup_service.dart';
 
 class AdminDBPage extends StatefulWidget {
   const AdminDBPage({super.key});
@@ -26,6 +29,15 @@ class _AdminDBPageState extends State<AdminDBPage>
   Color _messageColor = AppColors.blackOverlay;
   bool _isLoading = false;
   final ScrollController _verticalScroll = ScrollController();
+
+  // Google Drive Backup state
+  String _driveMessage = 'Inicia sesión con Google para hacer backup';
+  Color _driveMessageColor = AppColors.primaryBlue;
+  bool _driveLoading = false;
+  String? _driveFolderUrl;
+  List<String> _driveUploadedFiles = [];
+  String _driveProgressStep = '';
+  double _driveProgressPercent = 0;
 
   late Database db;
   String? _actualDbPath; // Ruta real obtenida del DatabaseLocationService
@@ -49,7 +61,8 @@ class _AdminDBPageState extends State<AdminDBPage>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _tabController = TabController(length: 3, vsync: this);
+    _initDriveSession();
     _openDB();
   }
 
@@ -482,6 +495,305 @@ class _AdminDBPageState extends State<AdminDBPage>
     }
   }
 
+  Future<void> _initDriveSession() async {
+    final email = await GoogleDriveBackupService.signInSilently();
+    if (email != null && mounted) {
+      setState(() {
+        _driveMessage = '✅ Sesión restaurada: $email';
+        _driveMessageColor = AppColors.darkGreen;
+      });
+    }
+  }
+
+  Future<void> _driveSignIn() async {
+    setState(() => _driveLoading = true);
+    try {
+      final email = await GoogleDriveBackupService.signIn();
+      setState(() {
+        _driveMessage = '✅ Sesión iniciada: $email';
+        _driveMessageColor = AppColors.darkGreen;
+      });
+    } catch (e) {
+      setState(() {
+        _driveMessage = '⛔ $e';
+        _driveMessageColor = AppColors.primaryRed;
+      });
+    } finally {
+      setState(() => _driveLoading = false);
+    }
+  }
+
+  Future<void> _driveSignOut() async {
+    await GoogleDriveBackupService.signOut();
+    setState(() {
+      _driveMessage = 'Sesión cerrada. Inicia sesión para hacer backup.';
+      _driveMessageColor = AppColors.primaryBlue;
+      _driveFolderUrl = null;
+      _driveUploadedFiles = [];
+    });
+  }
+
+  Future<void> _startDriveBackup() async {
+    setState(() {
+      _driveLoading = true;
+      _driveProgressStep = 'Iniciando backup...';
+      _driveProgressPercent = 0;
+      _driveFolderUrl = null;
+      _driveUploadedFiles = [];
+    });
+
+    final result = await GoogleDriveBackupService.performBackup(
+      onProgress: (progress) {
+        if (mounted) {
+          setState(() {
+            _driveProgressStep = progress.step;
+            _driveProgressPercent = progress.percent;
+          });
+        }
+      },
+    );
+
+    if (mounted) {
+      setState(() {
+        _driveLoading = false;
+        _driveMessage = result.message;
+        _driveMessageColor = result.success
+            ? AppColors.darkGreen
+            : AppColors.primaryRed;
+        _driveFolderUrl = result.driveFolderUrl;
+        _driveUploadedFiles = result.uploadedFiles;
+      });
+    }
+  }
+
+  Widget _buildDriveBackupTab() {
+    final isSignedIn = GoogleDriveBackupService.isSignedIn;
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Header info
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppColors.blackOverlay.withOpacity(0.05),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: AppColors.blackOverlay.withOpacity(0.1),
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.cloud_upload,
+                      size: 28,
+                      color: Color(0xFF4285F4),
+                    ),
+                    const SizedBox(width: 10),
+                    const Text(
+                      'Backup a Google Drive',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Exporta todas las tablas de la base de datos en formato JSON y sube las imágenes al Drive.',
+                  style: TextStyle(color: AppColors.mediumGray, fontSize: 13),
+                ),
+                const SizedBox(height: 6),
+                if (isSignedIn)
+                  Text(
+                    '👤 ${GoogleDriveBackupService.currentUserEmail}',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF4285F4),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 20),
+
+          // Botones de sesión
+          if (!isSignedIn)
+            ElevatedButton.icon(
+              onPressed: _driveLoading ? null : _driveSignIn,
+              icon: const Icon(Icons.login),
+              label: const Text('Iniciar sesión con Google'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF4285F4),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+            )
+          else
+            Row(
+              children: [
+                Expanded(
+                  flex: 3,
+                  child: ElevatedButton.icon(
+                    onPressed: _driveLoading ? null : _startDriveBackup,
+                    icon: const Icon(Icons.backup),
+                    label: const Text('Iniciar Backup'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.darkGreen,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  flex: 1,
+                  child: OutlinedButton.icon(
+                    onPressed: _driveLoading ? null : _driveSignOut,
+                    icon: const Icon(Icons.logout, size: 18),
+                    label: const Text('Salir'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.primaryRed,
+                      side: const BorderSide(color: AppColors.primaryRed),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          const SizedBox(height: 20),
+
+          // Progreso
+          if (_driveLoading) ...[
+            LinearProgressIndicator(
+              value: _driveProgressPercent == 0 ? null : _driveProgressPercent,
+              backgroundColor: AppColors.blackOverlay.withOpacity(0.1),
+              color: const Color(0xFF4285F4),
+              minHeight: 8,
+              borderRadius: BorderRadius.circular(4),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              _driveProgressStep,
+              style: TextStyle(color: AppColors.mediumGray, fontSize: 13),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
+          ],
+
+          // Mensaje de estado
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 300),
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: _driveMessageColor.withOpacity(0.08),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: _driveMessageColor.withOpacity(0.4)),
+            ),
+            child: Text(
+              _driveMessage,
+              style: TextStyle(
+                color: _driveMessageColor,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+
+          // Enlace a carpeta Drive
+          if (_driveFolderUrl != null) ...[
+            const SizedBox(height: 16),
+            ElevatedButton.icon(
+              onPressed: () async {
+                final uri = Uri.parse(_driveFolderUrl!);
+                if (await canLaunchUrl(uri)) {
+                  await launchUrl(uri, mode: LaunchMode.externalApplication);
+                }
+              },
+              icon: const Icon(Icons.open_in_new),
+              label: const Text('Abrir carpeta en Google Drive'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF4285F4),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+            ),
+          ],
+
+          // Lista de archivos subidos
+          if (_driveUploadedFiles.isNotEmpty) ...[
+            const SizedBox(height: 20),
+            Text(
+              'ARCHIVOS SUBIDOS (${_driveUploadedFiles.length})',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 12,
+                color: AppColors.mediumGray,
+                letterSpacing: 0.5,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.darkGray.withOpacity(0.05),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: AppColors.blackOverlay.withOpacity(0.1),
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: _driveUploadedFiles.map((file) {
+                  final isImage =
+                      file.endsWith('.jpg') ||
+                      file.endsWith('.png') ||
+                      file.endsWith('.jpeg') ||
+                      file.endsWith('.webp');
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 3),
+                    child: Row(
+                      children: [
+                        Icon(
+                          isImage ? Icons.image : Icons.description,
+                          size: 16,
+                          color: isImage
+                              ? AppColors.primaryBlue
+                              : AppColors.darkGreen,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(file, style: const TextStyle(fontSize: 13)),
+                      ],
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
+          ],
+
+          const SizedBox(height: 20),
+        ],
+      ),
+    );
+  }
+
   void _clearConsole() {
     setState(() {
       _queryResult = [];
@@ -489,6 +801,71 @@ class _AdminDBPageState extends State<AdminDBPage>
       _messageColor = AppColors.primaryBlue;
     });
     _queryController.clear();
+  }
+
+  Future<void> _exportToJsonLocally() async {
+    setState(() => _isLoading = true);
+    try {
+      final now = DateTime.now();
+      final folderName =
+          'BazarNicole_JSON_${now.year}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}_${now.hour.toString().padLeft(2, '0')}${now.minute.toString().padLeft(2, '0')}';
+
+      final docsDir = await getApplicationDocumentsDirectory();
+      final exportDir = Directory('${docsDir.path}/$folderName');
+      await exportDir.create(recursive: true);
+
+      // Obtener nombres de tablas
+      final List<Map<String, dynamic>> tableRows = await db.rawQuery(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' AND name NOT LIKE 'android_%'",
+      );
+      final tables = tableRows.map((r) => r['name'] as String).toList();
+
+      final List<String> exportedFiles = [];
+
+      for (final table in tables) {
+        final rows = await db.query(table);
+        final jsonContent = JsonEncoder.withIndent('  ').convert(rows);
+        final file = File('${exportDir.path}/$table.json');
+        await file.writeAsString(jsonContent, flush: true);
+        exportedFiles.add('$table.json');
+      }
+
+      // Compartir en móvil / abrir carpeta en desktop
+      if (Platform.isAndroid || Platform.isIOS) {
+        final xFiles = exportedFiles
+            .map((name) => XFile('${exportDir.path}/$name'))
+            .toList();
+        await Share.shareXFiles(
+          xFiles,
+          text: 'Exportación JSON de BazarNicole',
+        );
+      } else {
+        ProcessResult result;
+        if (Platform.isMacOS) {
+          result = await Process.run('open', [exportDir.path]);
+        } else if (Platform.isWindows) {
+          result = await Process.run('explorer', [exportDir.path]);
+        } else {
+          result = await Process.run('xdg-open', [exportDir.path]);
+        }
+        if (result.exitCode != 0) {
+          throw Exception('No se pudo abrir la carpeta: ${result.stderr}');
+        }
+      }
+
+      setState(() {
+        _message =
+            '✅ ${exportedFiles.length} archivos JSON exportados en:\n${exportDir.path}';
+        _messageColor = AppColors.darkGreen;
+      });
+    } catch (e) {
+      setState(() {
+        _message = '⛔ Error al exportar JSON: $e';
+        _messageColor = AppColors.primaryRed;
+      });
+    } finally {
+      setState(() => _isLoading = false);
+    }
   }
 
   Widget _buildResultConsole() {
@@ -892,6 +1269,77 @@ class _AdminDBPageState extends State<AdminDBPage>
                         ),
                       ),
                       onPressed: _isLoading ? null : _copyDatabaseFromAssets,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          // Opción 3: Exportar a JSON localmente
+          Card(
+            elevation: 3,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.orange.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Icon(
+                          Icons.data_object,
+                          color: Colors.orange,
+                          size: 24,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          'Exportar tablas a JSON',
+                          style: TextStyle(
+                            color: AppColors.blackOverlay,
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'Genera un archivo .json por cada tabla de la base de datos y los guarda en una carpeta local con fecha y hora.',
+                    style: TextStyle(
+                      color: AppColors.mediumGray,
+                      fontSize: 14,
+                      height: 1.4,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      icon: const Icon(Icons.download_for_offline),
+                      label: const Text('EXPORTAR A JSON'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.orange,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      onPressed: _isLoading ? null : _exportToJsonLocally,
                     ),
                   ),
                 ],
@@ -1314,12 +1762,17 @@ class _AdminDBPageState extends State<AdminDBPage>
               icon: Icon(Icons.swap_horizontal_circle),
               text: 'Reemplazar DB',
             ),
+            Tab(icon: Icon(Icons.cloud_upload), text: 'Backup Drive'),
           ],
         ),
       ),
       body: TabBarView(
         controller: _tabController,
-        children: [_buildSQLTab(), _buildReplaceDBTab()],
+        children: [
+          _buildSQLTab(),
+          _buildReplaceDBTab(),
+          _buildDriveBackupTab(),
+        ],
       ),
     );
   }

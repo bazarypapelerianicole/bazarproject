@@ -28,5 +28,44 @@
 	<string>MainMenu</string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
+	<key>GIDClientID</key>
+	<string>729574722293-qhf641a8dasfnu4kfdc43ttv2fdlm525.apps.googleusercontent.com</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.729574722293-qhf641a8dasfnu4kfdc43ttv2fdlm525</string>
+			</array>
+		</dict>
+	</array>
+		<key>NSLocalNetworkUsageDescription</key>
+	<string>This app requires access to the local network to debug and connect with the Dart VM Service.</string>
+	<key>NSBonjourServices</key>
+	<array>
+		<string>_dartobservatory._tcp</string>
+	</array>
+	<key>NSCameraUsageDescription</key>
+	<string>Necesitamos acceder a la cámara para tomar fotos y escanear códigos de barras dentro de la aplicación.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Necesitamos acceder a tu galería para que puedas seleccionar y adjuntar imágenes.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Necesitamos acceder a tu galería para guardar o adjuntar imágenes cuando lo necesites.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Necesitamos acceder al micrófono si usas funciones que requieran captura de audio dentro de la aplicación.</string>
+	<key>io.flutter.embedded_views_preview</key>
+	<true/>
+	<key>CADisableMinimumFrameDurationOnPhone</key>
+	<true/>
+	<key>UIApplicationSupportsIndirectInputEvents</key>
+	<true/>
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>mailto</string>
+	</array>
+	<key>UIFileSharingEnabled</key>
+	<true/>
+	<key>LSSupportsOpeningDocumentsInPlace</key>
+	<true/>
 </dict>
 </plist>
