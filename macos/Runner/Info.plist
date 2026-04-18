@@ -29,13 +29,13 @@
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
 	<key>GIDClientID</key>
-	<string>729574722293-qhf641a8dasfnu4kfdc43ttv2fdlm525.apps.googleusercontent.com</string>
+	<string>729574722293-e93dkahbkomgve16cph9q1fkkebfsldt.apps.googleusercontent.com</string>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
 			<key>CFBundleURLSchemes</key>
 			<array>
-				<string>com.googleusercontent.apps.729574722293-qhf641a8dasfnu4kfdc43ttv2fdlm525</string>
+				<string>com.googleusercontent.apps.729574722293-e93dkahbkomgve16cph9q1fkkebfsldt</string>
 			</array>
 		</dict>
 	</array>
