@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:bazarnicole/Presentation/Controller/product_management_controller.dart';
+import 'package:bazarnicole/Presentation/Utils/Colors.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
@@ -174,6 +175,12 @@ class _ProductManagementViewState extends State<ProductManagementView> {
         item['images'] != null && (item['images'] as String).isNotEmpty
         ? (item['images'] as String).split(',')
         : [];
+    final bazarStockController = TextEditingController(
+      text: ((item['stock_bazar'] as num?)?.toInt() ?? 0).toString(),
+    );
+    final tiendaStockController = TextEditingController(
+      text: ((item['stock_tienda'] as num?)?.toInt() ?? 0).toString(),
+    );
 
     await showDialog<void>(
       context: context,
@@ -355,6 +362,38 @@ class _ProductManagementViewState extends State<ProductManagementView> {
                         ],
                         onChanged: (v) => setDialogState(() => editStoreId = v),
                       ),
+                      const SizedBox(height: 12),
+                      // Cantidades por local
+                      const Text(
+                        'Cantidad en inventario',
+                        style: TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextField(
+                              controller: bazarStockController,
+                              keyboardType: TextInputType.number,
+                              decoration: const InputDecoration(
+                                labelText: 'Cantidad Bazar',
+                                border: OutlineInputBorder(),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: TextField(
+                              controller: tiendaStockController,
+                              keyboardType: TextInputType.number,
+                              decoration: const InputDecoration(
+                                labelText: 'Cantidad Tienda',
+                                border: OutlineInputBorder(),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                       const SizedBox(height: 16),
                       // Imágenes
                       const Text(
@@ -445,13 +484,73 @@ class _ProductManagementViewState extends State<ProductManagementView> {
                   onPressed: () => Navigator.pop(ctx),
                   child: const Text('Cancelar'),
                 ),
+                TextButton(
+                  style: TextButton.styleFrom(foregroundColor: Colors.red),
+                  onPressed: () async {
+                    final navigator = Navigator.of(ctx);
+                    final messenger = ScaffoldMessenger.of(context);
+                    final confirm = await showDialog<bool>(
+                      context: ctx,
+                      builder: (c) => AlertDialog(
+                        title: const Text('Eliminar producto'),
+                        content: Text(
+                          '¿Seguro que deseas eliminar "${item['name']}"?\n\nSe eliminará el producto y todo su inventario. Esta acción no se puede deshacer.',
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(c, false),
+                            child: const Text('Cancelar'),
+                          ),
+                          FilledButton(
+                            style: FilledButton.styleFrom(
+                              backgroundColor: Colors.red,
+                            ),
+                            onPressed: () => Navigator.pop(c, true),
+                            child: const Text('Eliminar'),
+                          ),
+                        ],
+                      ),
+                    );
+                    if (confirm != true) return;
+                    try {
+                      await controller.deleteProduct(
+                        (item['id'] as num).toInt(),
+                      );
+                      if (!mounted) return;
+                      navigator.pop();
+                      messenger.showSnackBar(
+                        const SnackBar(content: Text('Producto eliminado')),
+                      );
+                    } catch (e) {
+                      if (!mounted) return;
+                      messenger.showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            e.toString().replaceFirst('Exception: ', ''),
+                          ),
+                        ),
+                      );
+                    }
+                  },
+                  child: const Text('Eliminar'),
+                ),
                 FilledButton(
                   onPressed: () async {
                     final navigator = Navigator.of(ctx);
                     final messenger = ScaffoldMessenger.of(context);
                     try {
-                      await controller.updateProduct(
-                        productId: (item['id'] as num).toInt(),
+                      final productId = (item['id'] as num).toInt();
+                      // Construir mapa de stock por local
+                      final stockByStore = <int, int>{};
+                      for (final store in controller.stores) {
+                        final sid = (store['id'] as num).toInt();
+                        final storeName = store['name'] as String;
+                        stockByStore[sid] = storeName == 'Bazar'
+                            ? int.tryParse(bazarStockController.text) ?? 0
+                            : int.tryParse(tiendaStockController.text) ?? 0;
+                      }
+                      await controller.updateProductWithStock(
+                        productId: productId,
                         name: nameController.text,
                         category: categoryController.text,
                         sku: skuController.text,
@@ -480,6 +579,7 @@ class _ProductManagementViewState extends State<ProductManagementView> {
                             0,
                         storeId: editStoreId,
                         images: editImages,
+                        stockByStore: stockByStore,
                       );
                       if (!mounted) return;
                       navigator.pop();
@@ -507,7 +607,11 @@ class _ProductManagementViewState extends State<ProductManagementView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Productos compartidos')),
+      appBar: AppBar(
+        backgroundColor: AppColors.primaryLogo,
+        foregroundColor: Colors.white,
+        title: const Text('Productos compartidos'),
+      ),
       body: Consumer<ProductManagementController>(
         builder: (context, controller, _) {
           return SingleChildScrollView(
@@ -562,8 +666,9 @@ class _ProductManagementViewState extends State<ProductManagementView> {
                               border: OutlineInputBorder(),
                             ),
                             validator: (value) {
-                              if (value == null || value.trim().isEmpty)
+                              if (value == null || value.trim().isEmpty) {
                                 return 'Ingresa un nombre';
+                              }
                               return null;
                             },
                           ),

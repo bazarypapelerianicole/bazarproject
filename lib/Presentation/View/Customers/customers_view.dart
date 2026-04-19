@@ -1,4 +1,5 @@
 import 'package:bazarnicole/Presentation/Controller/customers_controller.dart';
+import 'package:bazarnicole/Presentation/Utils/Colors.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
@@ -68,7 +69,12 @@ class _CustomersViewState extends State<CustomersView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Clientes · CRM')),
+      backgroundColor: AppColors.whiteOverlay,
+      appBar: AppBar(
+        backgroundColor: AppColors.primaryLogo,
+        foregroundColor: Colors.white,
+        title: const Text('Clientes · CRM'),
+      ),
       body: Consumer<CustomersController>(
         builder: (context, controller, _) {
           return LayoutBuilder(
@@ -76,6 +82,7 @@ class _CustomersViewState extends State<CustomersView> {
               final isWide = constraints.maxWidth > 900;
 
               final formPanel = Card(
+                color: AppColors.lightGray,
                 child: Padding(
                   padding: const EdgeInsets.all(16),
                   child: Form(
@@ -86,41 +93,82 @@ class _CustomersViewState extends State<CustomersView> {
                       children: [
                         const Text(
                           'Registrar cliente',
-                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                         const SizedBox(height: 12),
                         TextFormField(
                           controller: _nameController,
-                          decoration: const InputDecoration(
+                          decoration: InputDecoration(
                             labelText: 'Nombre completo',
-                            border: OutlineInputBorder(),
+                            filled: true,
+                            fillColor: Colors.white,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(25),
+                              borderSide: BorderSide.none,
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 20,
+                              vertical: 15,
+                            ),
                           ),
                           validator: (value) =>
-                              value == null || value.trim().isEmpty ? 'Ingresa el nombre' : null,
+                              value == null || value.trim().isEmpty
+                              ? 'Ingresa el nombre'
+                              : null,
                         ),
                         const SizedBox(height: 10),
                         TextField(
                           controller: _phoneController,
-                          decoration: const InputDecoration(
+                          decoration: InputDecoration(
                             labelText: 'Teléfono',
-                            border: OutlineInputBorder(),
+                            filled: true,
+                            fillColor: Colors.white,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(25),
+                              borderSide: BorderSide.none,
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 20,
+                              vertical: 15,
+                            ),
                           ),
                         ),
                         const SizedBox(height: 10),
                         TextField(
                           controller: _emailController,
-                          decoration: const InputDecoration(
+                          decoration: InputDecoration(
                             labelText: 'Correo',
-                            border: OutlineInputBorder(),
+                            filled: true,
+                            fillColor: Colors.white,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(25),
+                              borderSide: BorderSide.none,
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 20,
+                              vertical: 15,
+                            ),
                           ),
                         ),
                         const SizedBox(height: 10),
                         TextField(
                           controller: _notesController,
                           maxLines: 2,
-                          decoration: const InputDecoration(
+                          decoration: InputDecoration(
                             labelText: 'Notas',
-                            border: OutlineInputBorder(),
+                            filled: true,
+                            fillColor: Colors.white,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(25),
+                              borderSide: BorderSide.none,
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 20,
+                              vertical: 15,
+                            ),
                           ),
                         ),
                         const SizedBox(height: 12),
@@ -128,6 +176,10 @@ class _CustomersViewState extends State<CustomersView> {
                           width: double.infinity,
                           child: FilledButton.icon(
                             onPressed: _saveCustomer,
+                            style: FilledButton.styleFrom(
+                              backgroundColor: Colors.black,
+                              foregroundColor: Colors.white,
+                            ),
                             icon: const Icon(Icons.person_add_alt_1),
                             label: const Text('Guardar cliente'),
                           ),
@@ -139,6 +191,7 @@ class _CustomersViewState extends State<CustomersView> {
               );
 
               final listPanel = Card(
+                color: AppColors.lightGray,
                 child: Padding(
                   padding: const EdgeInsets.all(16),
                   child: Column(
@@ -147,9 +200,19 @@ class _CustomersViewState extends State<CustomersView> {
                       TextField(
                         controller: _searchController,
                         decoration: InputDecoration(
-                          hintText: 'Buscar cliente por nombre, correo o teléfono',
+                          hintText:
+                              'Buscar cliente por nombre, correo o teléfono',
                           prefixIcon: const Icon(Icons.search),
-                          border: const OutlineInputBorder(),
+                          filled: true,
+                          fillColor: Colors.white,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(25),
+                            borderSide: BorderSide.none,
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 15,
+                          ),
                           suffixIcon: _searchController.text.isEmpty
                               ? null
                               : IconButton(
@@ -168,22 +231,31 @@ class _CustomersViewState extends State<CustomersView> {
                       ),
                       const SizedBox(height: 12),
                       Expanded(
-                        child: controller.isLoading && controller.customers.isEmpty
+                        child:
+                            controller.isLoading && controller.customers.isEmpty
                             ? const Center(child: CircularProgressIndicator())
                             : ListView.separated(
                                 itemCount: controller.customers.length,
-                                separatorBuilder: (_, __) => const Divider(height: 1),
+                                separatorBuilder: (_, __) =>
+                                    const Divider(height: 1),
                                 itemBuilder: (context, index) {
                                   final customer = controller.customers[index];
-                                  final isSelected = controller.selectedCustomer?['id'] == customer['id'];
+                                  final isSelected =
+                                      controller.selectedCustomer?['id'] ==
+                                      customer['id'];
                                   return ListTile(
                                     selected: isSelected,
-                                    leading: const CircleAvatar(child: Icon(Icons.person_outline)),
-                                    title: Text(customer['name']?.toString() ?? ''),
+                                    leading: const CircleAvatar(
+                                      child: Icon(Icons.person_outline),
+                                    ),
+                                    title: Text(
+                                      customer['name']?.toString() ?? '',
+                                    ),
                                     subtitle: Text(
                                       '${customer['phone'] ?? 'Sin teléfono'} · ${customer['email'] ?? 'Sin correo'}',
                                     ),
-                                    onTap: () => controller.selectCustomer(customer),
+                                    onTap: () =>
+                                        controller.selectCustomer(customer),
                                   );
                                 },
                               ),
@@ -196,6 +268,7 @@ class _CustomersViewState extends State<CustomersView> {
               final historyPanel = SizedBox(
                 width: isWide ? 340 : double.infinity,
                 child: Card(
+                  color: AppColors.lightGray,
                   child: Padding(
                     padding: const EdgeInsets.all(16),
                     child: Column(
@@ -204,11 +277,16 @@ class _CustomersViewState extends State<CustomersView> {
                       children: [
                         const Text(
                           'Ver historial',
-                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                         const SizedBox(height: 8),
                         if (controller.selectedCustomer == null)
-                          const Text('Selecciona un cliente para ver sus compras.')
+                          const Text(
+                            'Selecciona un cliente para ver sus compras.',
+                          )
                         else ...[
                           Text(
                             controller.selectedCustomer!['name'].toString(),
@@ -221,7 +299,8 @@ class _CustomersViewState extends State<CustomersView> {
                                 ? const Text('Todavía no registra ventas.')
                                 : ListView.separated(
                                     itemCount: controller.history.length,
-                                    separatorBuilder: (_, __) => const Divider(),
+                                    separatorBuilder: (_, __) =>
+                                        const Divider(),
                                     itemBuilder: (context, index) {
                                       final sale = controller.history[index];
                                       final date = DateTime.tryParse(
@@ -233,7 +312,9 @@ class _CustomersViewState extends State<CustomersView> {
                                         subtitle: Text(
                                           '${sale['store_name']} · ${date != null ? DateFormat('dd/MM/yyyy HH:mm').format(date) : ''}',
                                         ),
-                                        trailing: Text('\$${((sale['total'] as num?)?.toDouble() ?? 0).toStringAsFixed(2)}'),
+                                        trailing: Text(
+                                          '\$${((sale['total'] as num?)?.toDouble() ?? 0).toStringAsFixed(2)}',
+                                        ),
                                       );
                                     },
                                   ),

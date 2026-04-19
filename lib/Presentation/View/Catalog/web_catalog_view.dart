@@ -275,12 +275,12 @@ class _WebCatalogViewState extends State<WebCatalogView>
                   infoBuilder: (name) => _infoFor(name, CatalogStore.bazar),
                 ),
                 _CatalogGrid(
-                  store: CatalogStore.papeleria,
+                  store: CatalogStore.tienda,
                   items: _filtered(
-                    _categoriesFor(WebCatalog.papeleriaCategories),
+                    _categoriesFor(WebCatalog.tiendaCategories),
                   ),
                   isWide: isWide,
-                  infoBuilder: (name) => _infoFor(name, CatalogStore.papeleria),
+                  infoBuilder: (name) => _infoFor(name, CatalogStore.tienda),
                 ),
               ],
             ),

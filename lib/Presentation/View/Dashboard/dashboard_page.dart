@@ -214,6 +214,7 @@ class _DashboardPageState extends State<DashboardPage> {
     final cards = _buildCardsForRole(role);
 
     return Scaffold(
+      backgroundColor: AppColors.lightGray,
       appBar: _buildAppBar(),
       drawer: _buildDrawer(),
       body: IndexedStack(
@@ -288,6 +289,7 @@ class _DashboardCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
+      color: AppColors.whiteOverlay,
       elevation: 3,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: InkWell(

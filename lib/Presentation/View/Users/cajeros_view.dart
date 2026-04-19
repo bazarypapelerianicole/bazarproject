@@ -27,8 +27,12 @@ class _CajerosViewState extends State<CajerosView> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Cajeros', style: TextStyle(color: AppColors.threeColor)),
         backgroundColor: AppColors.primaryLogo,
+        foregroundColor: Colors.white,
+        title: const Text(
+          'Cajeros',
+          style: TextStyle(color: AppColors.threeColor),
+        ),
         iconTheme: const IconThemeData(color: AppColors.threeColor),
       ),
       body: Consumer<UsersController>(
@@ -49,8 +53,11 @@ class _CajerosViewState extends State<CajerosView> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.point_of_sale_outlined,
-                      size: 64, color: Colors.grey[400]),
+                  Icon(
+                    Icons.point_of_sale_outlined,
+                    size: 64,
+                    color: Colors.grey[400],
+                  ),
                   const SizedBox(height: 12),
                   Text(
                     'No hay cajeros registrados',
@@ -90,10 +97,7 @@ class _CajerosViewState extends State<CajerosView> {
   }
 
   void _showCajeroDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (_) => const _CajeroFormDialog(),
-    );
+    showDialog(context: context, builder: (_) => const _CajeroFormDialog());
   }
 }
 
@@ -186,9 +190,9 @@ class _CajeroCard extends StatelessWidget {
   }
 
   void _showError(BuildContext context, String msg) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(msg), backgroundColor: Colors.red),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(msg), backgroundColor: Colors.red));
   }
 
   void _showPasswordDialog(
@@ -225,8 +229,10 @@ class _CajeroCard extends StatelessWidget {
           ElevatedButton(
             onPressed: () async {
               if (!formKey.currentState!.validate()) return;
-              final err =
-                  await ctrl.changePassword(user.id!, passCtrl.text.trim());
+              final err = await ctrl.changePassword(
+                user.id!,
+                passCtrl.text.trim(),
+              );
               if (!ctx.mounted) return;
               Navigator.pop(ctx);
               if (err != null && context.mounted) {
@@ -325,8 +331,9 @@ class _CajeroFormDialogState extends State<_CajeroFormDialog> {
                   labelText: 'Correo *',
                   border: const OutlineInputBorder(),
                   prefixIcon: const Icon(Icons.email_outlined),
-                  helperText:
-                      _isEditing ? 'El correo no se puede cambiar' : null,
+                  helperText: _isEditing
+                      ? 'El correo no se puede cambiar'
+                      : null,
                 ),
                 validator: (v) {
                   if (v == null || v.trim().isEmpty) return 'Campo requerido';
@@ -408,9 +415,9 @@ class _CajeroFormDialogState extends State<_CajeroFormDialog> {
     setState(() => _saving = false);
 
     if (err != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(err), backgroundColor: Colors.red),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(err), backgroundColor: Colors.red));
     } else {
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(

@@ -65,6 +65,7 @@ class _PurchasesViewState extends State<PurchasesView> {
     return DefaultTabController(
       length: 2,
       child: Scaffold(
+        backgroundColor: AppColors.whiteOverlay,
         appBar: PreferredSize(
           preferredSize: Size.fromHeight(appBarHeight),
           child: ClipRRect(
@@ -165,6 +166,7 @@ class _NewPurchaseTab extends StatelessWidget {
             final isWide = constraints.maxWidth > 980;
 
             final catalogPanel = Card(
+              color: AppColors.lightGray,
               child: Padding(
                 padding: const EdgeInsets.all(16),
                 child: Column(
@@ -187,9 +189,18 @@ class _NewPurchaseTab extends StatelessWidget {
                         Expanded(
                           child: DropdownButtonFormField<int>(
                             value: controller.selectedStoreId,
-                            decoration: const InputDecoration(
+                            decoration: InputDecoration(
                               labelText: 'Local destino',
-                              border: OutlineInputBorder(),
+                              filled: true,
+                              fillColor: Colors.white,
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(25),
+                                borderSide: BorderSide.none,
+                              ),
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 20,
+                                vertical: 15,
+                              ),
                             ),
                             items: controller.stores
                                 .map(
@@ -206,9 +217,18 @@ class _NewPurchaseTab extends StatelessWidget {
                         Expanded(
                           child: TextField(
                             controller: supplierController,
-                            decoration: const InputDecoration(
+                            decoration: InputDecoration(
                               labelText: 'Proveedor opcional',
-                              border: OutlineInputBorder(),
+                              filled: true,
+                              fillColor: Colors.white,
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(25),
+                                borderSide: BorderSide.none,
+                              ),
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 20,
+                                vertical: 15,
+                              ),
                             ),
                           ),
                         ),
@@ -220,9 +240,18 @@ class _NewPurchaseTab extends StatelessWidget {
                         Expanded(
                           child: TextField(
                             controller: supplierPhoneController,
-                            decoration: const InputDecoration(
+                            decoration: InputDecoration(
                               labelText: 'Teléfono proveedor',
-                              border: OutlineInputBorder(),
+                              filled: true,
+                              fillColor: Colors.white,
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(25),
+                                borderSide: BorderSide.none,
+                              ),
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 20,
+                                vertical: 15,
+                              ),
                             ),
                           ),
                         ),
@@ -230,10 +259,19 @@ class _NewPurchaseTab extends StatelessWidget {
                         Expanded(
                           child: TextField(
                             controller: searchController,
-                            decoration: const InputDecoration(
+                            decoration: InputDecoration(
                               labelText: 'Buscar producto',
                               prefixIcon: Icon(Icons.search),
-                              border: OutlineInputBorder(),
+                              filled: true,
+                              fillColor: Colors.white,
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(25),
+                                borderSide: BorderSide.none,
+                              ),
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 20,
+                                vertical: 15,
+                              ),
                             ),
                             onChanged: controller.updateSearch,
                           ),
@@ -303,6 +341,7 @@ class _NewPurchaseTab extends StatelessWidget {
             );
 
             final summaryPanel = Card(
+              color: AppColors.lightGray,
               child: Padding(
                 padding: const EdgeInsets.all(16),
                 child: Column(
@@ -389,6 +428,10 @@ class _NewPurchaseTab extends StatelessWidget {
                       width: double.infinity,
                       child: FilledButton.icon(
                         onPressed: controller.cart.isEmpty ? null : onSave,
+                        style: FilledButton.styleFrom(
+                          backgroundColor: Colors.black,
+                          foregroundColor: Colors.white,
+                        ),
                         icon: const Icon(Icons.save_outlined),
                         label: const Padding(
                           padding: EdgeInsets.symmetric(vertical: 12),

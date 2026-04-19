@@ -602,6 +602,7 @@ class _CatalogPanel extends StatelessWidget {
     return Consumer<PosController>(
       builder: (context, controller, _) {
         return Card(
+          color: AppColors.whiteOverlay,
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Column(

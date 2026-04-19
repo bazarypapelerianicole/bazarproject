@@ -95,4 +95,50 @@ class ProductManagementController extends ChangeNotifier {
     );
     await loadCatalog();
   }
+
+  Future<void> updateProductWithStock({
+    required int productId,
+    required String name,
+    required String category,
+    required double price,
+    double costPrice = 0,
+    double ivaRate = 0,
+    double profitIva = 0,
+    String? sku,
+    String? auxCode,
+    String? description,
+    String? tags,
+    int? storeId,
+    List<String>? images,
+    Map<int, int> stockByStore = const {},
+  }) async {
+    await DatabaseService.updateProduct(
+      productId: productId,
+      name: name,
+      categoryName: category,
+      sku: sku ?? '',
+      price: price,
+      costPrice: costPrice,
+      ivaRate: ivaRate,
+      profitIva: profitIva,
+      auxCode: auxCode,
+      description: description,
+      tags: tags,
+      storeId: storeId,
+      images: images,
+    );
+    for (final entry in stockByStore.entries) {
+      await DatabaseService.updateInventoryStock(
+        productId: productId,
+        storeId: entry.key,
+        stock: entry.value,
+      );
+    }
+    await loadCatalog();
+  }
+
+  Future<void> deleteProduct(int productId) async {
+    await DatabaseService.deleteProduct(productId);
+    await loadCatalog();
+  }
 }

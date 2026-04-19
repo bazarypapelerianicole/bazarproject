@@ -42,6 +42,7 @@ class _CashViewState extends State<CashView>
   Widget build(BuildContext context) {
     final appBarHeight = ResponsiveHelper.getAppBarHeight(context);
     return Scaffold(
+      backgroundColor: AppColors.lightGray,
       appBar: PreferredSize(
         preferredSize: Size.fromHeight(appBarHeight + kTextTabBarHeight),
         child: ClipRRect(
@@ -126,7 +127,19 @@ class _CajaTab extends StatelessWidget {
             children: [
               DropdownButtonFormField<int>(
                 value: controller.selectedStoreId,
-                decoration: const InputDecoration(labelText: 'Local'),
+                decoration: InputDecoration(
+                  labelText: 'Local',
+                  filled: true,
+                  fillColor: AppColors.whiteOverlay,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    vertical: 0,
+                    horizontal: 12,
+                  ),
+                ),
                 items: controller.stores
                     .map(
                       (s) => DropdownMenuItem<int>(
@@ -141,6 +154,8 @@ class _CajaTab extends StatelessWidget {
               ),
               const SizedBox(height: 16),
               Card(
+                color: AppColors.whiteOverlay,
+                elevation: 4,
                 child: Padding(
                   padding: const EdgeInsets.all(16),
                   child: Column(
@@ -208,6 +223,8 @@ class _CajaTab extends StatelessWidget {
               const SizedBox(height: 16),
               if (controller.hasOpenSession)
                 Card(
+                  color: AppColors.whiteOverlay,
+                  elevation: 4,
                   child: Padding(
                     padding: const EdgeInsets.all(16),
                     child: Column(
@@ -270,6 +287,8 @@ class _CajaTab extends StatelessWidget {
               const SizedBox(height: 8),
               if (controller.movements.isEmpty)
                 const Card(
+                  elevation: 4,
+                  color: AppColors.whiteOverlay,
                   child: Padding(
                     padding: EdgeInsets.all(16),
                     child: Text('No hay movimientos registrados'),
@@ -278,6 +297,8 @@ class _CajaTab extends StatelessWidget {
               else
                 ...controller.movements.reversed.map(
                   (m) => Card(
+                    elevation: 4,
+                    color: AppColors.whiteOverlay,
                     child: ListTile(
                       leading: Icon(
                         m['type'] == 'income'
@@ -367,8 +388,21 @@ class _HistorialTab extends StatelessWidget {
             children: [
               // ── Selector de local ──────────────────────────────────────
               DropdownButtonFormField<int>(
+                elevation: 4,
                 value: controller.selectedStoreId,
-                decoration: const InputDecoration(labelText: 'Local'),
+                decoration: InputDecoration(
+                  labelText: 'Local',
+                  filled: true,
+                  fillColor: AppColors.whiteOverlay,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    vertical: 0,
+                    horizontal: 12,
+                  ),
+                ),
                 items: controller.stores
                     .map(
                       (s) => DropdownMenuItem<int>(
@@ -408,8 +442,21 @@ class _HistorialTab extends StatelessWidget {
               if (groupBy != 'year' &&
                   controller.historyAvailableYears.isNotEmpty) ...[
                 DropdownButtonFormField<String>(
+                  elevation: 4,
                   value: controller.historyYear,
-                  decoration: const InputDecoration(labelText: 'Año'),
+                  decoration: InputDecoration(
+                    labelText: 'Año',
+                    filled: true,
+                    fillColor: AppColors.whiteOverlay,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide.none,
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                      vertical: 0,
+                      horizontal: 12,
+                    ),
+                  ),
                   items: [
                     const DropdownMenuItem(value: null, child: Text('Todos')),
                     ...controller.historyAvailableYears.map(
@@ -446,6 +493,8 @@ class _HistorialTab extends StatelessWidget {
               // ── Lista de sesiones ──────────────────────────────────────
               if (controller.historySessions.isEmpty)
                 const Card(
+                  elevation: 4,
+                  color: AppColors.whiteOverlay,
                   child: Padding(
                     padding: EdgeInsets.all(16),
                     child: Text('No hay cajas en este período'),
@@ -627,8 +676,18 @@ class _MonthPicker extends StatelessWidget {
         : null;
 
     return DropdownButtonFormField<String>(
+      elevation: 4,
       value: currentValue,
-      decoration: const InputDecoration(labelText: 'Mes'),
+      decoration: InputDecoration(
+        labelText: 'Mes',
+        filled: true,
+        fillColor: AppColors.whiteOverlay,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide.none,
+        ),
+        contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 12),
+      ),
       items: [
         const DropdownMenuItem(value: null, child: Text('Todos')),
         ...items,
@@ -678,7 +737,17 @@ class _WeekPicker extends StatelessWidget {
 
     return DropdownButtonFormField<String>(
       value: (selected != null && weeks.contains(selected)) ? selected : null,
-      decoration: const InputDecoration(labelText: 'Semana'),
+      decoration: InputDecoration(
+        suffixStyle: const TextStyle(fontSize: 12, color: Colors.grey),
+        labelText: 'Semana',
+        filled: true,
+        fillColor: AppColors.whiteOverlay,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide.none,
+        ),
+        contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 12),
+      ),
       items: [
         const DropdownMenuItem(value: null, child: Text('Todas')),
         ...weeks.map((w) {

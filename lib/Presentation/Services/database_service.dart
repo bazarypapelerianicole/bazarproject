@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:math';
 
@@ -19,6 +20,7 @@ String generateFirebaseId() {
 /// Mantiene un único sistema con múltiples locales compartiendo la misma base.
 class DatabaseService {
   static Database? _database;
+  static Completer<Database>? _dbCompleter;
 
   static const List<String> _storeNames = ['Bazar', 'Tienda'];
 
@@ -206,7 +208,16 @@ class DatabaseService {
 
   static Future<Database> get database async {
     if (_database != null) return _database!;
-    _database = await _initDatabase();
+    if (_dbCompleter != null) return _dbCompleter!.future;
+    _dbCompleter = Completer<Database>();
+    try {
+      _database = await _initDatabase();
+      _dbCompleter!.complete(_database!);
+    } catch (e) {
+      _dbCompleter!.completeError(e);
+      _dbCompleter = null;
+      rethrow;
+    }
     return _database!;
   }
 
@@ -242,7 +253,6 @@ class DatabaseService {
       onOpen: (db) async => _ensureBusinessSchema(db),
     );
 
-    await _ensureBusinessSchema(db);
     _performAutomaticBackupIfNeeded();
     return db;
   }
@@ -638,6 +648,11 @@ class DatabaseService {
       )
     ''');
 
+    // Migración: asignar uid a cualquier producto que aún no lo tenga
+    await db.rawUpdate(
+      "UPDATE products SET uid = (lower(hex(randomblob(10)))) WHERE uid IS NULL OR uid = ''",
+    );
+
     await _seedStores(db);
     await _seedCatalog(db);
   }
@@ -651,7 +666,16 @@ class DatabaseService {
       await db.rawInsert(
         '''INSERT OR IGNORE INTO users (uid, email, password, name, lastname, role, is_active, created_at)
            VALUES (?, ?, ?, ?, ?, ?, ?, ?)''',
-        [uid, 'admin@bazarnicole.com', 'admin123', 'Administrador', '', 'admin', 1, DateTime.now().toIso8601String()],
+        [
+          uid,
+          'admin@bazarnicole.com',
+          'admin123',
+          'Administrador',
+          '',
+          'admin',
+          1,
+          DateTime.now().toIso8601String(),
+        ],
       );
     }
   }
@@ -705,11 +729,23 @@ class DatabaseService {
         int productId;
         if (existing.isNotEmpty) {
           productId = (existing.first['id'] as num).toInt();
+          // Asignar uid si el producto semilla aún no lo tiene
+          final uidCheck = await db.rawQuery(
+            'SELECT uid FROM products WHERE id = ? LIMIT 1',
+            [productId],
+          );
+          if (uidCheck.isNotEmpty && uidCheck.first['uid'] == null) {
+            await db.rawUpdate(
+              'UPDATE products SET uid = ? WHERE id = ?',
+              [generateFirebaseId(), productId],
+            );
+          }
         } else {
           final uniqueSku = await _uniqueSku(db, _buildSku(productName));
           productId = await db.rawInsert(
-            'INSERT INTO products (name, sku, category_id, created_at) VALUES (?, ?, ?, ?)',
+            'INSERT INTO products (uid, name, sku, category_id, created_at) VALUES (?, ?, ?, ?, ?)',
             [
+              generateFirebaseId(),
               productName,
               uniqueSku,
               categoryId,
@@ -880,7 +916,7 @@ class DatabaseService {
       GROUP BY p.id, p.name, p.sku, p.price, c.name
       ORDER BY p.name COLLATE NOCASE
       ''',
-      [filter, filter, filter, filter, filter],
+      [filter, filter, filter, filter],
     );
   }
 
@@ -1155,7 +1191,9 @@ class DatabaseService {
       }
 
       final categoryId = await _ensureCategory(txn, categoryName);
-      final imagesJson = images == null ? null : (images.isEmpty ? null : images.join(','));
+      final imagesJson = images == null
+          ? null
+          : (images.isEmpty ? null : images.join(','));
       await txn.rawUpdate(
         'UPDATE products SET name = ?, sku = ?, aux_code = ?, description = ?, tags = ?, category_id = ?, store_id = ?, price = ?, cost_price = ?, iva_rate = ?, profit_iva = ?, images = ? WHERE id = ?',
         [
@@ -1174,6 +1212,15 @@ class DatabaseService {
           productId,
         ],
       );
+    });
+  }
+
+  static Future<void> deleteProduct(int productId) async {
+    await transaction((txn) async {
+      await txn.rawDelete('DELETE FROM inventory WHERE product_id = ?', [
+        productId,
+      ]);
+      await txn.rawDelete('DELETE FROM products WHERE id = ?', [productId]);
     });
   }
 
@@ -1592,7 +1639,13 @@ class DatabaseService {
       final sessionId = await txn.rawInsert(
         '''INSERT INTO cash_sessions (store_id, opening_amount, opened_at, status, opened_by, opened_by_name)
            VALUES (?, ?, ?, 'open', ?, ?)''',
-        [storeId, openingAmount, DateTime.now().toIso8601String(), openedBy, openedByName],
+        [
+          storeId,
+          openingAmount,
+          DateTime.now().toIso8601String(),
+          openedBy,
+          openedByName,
+        ],
       );
 
       // Registrar apertura como movimiento de ingreso
@@ -1738,7 +1791,8 @@ class DatabaseService {
   /// [moment]: 'open' al abrir, 'close' al cerrar.
   static Future<void> saveCashDenominations({
     required int sessionId,
-    required List<Map<String, dynamic>> entries, // toMap() de cada DenominationEntry
+    required List<Map<String, dynamic>>
+    entries, // toMap() de cada DenominationEntry
     required String moment,
   }) async {
     final db = await database;
@@ -1832,8 +1886,7 @@ class DatabaseService {
       args.add(yearFilter);
     }
 
-    return db.rawQuery(
-      '''
+    return db.rawQuery('''
       SELECT cs.id, cs.opening_amount, cs.closing_amount,
              cs.opened_at, cs.closed_at,
              COALESCE(cs.opened_by_name, '') AS opened_by_name,
@@ -1846,9 +1899,7 @@ class DatabaseService {
       WHERE $where
       GROUP BY cs.id
       ORDER BY cs.opened_at DESC
-      ''',
-      args,
-    );
+      ''', args);
   }
 
   /// Devuelve los años distintos en que hubo sesiones cerradas para un local.
@@ -2053,20 +2104,20 @@ class DatabaseService {
   }) async {
     try {
       final db = await database;
-      
+
       String whereClause = 'si.product_id IS NOT NULL AND s.store_id = ?';
       List<dynamic> whereArgs = [storeId];
-      
+
       if (dateFrom != null) {
         whereClause += ' AND s.date >= ?';
         whereArgs.add(dateFrom.toIso8601String());
       }
-      
+
       if (dateTo != null) {
         whereClause += ' AND s.date <= ?';
         whereArgs.add(dateTo.toIso8601String());
       }
-      
+
       final result = await db.rawQuery('''
         SELECT 
           si.product_id,
@@ -2076,14 +2127,14 @@ class DatabaseService {
         WHERE $whereClause
         GROUP BY si.product_id
       ''', whereArgs);
-      
+
       final Map<int, int> unitsSold = {};
       for (var row in result) {
         final productId = (row['product_id'] as num).toInt();
         final quantity = (row['totalSold'] as num).toInt();
         unitsSold[productId] = quantity;
       }
-      
+
       return unitsSold;
     } catch (e) {
       print('Error en getUnitsSoldByProduct: $e');
@@ -2100,21 +2151,22 @@ class DatabaseService {
   }) async {
     try {
       final db = await database;
-      
+
       String whereClause = 's.store_id = ?';
       List<dynamic> whereArgs = [storeId];
-      
+
       if (dateFrom != null) {
         whereClause += ' AND s.date >= ?';
         whereArgs.add(dateFrom.toIso8601String());
       }
-      
+
       if (dateTo != null) {
         whereClause += ' AND s.date <= ?';
         whereArgs.add(dateTo.toIso8601String());
       }
-      
-      final result = await db.rawQuery('''
+
+      final result = await db.rawQuery(
+        '''
         SELECT 
           p.id,
           p.name,
@@ -2129,8 +2181,10 @@ class DatabaseService {
         GROUP BY p.id
         ORDER BY totalSold DESC
         LIMIT ?
-      ''', [...whereArgs, topCount]);
-      
+      ''',
+        [...whereArgs, topCount],
+      );
+
       return result;
     } catch (e) {
       print('Error en getTopSellingProducts: $e');
@@ -2145,8 +2199,9 @@ class DatabaseService {
   }) async {
     try {
       final db = await database;
-      
-      final result = await db.rawQuery('''
+
+      final result = await db.rawQuery(
+        '''
         SELECT 
           p.id,
           p.name,
@@ -2176,8 +2231,10 @@ class DatabaseService {
         WHERE i.store_id = ?
         ORDER BY marginPercent DESC
         LIMIT ?
-      ''', [storeId, storeId, topCount]);
-      
+      ''',
+        [storeId, storeId, topCount],
+      );
+
       return result;
     } catch (e) {
       print('Error en getTopMarginProducts: $e');
@@ -2191,8 +2248,9 @@ class DatabaseService {
   }) async {
     try {
       final db = await database;
-      
-      final result = await db.rawQuery('''
+
+      final result = await db.rawQuery(
+        '''
         SELECT 
           COUNT(DISTINCT p.id) as totalProducts,
           SUM(i.stock) as totalUnits,
@@ -2207,8 +2265,10 @@ class DatabaseService {
         FROM products p
         LEFT JOIN inventory i ON p.id = i.product_id
         WHERE i.store_id = ?
-      ''', [storeId]);
-      
+      ''',
+        [storeId],
+      );
+
       if (result.isEmpty) {
         return {
           'totalProducts': 0,
@@ -2221,13 +2281,15 @@ class DatabaseService {
           'potentialROI': 0.0,
         };
       }
-      
+
       final row = result.first;
       final totalInvested = (row['totalInvested'] as num?)?.toDouble() ?? 0.0;
       final totalSellValue = (row['totalSellValue'] as num?)?.toDouble() ?? 0.0;
       final potentialGain = totalSellValue - totalInvested;
-      final potentialROI = totalInvested > 0 ? (potentialGain / totalInvested) * 100 : 0.0;
-      
+      final potentialROI = totalInvested > 0
+          ? (potentialGain / totalInvested) * 100
+          : 0.0;
+
       return {
         'totalProducts': (row['totalProducts'] as num?)?.toInt() ?? 0,
         'totalUnits': (row['totalUnits'] as num?)?.toInt() ?? 0,
@@ -2235,7 +2297,8 @@ class DatabaseService {
         'totalSellValue': totalSellValue,
         'potentialGain': potentialGain,
         'potentialROI': potentialROI,
-        'avgMarginPerUnit': (row['avgMarginPerUnit'] as num?)?.toDouble() ?? 0.0,
+        'avgMarginPerUnit':
+            (row['avgMarginPerUnit'] as num?)?.toDouble() ?? 0.0,
         'lowStockCount': (row['lowStockCount'] as num?)?.toInt() ?? 0,
       };
     } catch (e) {
@@ -2251,15 +2314,17 @@ class DatabaseService {
     try {
       final db = await database;
       final Map<String, double> trend = {};
-      
+
       // Inicializar con los últimos 7 días
       for (int i = 6; i >= 0; i--) {
         final date = DateTime.now().subtract(Duration(days: i));
-        final dateStr = '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+        final dateStr =
+            '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
         trend[dateStr] = 0.0;
       }
-      
-      final result = await db.rawQuery('''
+
+      final result = await db.rawQuery(
+        '''
         SELECT 
           DATE(s.date) as saleDate,
           SUM(s.total) as dayTotal
@@ -2268,8 +2333,10 @@ class DatabaseService {
           AND s.date >= datetime('now', '-7 days')
         GROUP BY DATE(s.date)
         ORDER BY s.date
-      ''', [storeId]);
-      
+      ''',
+        [storeId],
+      );
+
       // Actualizar trend con datos reales
       for (var row in result) {
         final dateStr = row['saleDate'] as String;
@@ -2278,7 +2345,7 @@ class DatabaseService {
           trend[dateStr] = dayTotal;
         }
       }
-      
+
       return trend;
     } catch (e) {
       print('Error en getSalesTrendLast7Days: $e');
@@ -2293,21 +2360,24 @@ class DatabaseService {
   }) async {
     try {
       final db = await database;
-      
+
       final dateFrom = DateTime.now().subtract(Duration(days: daysToAnalyze));
-      
-      final result = await db.rawQuery('''
+
+      final result = await db.rawQuery(
+        '''
         SELECT SUM(si.quantity) as totalSold
         FROM sale_items si
         JOIN sales s ON si.sale_id = s.id
         WHERE s.store_id = ?
           AND s.date >= ?
-      ''', [storeId, dateFrom.toIso8601String()]);
-      
+      ''',
+        [storeId, dateFrom.toIso8601String()],
+      );
+
       if (result.isEmpty || result.first['totalSold'] == null) {
         return 0.0;
       }
-      
+
       final totalSold = (result.first['totalSold'] as num).toDouble();
       return totalSold / daysToAnalyze;
     } catch (e) {
@@ -2324,8 +2394,9 @@ class DatabaseService {
   }) async {
     try {
       final db = await database;
-      
-      final result = await db.rawQuery('''
+
+      final result = await db.rawQuery(
+        '''
         SELECT 
           p.id,
           p.name,
@@ -2346,8 +2417,10 @@ class DatabaseService {
                                   WHERE product_id = p.id 
                                   LIMIT 1), 0)) >= ?
         ORDER BY investmentValue DESC
-      ''', [storeId, maxStock, minInvestmentValue]);
-      
+      ''',
+        [storeId, maxStock, minInvestmentValue],
+      );
+
       return result;
     } catch (e) {
       print('Error en getCriticalInvestmentProducts: $e');
@@ -2365,48 +2438,45 @@ class DatabaseService {
       final now = DateTime.now();
       final from = dateFrom ?? DateTime(now.year, now.month, 1);
       final to = dateTo ?? now;
-      
+
       // Obtener todos los datos en paralelo
       final unitsSoldData = await getUnitsSoldByProduct(
         storeId: storeId,
         dateFrom: from,
         dateTo: to,
       );
-      
+
       final topSellers = await getTopSellingProducts(
         storeId: storeId,
         topCount: 10,
         dateFrom: from,
         dateTo: to,
       );
-      
+
       final topMargin = await getTopMarginProducts(
         storeId: storeId,
         topCount: 10,
       );
-      
+
       final investment = await getInventoryInvestmentSummary(storeId: storeId);
-      
+
       final trend = await getSalesTrendLast7Days(storeId: storeId);
-      
+
       final rotation = await getAverageInventoryRotation(
         storeId: storeId,
         daysToAnalyze: 30,
       );
-      
+
       final critical = await getCriticalInvestmentProducts(storeId: storeId);
-      
+
       // Calcular métricas adicionales
       final totalSales = topSellers.fold<double>(
         0,
         (sum, item) => sum + ((item['totalSold'] as num?)?.toDouble() ?? 0),
       );
-      
+
       return {
-        'period': {
-          'from': from.toIso8601String(),
-          'to': to.toIso8601String(),
-        },
+        'period': {'from': from.toIso8601String(), 'to': to.toIso8601String()},
         'investment': investment,
         'unitsSoldByProduct': unitsSoldData,
         'topSellers': topSellers,

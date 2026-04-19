@@ -24,6 +24,7 @@ class _ReportsViewState extends State<ReportsView> {
   Widget build(BuildContext context) {
     final appBarHeight = ResponsiveHelper.getAppBarHeight(context);
     return Scaffold(
+      backgroundColor:  AppColors.lightGray,
       appBar: PreferredSize(
         preferredSize: Size.fromHeight(appBarHeight),
         child: ClipRRect(
@@ -111,6 +112,7 @@ class _ReportsViewState extends State<ReportsView> {
                       ),
                       const SizedBox(height: 16),
                       Card(
+                        color: AppColors.whiteOverlay,
                         child: Padding(
                           padding: const EdgeInsets.all(16),
                           child: Column(
@@ -151,6 +153,7 @@ class _ReportsViewState extends State<ReportsView> {
                       ),
                       const SizedBox(height: 16),
                       Card(
+                        color: AppColors.whiteOverlay,
                         child: Padding(
                           padding: const EdgeInsets.all(16),
                           child: Column(
@@ -219,7 +222,7 @@ class _MetricCard extends StatelessWidget {
       width: 250,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.indigo.shade50,
+        color: AppColors.whiteOverlay,
         borderRadius: BorderRadius.circular(14),
       ),
       child: Column(

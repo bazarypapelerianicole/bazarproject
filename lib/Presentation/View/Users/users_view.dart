@@ -23,12 +23,14 @@ class _UsersViewState extends State<UsersView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.lightGray,
       appBar: AppBar(
+        backgroundColor: AppColors.primaryLogo,
+        foregroundColor: Colors.white,
         title: const Text(
           'Usuarios y Roles',
           style: TextStyle(color: AppColors.threeColor),
         ),
-        backgroundColor: AppColors.primaryLogo,
         iconTheme: const IconThemeData(color: AppColors.threeColor),
       ),
       body: Consumer<UsersController>(
@@ -80,6 +82,7 @@ class _UserCard extends StatelessWidget {
     final roleColor = _roleColor(user.role);
 
     return Card(
+      color: AppColors.whiteOverlay,
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: ListTile(
@@ -87,10 +90,7 @@ class _UserCard extends StatelessWidget {
           backgroundColor: roleColor.withOpacity(0.15),
           child: Text(
             user.name.isNotEmpty ? user.name[0].toUpperCase() : '?',
-            style: TextStyle(
-              color: roleColor,
-              fontWeight: FontWeight.bold,
-            ),
+            style: TextStyle(color: roleColor, fontWeight: FontWeight.bold),
           ),
         ),
         title: Row(
@@ -193,8 +193,9 @@ class _UserCard extends StatelessWidget {
   }
 
   void _showError(BuildContext context, String msg) {
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text(msg), backgroundColor: Colors.red));
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(msg), backgroundColor: Colors.red));
   }
 
   void _showPasswordDialog(BuildContext context, UserModel user) {
@@ -255,7 +256,9 @@ class _UserCard extends StatelessWidget {
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('¿Eliminar usuario?'),
-        content: Text('Se eliminará a ${user.fullName}. Esta acción no se puede deshacer.'),
+        content: Text(
+          'Se eliminará a ${user.fullName}. Esta acción no se puede deshacer.',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
@@ -271,7 +274,10 @@ class _UserCard extends StatelessWidget {
                 _showError(context, err);
               }
             },
-            child: const Text('Eliminar', style: TextStyle(color: Colors.white)),
+            child: const Text(
+              'Eliminar',
+              style: TextStyle(color: Colors.white),
+            ),
           ),
         ],
       ),
@@ -343,9 +349,8 @@ class _UserFormDialogState extends State<_UserFormDialog> {
                   border: OutlineInputBorder(),
                   prefixIcon: Icon(Icons.person_outline),
                 ),
-                validator: (v) => (v == null || v.trim().isEmpty)
-                    ? 'Campo requerido'
-                    : null,
+                validator: (v) =>
+                    (v == null || v.trim().isEmpty) ? 'Campo requerido' : null,
               ),
               const SizedBox(height: 12),
               // Apellido
@@ -367,7 +372,9 @@ class _UserFormDialogState extends State<_UserFormDialog> {
                   labelText: 'Correo *',
                   border: const OutlineInputBorder(),
                   prefixIcon: const Icon(Icons.email_outlined),
-                  helperText: _isEditing ? 'El correo no se puede cambiar' : null,
+                  helperText: _isEditing
+                      ? 'El correo no se puede cambiar'
+                      : null,
                 ),
                 validator: (v) {
                   if (v == null || v.trim().isEmpty) return 'Campo requerido';
@@ -402,13 +409,15 @@ class _UserFormDialogState extends State<_UserFormDialog> {
                   prefixIcon: Icon(Icons.badge_outlined),
                 ),
                 items: UserRoles.all
-                    .map((r) => DropdownMenuItem(
-                          value: r,
-                          child: Text(
-                            '${UserRoles.label(r)} — ${UserRoles.description(r)}',
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ))
+                    .map(
+                      (r) => DropdownMenuItem(
+                        value: r,
+                        child: Text(
+                          '${UserRoles.label(r)} — ${UserRoles.description(r)}',
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    )
                     .toList(),
                 onChanged: (v) => setState(() => _selectedRole = v!),
               ),
@@ -431,7 +440,10 @@ class _UserFormDialogState extends State<_UserFormDialog> {
               ? const SizedBox(
                   width: 18,
                   height: 18,
-                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white,
+                  ),
                 )
               : Text(_isEditing ? 'Guardar' : 'Crear'),
         ),
@@ -466,9 +478,9 @@ class _UserFormDialogState extends State<_UserFormDialog> {
     setState(() => _saving = false);
 
     if (err != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(err), backgroundColor: Colors.red),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(err), backgroundColor: Colors.red));
     } else {
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(

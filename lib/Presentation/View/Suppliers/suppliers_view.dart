@@ -32,6 +32,7 @@ class _SuppliersViewState extends State<SuppliersView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.lightGray,
       appBar: AppBar(
         title: const Text('Proveedores', style: TextStyle(color: AppColors.threeColor)),
         backgroundColor: AppColors.primaryLogo,
