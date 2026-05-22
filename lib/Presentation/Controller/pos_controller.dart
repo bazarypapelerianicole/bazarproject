@@ -9,6 +9,10 @@ class PosController extends ChangeNotifier {
   int? historyCustomerId;
   String search = '';
   DateTime? historyDate;
+  int? historyYear;
+  int? historyMonth;
+  int? historyDay;
+  int totalSalesCount = 0;
 
   List<Map<String, dynamic>> stores = [];
   List<Map<String, dynamic>> customers = [];
@@ -76,8 +80,50 @@ class PosController extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> updateCustomer({
+    required int id,
+    required String name,
+    String? phone,
+    String? email,
+    String? notes,
+    String? cedula,
+    String? identificationType,
+    String? address,
+  }) async {
+    await DatabaseService.updateCustomer(
+      id: id,
+      name: name,
+      phone: phone,
+      email: email,
+      notes: notes,
+      cedula: cedula,
+      identificationType: identificationType,
+      address: address,
+    );
+    customers = await DatabaseService.getCustomers();
+    notifyListeners();
+  }
+
   Future<void> selectHistoryCustomer(int? customerId) async {
     historyCustomerId = customerId;
+    await loadSalesHistory();
+  }
+
+  Future<void> setHistoryYear(int? year) async {
+    historyYear = year;
+    historyMonth = null;
+    historyDay = null;
+    await loadSalesHistory();
+  }
+
+  Future<void> setHistoryMonth(int? month) async {
+    historyMonth = month;
+    historyDay = null;
+    await loadSalesHistory();
+  }
+
+  Future<void> setHistoryDay(int? day) async {
+    historyDay = day;
     await loadSalesHistory();
   }
 
@@ -89,6 +135,9 @@ class PosController extends ChangeNotifier {
   Future<void> clearHistoryFilters() async {
     historyCustomerId = null;
     historyDate = null;
+    historyYear = null;
+    historyMonth = null;
+    historyDay = null;
     await loadSalesHistory();
   }
 
@@ -97,13 +146,21 @@ class PosController extends ChangeNotifier {
       salesHistory = await DatabaseService.getSalesHistory(
         storeId: selectedStoreId,
         customerId: historyCustomerId,
-        date: historyDate,
+        year: historyYear,
+        month: historyMonth,
+        day: historyDay,
+      );
+      totalSalesCount = await DatabaseService.getSalesHistoryCount(
+        storeId: selectedStoreId,
+        customerId: historyCustomerId,
+        year: historyYear,
+        month: historyMonth,
+        day: historyDay,
       );
       errorMessage = null;
     } catch (e) {
       errorMessage = 'No se pudo cargar el historial de ventas: $e';
     }
-
     notifyListeners();
   }
 

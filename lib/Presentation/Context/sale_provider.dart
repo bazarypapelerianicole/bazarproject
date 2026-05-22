@@ -26,9 +26,11 @@ class SaleProvider extends ChangeNotifier {
 
     try {
       final rawSales = await DatabaseService.getSalesHistory(
-        date: fromDate,
+        year: fromDate?.year,
+        month: fromDate?.month,
+        day: fromDate?.day,
       );
-      
+
       sales = rawSales.map((s) {
         return Sale(
           id: (s['id'] as num).toInt(),
@@ -49,8 +51,10 @@ class SaleProvider extends ChangeNotifier {
 
       if (fromDate != null && toDate != null) {
         sales = sales
-            .where((s) =>
-                s.saleDate.isAfter(fromDate) && s.saleDate.isBefore(toDate))
+            .where(
+              (s) =>
+                  s.saleDate.isAfter(fromDate) && s.saleDate.isBefore(toDate),
+            )
             .toList();
       }
 
@@ -64,10 +68,16 @@ class SaleProvider extends ChangeNotifier {
   }
 
   /// Añade un producto al carrito
-  void addToCart(int productId, String productName, int quantity,
-      double unitPrice, {double discount = 0.0}) {
-    final existingIndex =
-        cartItems.indexWhere((item) => item.productId == productId);
+  void addToCart(
+    int productId,
+    String productName,
+    int quantity,
+    double unitPrice, {
+    double discount = 0.0,
+  }) {
+    final existingIndex = cartItems.indexWhere(
+      (item) => item.productId == productId,
+    );
 
     if (existingIndex >= 0) {
       // Producto ya existe, aumentar cantidad
@@ -78,19 +88,22 @@ class SaleProvider extends ChangeNotifier {
         quantity: existingItem.quantity + quantity,
         unitPrice: existingItem.unitPrice,
         discount: discount,
-        totalPrice: (existingItem.unitPrice * (existingItem.quantity + quantity)) -
+        totalPrice:
+            (existingItem.unitPrice * (existingItem.quantity + quantity)) -
             (discount * (existingItem.quantity + quantity)),
       );
     } else {
       // Nuevo producto
-      cartItems.add(SaleItem(
-        productId: productId,
-        productName: productName,
-        quantity: quantity,
-        unitPrice: unitPrice,
-        discount: discount,
-        totalPrice: (unitPrice * quantity) - (discount * quantity),
-      ));
+      cartItems.add(
+        SaleItem(
+          productId: productId,
+          productName: productName,
+          quantity: quantity,
+          unitPrice: unitPrice,
+          discount: discount,
+          totalPrice: (unitPrice * quantity) - (discount * quantity),
+        ),
+      );
     }
 
     notifyListeners();
@@ -116,7 +129,8 @@ class SaleProvider extends ChangeNotifier {
           quantity: newQuantity,
           unitPrice: item.unitPrice,
           discount: item.discount,
-          totalPrice: (item.unitPrice * newQuantity) - (item.discount * newQuantity),
+          totalPrice:
+              (item.unitPrice * newQuantity) - (item.discount * newQuantity),
         );
         notifyListeners();
       }
@@ -176,7 +190,7 @@ class SaleProvider extends ChangeNotifier {
 
       // TODO: Implementar createSale en DatabaseService
       // await DatabaseService.createSale(sale.toMap());
-      
+
       clearCart();
       await loadSales();
 
@@ -198,20 +212,25 @@ class SaleProvider extends ChangeNotifier {
       cartItems.fold<int>(0, (sum, item) => sum + item.quantity);
 
   /// Calcula el subtotal
-  double get cartSubtotal =>
-      cartItems.fold<double>(0, (sum, item) => sum + (item.unitPrice * item.quantity));
+  double get cartSubtotal => cartItems.fold<double>(
+    0,
+    (sum, item) => sum + (item.unitPrice * item.quantity),
+  );
 
   /// Total de ventas
-  double get totalSales => sales.fold<double>(0, (sum, sale) => sum + sale.total);
+  double get totalSales =>
+      sales.fold<double>(0, (sum, sale) => sum + sale.total);
 
   /// Ventas del día
   List<Sale> get todaySales {
     final now = DateTime.now();
     return sales
-        .where((s) =>
-            s.saleDate.year == now.year &&
-            s.saleDate.month == now.month &&
-            s.saleDate.day == now.day)
+        .where(
+          (s) =>
+              s.saleDate.year == now.year &&
+              s.saleDate.month == now.month &&
+              s.saleDate.day == now.day,
+        )
         .toList();
   }
 

@@ -229,7 +229,14 @@ class MyApp extends StatelessWidget {
           useMaterial3: true,
         ),
         initialRoute: initialRoute,
-        routes: AppRoutes.routes,
+        onGenerateRoute: (settings) {
+          final builder = AppRoutes.routes[settings.name];
+          if (builder == null) return null;
+          return MaterialPageRoute(
+            settings: settings,
+            builder: (ctx) => SelectionArea(child: builder(ctx)),
+          );
+        },
         debugShowCheckedModeBanner: false,
         navigatorKey: navigatorKey,
       ),

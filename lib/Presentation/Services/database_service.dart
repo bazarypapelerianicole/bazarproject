@@ -24,186 +24,297 @@ class DatabaseService {
 
   static const List<String> _storeNames = ['Bazar', 'Tienda'];
 
-  static const Map<String, List<String>> _catalogByStore = {
-    'Bazar': [
-      'Peluches',
-      'Carteras',
-      'Juguetes',
-      'Portarretratos',
-      'Accesorios de cocina',
-      'Lámparas dormitorio',
-      'Fundas de regalo',
-      'Pelotas de fútbol',
-      'Pelotas de indor',
-      'Zapatos deportivos',
-      'Zapatillas',
-      'Mochilas',
-      'Loncheras',
-      'Plateros y accesorios para platos',
-      'Accesorios para fiestas y cumpleaños',
-      'Lazos',
-      'Vinchas',
-      'Joyería',
-      'Perfumes',
-      'Esmaltes y labiales',
-      'Accesorios navideños',
-      'Audífonos',
-      'Auricular Bluetooth',
-      'Billeteras para hombre y mujer',
-      'Velas aromáticas',
-      'Cajas para obsequios',
-      'Espejos',
-    ],
-    'Tienda': [
-      'Cuadernos',
-      'Hojas A4',
-      'Papel crepé',
-      'Fomix',
-      'Hojas papel bond',
-      'Cartón prensado',
-      'Espuma flex',
-      'Agendas',
-      'Diccionario',
-      'Pinturas',
-      'Lápices de colores',
-      'Resaltadores',
-      'Acuarelas',
-      'Sacapuntas',
-      'Corrector',
-      'Goma',
-      'Silicona',
-      'Lápiz',
-      'Esferos',
-      'Marcador doble punta',
-      'Lapicero borrable',
-      'Esferos azul',
-      'Borrador',
-      'Marcador permanente y borrable',
-      'Lana',
-      'Hilo ratón',
-      'Cintas',
-      'Adornos tipo lentejuelas',
-      'Reglas',
-      'Tijera',
-      'Pilas',
-      'Adornos en fomix recortados',
-      'Pintura acrílica Artesco',
-      'Slime',
-      'Paletas de colores',
-      'Calculadora',
-      'Estilete',
-      'Prestobarba',
-      'Brujita',
-      'Peinillas',
-      'Descorchador vinos',
-      'Cepillo de dientes',
-      'Uñas postizas',
-      'Rizador',
-      'Pestañas postizas',
-      'Pegamento de uñas y cejas',
-      'Moños',
-      'Ampollas para el pelo',
-      'Llaveros',
-      'Invisibles',
-      'Fosforeras',
-      'Corta uñas',
-      'Limas',
-      'Pinza para cejas',
-      'Brochas para maquillaje',
-      'Tiras de sostén',
-      'Cherry para zapatos saca brillo',
-      'Desodorantes en aerosol',
-      'Fijación e hidratación para pelo',
-      'Teta para recién nacido',
-      'Banderola para sacar brillo zapatos',
-      'Talco de pies',
-      'Limpiador facial',
-      'Tinte de cabello',
-      'Crema oxigenada',
-      'Gel',
-      'Esponja para sacar brillo zapatos',
-      'Desinfectante ambiental',
-      'Casino',
-      'Alcancías',
-      'Aceite limpiador de madera',
-      'Desodorante en barra',
-      'Desodorante en crema',
-      'Aceite Johnson',
-      'Repelente',
-      'Listerine',
-      'Protector solar',
-      'Crema hidratante corporal',
-      'Cirio vela',
-      'Difusor de esencia',
-      'Fósforos',
-      'Jaboncillo',
-      'Jabón',
-      'Pasta dental niño y adulto',
-      'Suavizante para ropa',
-      'Gillette',
-      'Pañitos húmedos',
-      'Shampoo',
-      'Papel aluminio',
-      'Toallas higiénicas',
-      'Esencias para carro',
-      'Silicón en spray para cabello',
-      'Leche',
-      'Cinta transparente y de todo tipo',
-      'Detergente',
-      'Guantes',
-      'Cloro',
-      'Ambiental tips',
-      'Enlatados',
-      'Sardina',
-      'Atún real',
-      'Tallarines',
-      'Fideos',
-      'Panela',
-      'Lavavajilla',
-      'Focos',
-      'Pañales',
-      'Café',
-      'Harina',
-      'Azúcar',
-      'Sal',
-      'Avena',
-      'Aceite',
-      'Manteca',
-      'Perforadora',
-      'Tape dispenser',
-      'Grapadora',
-      'Insecticidas',
-      'Aliños de todo tipo',
-      'Condimentos',
-      'Esencias',
-      'Salsas',
-      'Cocos',
-      'Mantequilla',
-      'Productos lácteos',
-      'Jugos o néctares',
-      'Café en polvo',
-      'Leche condensada',
-      'Enlatados tipo verduras',
-      'Frutas',
-      'Frutos secos',
-      'Leches saborizadas',
-      'Cremas de peinar',
-      'Papel higiénico',
-      'Galletas Amor',
-      'Bombones',
-      'Gelatina',
-      'Horchata en sobre',
-      'Tés en cartón por sobres',
-      'Frescosolo',
-      'Polvo de hornear',
-      'Mezcla de polvo chantilly',
-      'Platos desechables',
-      'Servilletas',
-      'Velas',
-      'Carpetas',
-      'Fundas',
-      'Esponjas',
-    ],
+  // =========================================================
+  // CATÁLOGO ORGANIZADO — BazarNicole ERP/POS v2
+  // Estructura: Store → Categoría → Productos
+  //
+  // Iconos sugeridos por categoría (Flutter Icons):
+  //   Juguetería            → Icons.toys
+  //   Moda y Accesorios     → Icons.checkroom
+  //   Belleza               → Icons.face_retouching_natural
+  //   Hogar y Decoración    → Icons.home
+  //   Fiestas y Regalos     → Icons.celebration
+  //   Tecnología            → Icons.headphones
+  //   Temporada             → Icons.ac_unit
+  //   Papelería y Oficina   → Icons.edit_note
+  //   Manualidades y Arte   → Icons.palette
+  //   Belleza y Cosméticos  → Icons.spa
+  //   Higiene Personal      → Icons.soap
+  //   Limpieza y Hogar      → Icons.cleaning_services
+  //   Bebés                 → Icons.child_care
+  //   Zapatería             → Icons.shopping_bag
+  //   Ferretería            → Icons.hardware
+  //   Alimentos y Abarrotes → Icons.shopping_cart
+  //   Desechables y Eventos → Icons.dinner_dining
+  //
+  // Colores sugeridos (Material Design 3):
+  //   Bazar   → Color(0xFF6C3EB8)  // Violeta profundo
+  //   Tienda  → Color(0xFF1976D2)  // Azul corporativo
+  //
+  // Subcategorías futuras sugeridas:
+  //   Bazar   → Decoración de interiores, Ropa deportiva, Electrónica menor
+  //   Tienda  → Farmacia básica, Snacks importados, Artículos escolares premium
+  //
+  // Big Data / Reportes:
+  //   - Usar categoría + tienda como dimensiones en dashboards
+  //   - KPIs por categoría: margen, rotación, stock mínimo, ventas mensuales
+  //   - Recomendaciones futuras con IA: productos de alta demanda por categoría
+  // =========================================================
+
+  /// Catálogo maestro estructurado en tres niveles:
+  /// [Store] → [Categoría] → [Productos]
+  ///
+  /// Optimizado para:
+  ///   • GridView / ExpansionTile / NavigationRail / Sidebar
+  ///   • Filtrado rápido por categoría y tienda
+  ///   • Reportes y análisis Big Data
+  ///   • Escalabilidad y mantenimiento profesional
+  static const Map<String, Map<String, List<String>>> _catalogByStore = {
+    // =========================================================
+    // BAZAR
+    // =========================================================
+    'Bazar': {
+      // Icono: Icons.toys | Color: 0xFFE91E63
+      'Juguetería': [
+        'Peluches',
+        'Juguetes',
+        'Pelotas de fútbol',
+        'Pelotas de indor',
+      ],
+
+      // Icono: Icons.checkroom | Color: 0xFF9C27B0
+      'Moda y Accesorios': [
+        'Carteras',
+        'Zapatos deportivos',
+        'Zapatillas',
+        'Mochilas',
+        'Loncheras',
+        'Lazos',
+        'Vinchas',
+        'Joyería',
+        'Billeteras',
+      ],
+
+      // Icono: Icons.face_retouching_natural | Color: 0xFFE91E63
+      'Belleza y Perfumería': ['Perfumes', 'Esmaltes', 'Labiales'],
+
+      // Icono: Icons.home | Color: 0xFF795548
+      'Hogar y Decoración': [
+        'Portarretratos',
+        'Accesorios de cocina',
+        'Lámparas de dormitorio',
+        'Plateros y accesorios para platos',
+        'Velas aromáticas',
+        'Espejos',
+      ],
+
+      // Icono: Icons.celebration | Color: 0xFFFF9800
+      'Fiestas y Regalos': [
+        'Fundas de regalo',
+        'Accesorios para fiestas y cumpleaños',
+        'Cajas para obsequios',
+      ],
+
+      // Icono: Icons.headphones | Color: 0xFF00BCD4
+      'Tecnología y Electrónicos': ['Audífonos', 'Auriculares Bluetooth'],
+
+      // Icono: Icons.ac_unit | Color: 0xFF2196F3
+      'Temporada y Navidad': ['Accesorios navideños'],
+    },
+
+    // =========================================================
+    // TIENDA
+    // =========================================================
+    'Tienda': {
+      // Icono: Icons.edit_note | Color: 0xFF1565C0
+      'Papelería y Oficina': [
+        'Cuadernos',
+        'Hojas A4',
+        'Hojas papel bond',
+        'Agendas',
+        'Diccionario',
+        'Lápiz',
+        'Esferos',
+        'Lapicero borrable',
+        'Marcador doble punta',
+        'Marcador permanente',
+        'Marcador borrable',
+        'Resaltadores',
+        'Corrector',
+        'Borrador',
+        'Sacapuntas',
+        'Reglas',
+        'Tijera',
+        'Calculadora',
+        'Perforadora',
+        'Tape dispenser',
+        'Grapadora',
+        'Carpetas',
+        'Fundas plásticas',
+        'Cinta transparente',
+        'Cinta de empaque',
+      ],
+
+      // Icono: Icons.palette | Color: 0xFF7B1FA2
+      'Manualidades y Arte': [
+        'Papel crepé',
+        'Fomix',
+        'Cartón prensado',
+        'Espuma flex',
+        'Pinturas',
+        'Pintura acrílica Artesco',
+        'Acuarelas',
+        'Lápices de colores',
+        'Paletas de colores',
+        'Lana',
+        'Hilo ratón',
+        'Cintas decorativas',
+        'Adornos tipo lentejuelas',
+        'Adornos en fomix recortados',
+        'Silicona',
+        'Slime',
+        'Goma',
+      ],
+
+      // Icono: Icons.spa | Color: 0xFFAD1457
+      'Belleza y Cosméticos': [
+        'Uñas postizas',
+        'Pegamento de uñas',
+        'Pegamento de cejas',
+        'Pestañas postizas',
+        'Brochas para maquillaje',
+        'Ampollas para el pelo',
+        'Tinte de cabello',
+        'Crema oxigenada',
+        'Gel para cabello',
+        'Cremas de peinar',
+        'Silicón en spray para cabello',
+        'Fijación e hidratación para pelo',
+        'Rizador',
+        'Limas',
+        'Corta uñas',
+        'Pinza para cejas',
+        'Moños',
+        'Invisibles',
+      ],
+
+      // Icono: Icons.soap | Color: 0xFF00838F
+      'Higiene y Cuidado Personal': [
+        'Prestobarba',
+        'Gillette',
+        'Maquinilla desechable',
+        'Peinillas',
+        'Cepillo de dientes',
+        'Pasta dental niño',
+        'Pasta dental adulto',
+        'Desodorante en aerosol',
+        'Desodorante en barra',
+        'Desodorante en crema',
+        'Talco de pies',
+        'Limpiador facial',
+        'Listerine',
+        'Protector solar',
+        'Crema hidratante corporal',
+        'Jaboncillo',
+        'Jabón de baño',
+        'Pañitos húmedos',
+        'Shampoo',
+        'Repelente',
+        'Aceite Johnson',
+        'Tiras de sostén',
+      ],
+
+      // Icono: Icons.cleaning_services | Color: 0xFF2E7D32
+      'Limpieza y Hogar': [
+        'Desinfectante ambiental',
+        'Ambientador tips',
+        'Aceite limpiador de madera',
+        'Lavavajilla',
+        'Detergente',
+        'Cloro',
+        'Guantes de limpieza',
+        'Papel aluminio',
+        'Papel higiénico',
+        'Toallas higiénicas',
+        'Esponjas',
+        'Suavizante para ropa',
+        'Insecticidas',
+        'Focos',
+      ],
+
+      // Icono: Icons.child_care | Color: 0xFFF06292
+      'Bebés y Maternidad': ['Teta para recién nacido', 'Pañales'],
+
+      // Icono: Icons.shopping_bag | Color: 0xFF5D4037
+      'Zapatería y Calzado': [
+        'Cherry saca brillo para zapatos',
+        'Banderola saca brillo para zapatos',
+        'Esponja saca brillo para zapatos',
+      ],
+
+      // Icono: Icons.hardware | Color: 0xFF616161
+      'Ferretería y Utilitarios': [
+        'Pilas',
+        'Estilete',
+        'Fosforeras',
+        'Fósforos',
+        'Velas',
+        'Cirio vela',
+        'Difusor de esencia',
+        'Esencias para carro',
+        'Descorchador de vinos',
+        'Llaveros',
+        'Alcancías',
+        'Casino',
+      ],
+
+      // Icono: Icons.shopping_cart | Color: 0xFF388E3C
+      'Alimentos y Abarrotes': [
+        'Leche',
+        'Leche condensada',
+        'Leches saborizadas',
+        'Café',
+        'Café en polvo',
+        'Azúcar',
+        'Sal',
+        'Harina',
+        'Avena',
+        'Aceite',
+        'Manteca',
+        'Mantequilla',
+        'Panela',
+        'Tallarines',
+        'Fideos',
+        'Aliños',
+        'Condimentos',
+        'Esencias de cocina',
+        'Salsas',
+        'Cocos',
+        'Enlatados',
+        'Enlatados de verduras',
+        'Sardina',
+        'Atún real',
+        'Productos lácteos',
+        'Jugos y néctares',
+        'Frutas',
+        'Frutos secos',
+        'Bombones',
+        'Gelatina',
+        'Horchata en sobre',
+        'Tés en sobre',
+        'Frescosolo',
+        'Polvo de hornear',
+        'Mezcla chantilly en polvo',
+        'Galletas Amor',
+      ],
+
+      // Icono: Icons.dinner_dining | Color: 0xFFEF6C00
+      'Desechables y Eventos': [
+        'Platos desechables',
+        'Servilletas',
+        'Velas de cumpleaños',
+      ],
+    },
   };
 
   static Future<Database> get database async {
@@ -334,6 +445,17 @@ class DatabaseService {
         created_at TEXT NOT NULL
       )
     ''');
+
+    // ── Migración: columnas cedula, identification_type, address ──
+    for (final colDef in [
+      'cedula TEXT',
+      'identification_type TEXT DEFAULT "cedula"',
+      'address TEXT',
+    ]) {
+      try {
+        await db.execute('ALTER TABLE clients ADD COLUMN $colDef');
+      } catch (_) {} // columna ya existe
+    }
 
     await db.execute('''
       CREATE TABLE IF NOT EXISTS suppliers (
@@ -965,45 +1087,52 @@ class DatabaseService {
 
     if (storeIds.isEmpty) return;
 
-    for (final entry in _catalogByStore.entries) {
-      final categoryId = await _ensureCategory(db, entry.key);
+    // Iterar estructura: Store → Categoría → Productos
+    for (final storeEntry in _catalogByStore.entries) {
+      final storeName = storeEntry.key;
+      final storeId = storeIds[storeName];
+      if (storeId == null) continue; // tienda no existe en DB
 
-      for (final rawName in entry.value) {
-        final productName = _cleanName(rawName);
-        final existing = await db.rawQuery(
-          'SELECT id FROM products WHERE lower(name) = ?',
-          [productName.toLowerCase()],
-        );
+      for (final categoryEntry in storeEntry.value.entries) {
+        final categoryId = await _ensureCategory(db, categoryEntry.key);
 
-        int productId;
-        if (existing.isNotEmpty) {
-          productId = (existing.first['id'] as num).toInt();
-          // Asignar uid si el producto semilla aún no lo tiene
-          final uidCheck = await db.rawQuery(
-            'SELECT uid FROM products WHERE id = ? LIMIT 1',
-            [productId],
+        for (final rawName in categoryEntry.value) {
+          final productName = _cleanName(rawName);
+          final existing = await db.rawQuery(
+            'SELECT id FROM products WHERE lower(name) = ?',
+            [productName.toLowerCase()],
           );
-          if (uidCheck.isNotEmpty && uidCheck.first['uid'] == null) {
-            await db.rawUpdate('UPDATE products SET uid = ? WHERE id = ?', [
-              generateFirebaseId(),
-              productId,
-            ]);
+
+          int productId;
+          if (existing.isNotEmpty) {
+            productId = (existing.first['id'] as num).toInt();
+            // Asignar uid si el producto semilla aún no lo tiene
+            final uidCheck = await db.rawQuery(
+              'SELECT uid FROM products WHERE id = ? LIMIT 1',
+              [productId],
+            );
+            if (uidCheck.isNotEmpty && uidCheck.first['uid'] == null) {
+              await db.rawUpdate('UPDATE products SET uid = ? WHERE id = ?', [
+                generateFirebaseId(),
+                productId,
+              ]);
+            }
+          } else {
+            final uniqueSku = await _uniqueSku(db, _buildSku(productName));
+            productId = await db.rawInsert(
+              'INSERT INTO products (uid, name, sku, category_id, store_id, created_at) VALUES (?, ?, ?, ?, ?, ?)',
+              [
+                generateFirebaseId(),
+                productName,
+                uniqueSku,
+                categoryId,
+                storeId,
+                DateTime.now().toIso8601String(),
+              ],
+            );
           }
-        } else {
-          final uniqueSku = await _uniqueSku(db, _buildSku(productName));
-          productId = await db.rawInsert(
-            'INSERT INTO products (uid, name, sku, category_id, created_at) VALUES (?, ?, ?, ?, ?)',
-            [
-              generateFirebaseId(),
-              productName,
-              uniqueSku,
-              categoryId,
-              DateTime.now().toIso8601String(),
-            ],
-          );
-        }
 
-        for (final storeId in storeIds.values) {
+          // Registrar inventario para la tienda correspondiente
           await db.rawInsert(
             'INSERT OR IGNORE INTO inventory (product_id, store_id, stock) VALUES (?, ?, 0)',
             [productId, storeId],
@@ -1481,12 +1610,43 @@ class DatabaseService {
 
     return db.rawQuery(
       '''
-      SELECT id, name, phone, email, notes, created_at
+      SELECT id, name, phone, email, notes, created_at,
+             cedula, identification_type, address
       FROM clients
-      WHERE name LIKE ? OR COALESCE(phone, '') LIKE ? OR COALESCE(email, '') LIKE ?
+      WHERE name LIKE ? OR COALESCE(phone, '') LIKE ?
+         OR COALESCE(email, '') LIKE ? OR COALESCE(cedula, '') LIKE ?
       ORDER BY name COLLATE NOCASE
       ''',
-      [filter, filter, filter],
+      [filter, filter, filter, filter],
+    );
+  }
+
+  static Future<void> updateCustomer({
+    required int id,
+    required String name,
+    String? phone,
+    String? email,
+    String? notes,
+    String? cedula,
+    String? identificationType,
+    String? address,
+  }) async {
+    if (name.trim().isEmpty)
+      throw Exception('El nombre del cliente es obligatorio');
+    final db = await database;
+    await db.update(
+      'clients',
+      {
+        'name': _cleanName(name),
+        'phone': phone?.trim().isNotEmpty == true ? phone!.trim() : null,
+        'email': email?.trim().isNotEmpty == true ? email!.trim() : null,
+        'notes': notes?.trim().isNotEmpty == true ? notes!.trim() : null,
+        'cedula': cedula?.trim().isNotEmpty == true ? cedula!.trim() : null,
+        'identification_type': identificationType,
+        'address': address?.trim().isNotEmpty == true ? address!.trim() : null,
+      },
+      where: 'id = ?',
+      whereArgs: [id],
     );
   }
 
@@ -1614,7 +1774,11 @@ class DatabaseService {
   static Future<List<Map<String, dynamic>>> getSalesHistory({
     int? storeId,
     int? customerId,
-    DateTime? date,
+    int? year,
+    int? month,
+    int? day,
+    int limit = 50,
+    int offset = 0,
   }) async {
     final db = await database;
     final conditions = <String>[];
@@ -1628,9 +1792,17 @@ class DatabaseService {
       conditions.add('sa.client_id = ?');
       args.add(customerId);
     }
-    if (date != null) {
-      conditions.add('sa.date LIKE ?');
-      args.add('${date.toIso8601String().split('T').first}%');
+    if (year != null) {
+      conditions.add("strftime('%Y', sa.date) = ?");
+      args.add(year.toString().padLeft(4, '0'));
+    }
+    if (month != null) {
+      conditions.add("strftime('%m', sa.date) = ?");
+      args.add(month.toString().padLeft(2, '0'));
+    }
+    if (day != null) {
+      conditions.add("strftime('%d', sa.date) = ?");
+      args.add(day.toString().padLeft(2, '0'));
     }
 
     final whereClause = conditions.isEmpty
@@ -1640,13 +1812,62 @@ class DatabaseService {
     return db.rawQuery('''
       SELECT sa.id, sa.date, sa.total,
              st.name AS store_name,
-             COALESCE(c.name, 'Consumidor final') AS client_name
+             COALESCE(c.name, 'Consumidor final') AS client_name,
+             pm.name AS payment_method_name
       FROM sales sa
       INNER JOIN stores st ON st.id = sa.store_id
       LEFT JOIN clients c ON c.id = sa.client_id
+      LEFT JOIN sale_payments sp ON sp.sale_id = sa.id
+        AND sp.id = (SELECT MIN(id) FROM sale_payments WHERE sale_id = sa.id)
+      LEFT JOIN payment_methods pm ON pm.id = sp.method_id
       $whereClause
       ORDER BY sa.date DESC, sa.id DESC
-      ''', args);
+      LIMIT $limit OFFSET $offset
+    ''', args);
+  }
+
+  static Future<int> getSalesHistoryCount({
+    int? storeId,
+    int? customerId,
+    int? year,
+    int? month,
+    int? day,
+  }) async {
+    final db = await database;
+    final conditions = <String>[];
+    final args = <dynamic>[];
+
+    if (storeId != null) {
+      conditions.add('sa.store_id = ?');
+      args.add(storeId);
+    }
+    if (customerId != null) {
+      conditions.add('sa.client_id = ?');
+      args.add(customerId);
+    }
+    if (year != null) {
+      conditions.add("strftime('%Y', sa.date) = ?");
+      args.add(year.toString().padLeft(4, '0'));
+    }
+    if (month != null) {
+      conditions.add("strftime('%m', sa.date) = ?");
+      args.add(month.toString().padLeft(2, '0'));
+    }
+    if (day != null) {
+      conditions.add("strftime('%d', sa.date) = ?");
+      args.add(day.toString().padLeft(2, '0'));
+    }
+
+    final whereClause = conditions.isEmpty
+        ? ''
+        : 'WHERE ${conditions.join(' AND ')}';
+    final result = await db.rawQuery('''
+      SELECT COUNT(*) as cnt FROM sales sa
+      INNER JOIN stores st ON st.id = sa.store_id
+      LEFT JOIN clients c ON c.id = sa.client_id
+      $whereClause
+    ''', args);
+    return (result.first['cnt'] as num?)?.toInt() ?? 0;
   }
 
   static Future<List<Map<String, dynamic>>> getSaleItems(int saleId) async {
