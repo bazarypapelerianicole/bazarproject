@@ -23,9 +23,9 @@ class InventoryItem {
     double? investmentValue,
     double? potentialGain,
     double? marginPerUnit,
-  })  : investmentValue = investmentValue ?? (costPrice * quantity),
-        potentialGain = potentialGain ?? ((sellPrice - costPrice) * quantity),
-        marginPerUnit = marginPerUnit ?? (sellPrice - costPrice);
+  }) : investmentValue = investmentValue ?? (costPrice * quantity),
+       potentialGain = potentialGain ?? ((sellPrice - costPrice) * quantity),
+       marginPerUnit = marginPerUnit ?? (sellPrice - costPrice);
 
   /// Margen de ganancia en porcentaje
   double get marginPercent {
@@ -48,14 +48,20 @@ class InventoryItem {
     int score = 50; // Base
 
     // Bonificar por rotación (productos que se venden rápido)
-    if (rotationRate > 2) score += 25;
-    else if (rotationRate > 1) score += 15;
-    else if (rotationRate > 0.5) score += 5;
+    if (rotationRate > 2) {
+      score += 25;
+    } else if (rotationRate > 1) {
+      score += 15;
+    } else if (rotationRate > 0.5) {
+      score += 5;
+    }
 
     // Bonificar por margen
-    if (marginPercent > 50) score += 15;
-    else if (marginPercent > 30) score += 8;
-
+    if (marginPercent > 50) {
+      score += 15;
+    } else if (marginPercent > 30) {
+      score += 8;
+    }
     // Penalizar stock bajo
     if (isLowStock) score -= 10;
 
@@ -64,7 +70,8 @@ class InventoryItem {
 
   factory InventoryItem.fromMap(Map<String, dynamic> map, {int unitsSold = 0}) {
     final sellPrice = (map['price'] as num?)?.toDouble() ?? 0.0;
-    final costPrice = (map['cost_price'] ?? map['costPrice'] as num?)?.toDouble() ?? 0.0;
+    final costPrice =
+        (map['cost_price'] ?? map['costPrice'] as num?)?.toDouble() ?? 0.0;
     final quantity = (map['stock'] as num?)?.toInt() ?? 0;
 
     return InventoryItem(
