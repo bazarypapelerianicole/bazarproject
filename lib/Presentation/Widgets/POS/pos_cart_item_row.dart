@@ -47,9 +47,18 @@ class PosCartItemRow extends StatelessWidget {
           ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 10),
-            child: Text(
-              '$qty',
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 200),
+              transitionBuilder: (child, anim) =>
+                  ScaleTransition(scale: anim, child: child),
+              child: Text(
+                '$qty',
+                key: ValueKey(qty),
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
+              ),
             ),
           ),
           IconButton(
@@ -59,9 +68,13 @@ class PosCartItemRow extends StatelessWidget {
             constraints: const BoxConstraints(),
           ),
           const SizedBox(width: 10),
-          Text(
-            '\$${(price * qty).toStringAsFixed(2)}',
-            style: const TextStyle(fontWeight: FontWeight.bold),
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 250),
+            child: Text(
+              '\$${(price * qty).toStringAsFixed(2)}',
+              key: ValueKey(price * qty),
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
           ),
         ],
       ),

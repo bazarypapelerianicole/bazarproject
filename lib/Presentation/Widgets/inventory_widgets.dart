@@ -6,10 +6,7 @@ import 'package:bazarnicole/Presentation/Model/inventory_model.dart';
 class InventoryInvestmentCard extends StatelessWidget {
   final InventorySummary summary;
 
-  const InventoryInvestmentCard({
-    super.key,
-    required this.summary,
-  });
+  const InventoryInvestmentCard({super.key, required this.summary});
 
   @override
   Widget build(BuildContext context) {
@@ -37,13 +34,17 @@ class InventoryInvestmentCard extends StatelessWidget {
                 _MetricTile(
                   icon: '💵',
                   label: 'Inversión Total',
-                  value: CurrencyFormatter.formatCurrency(summary.totalInvested),
+                  value: CurrencyFormatter.formatCurrency(
+                    summary.totalInvested,
+                  ),
                   subValue: '${summary.totalUnits} unidades',
                 ),
                 _MetricTile(
                   icon: '📈',
                   label: 'Ganancia Potencial',
-                  value: CurrencyFormatter.formatCurrency(summary.totalPotentialGain),
+                  value: CurrencyFormatter.formatCurrency(
+                    summary.totalPotentialGain,
+                  ),
                   subValue: 'Si se vende todo',
                   valueColor: Colors.green,
                 ),
@@ -93,7 +94,7 @@ class InventoryInvestmentCard extends StatelessWidget {
 }
 
 /// Tarjeta de Métrica Individual
-class _MetricTile extends StatelessWidget {
+class _MetricTile extends StatefulWidget {
   final String icon;
   final String label;
   final String value;
@@ -109,45 +110,86 @@ class _MetricTile extends StatelessWidget {
   });
 
   @override
+  State<_MetricTile> createState() => _MetricTileState();
+}
+
+class _MetricTileState extends State<_MetricTile>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl;
+  late final Animation<double> _fade;
+  late final Animation<double> _scale;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 450),
+    );
+    _fade = CurvedAnimation(parent: _ctrl, curve: Curves.easeOut);
+    _scale = Tween<double>(
+      begin: 0.75,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeOutBack));
+    _ctrl.forward();
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.grey.shade50,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade200),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Row(
+    return FadeTransition(
+      opacity: _fade,
+      child: ScaleTransition(
+        scale: _scale,
+        child: Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Colors.grey.shade50,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.grey.shade200),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(icon, style: const TextStyle(fontSize: 20)),
-              const SizedBox(width: 8),
-              Expanded(
+              Row(
+                children: [
+                  Text(widget.icon, style: const TextStyle(fontSize: 20)),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      widget.label,
+                      style: const TextStyle(fontSize: 12, color: Colors.grey),
+                    ),
+                  ),
+                ],
+              ),
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 300),
                 child: Text(
-                  label,
-                  style: const TextStyle(fontSize: 12, color: Colors.grey),
+                  widget.value,
+                  key: ValueKey(widget.value),
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: widget.valueColor,
+                  ),
                 ),
+              ),
+              Text(
+                widget.subValue,
+                style: const TextStyle(fontSize: 10, color: Colors.grey),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ],
           ),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: valueColor,
-            ),
-          ),
-          Text(
-            subValue,
-            style: const TextStyle(fontSize: 10, color: Colors.grey),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -159,21 +201,14 @@ class _DetailRow extends StatelessWidget {
   final String value;
   final Color? valueColor;
 
-  const _DetailRow({
-    required this.label,
-    required this.value,
-    this.valueColor,
-  });
+  const _DetailRow({required this.label, required this.value, this.valueColor});
 
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Text(
-          label,
-          style: const TextStyle(fontSize: 12, color: Colors.grey),
-        ),
+        Text(label, style: const TextStyle(fontSize: 12, color: Colors.grey)),
         const SizedBox(height: 4),
         Text(
           value,
@@ -249,17 +284,17 @@ class InventoryProductCard extends StatelessWidget {
                   children: [
                     _PriceInfo(
                       label: 'Costo Unitario',
-                      value:
-                          CurrencyFormatter.formatCurrency(item.costPrice),
+                      value: CurrencyFormatter.formatCurrency(item.costPrice),
                     ),
                     _PriceInfo(
                       label: 'Venta Unitaria',
-                      value:
-                          CurrencyFormatter.formatCurrency(item.sellPrice),
+                      value: CurrencyFormatter.formatCurrency(item.sellPrice),
                     ),
                     _PriceInfo(
                       label: 'Margen/Unidad',
-                      value: CurrencyFormatter.formatCurrency(item.marginPerUnit),
+                      value: CurrencyFormatter.formatCurrency(
+                        item.marginPerUnit,
+                      ),
                       valueColor: Colors.green,
                     ),
                   ],
@@ -389,21 +424,14 @@ class _PriceInfo extends StatelessWidget {
   final String value;
   final Color? valueColor;
 
-  const _PriceInfo({
-    required this.label,
-    required this.value,
-    this.valueColor,
-  });
+  const _PriceInfo({required this.label, required this.value, this.valueColor});
 
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Text(
-          label,
-          style: const TextStyle(fontSize: 11, color: Colors.grey),
-        ),
+        Text(label, style: const TextStyle(fontSize: 11, color: Colors.grey)),
         const SizedBox(height: 4),
         Text(
           value,
@@ -438,10 +466,7 @@ class _InvestmentInfo extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Text(
-            icon,
-            style: const TextStyle(fontSize: 18),
-          ),
+          Text(icon, style: const TextStyle(fontSize: 18)),
           const SizedBox(height: 4),
           Text(
             label,
@@ -470,21 +495,14 @@ class _StatInfo extends StatelessWidget {
   final String value;
   final Color? color;
 
-  const _StatInfo({
-    required this.label,
-    required this.value,
-    this.color,
-  });
+  const _StatInfo({required this.label, required this.value, this.color});
 
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Text(
-          label,
-          style: const TextStyle(fontSize: 11, color: Colors.grey),
-        ),
+        Text(label, style: const TextStyle(fontSize: 11, color: Colors.grey)),
         const SizedBox(height: 4),
         Text(
           value,
@@ -523,10 +541,7 @@ class TopProductsList extends StatelessWidget {
           children: [
             Text(
               title,
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 12),
             ...items.asMap().entries.map((entry) {

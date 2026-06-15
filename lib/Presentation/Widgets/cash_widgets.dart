@@ -48,16 +48,13 @@ class _DenominationInputWidgetState extends State<DenominationInputWidget> {
       return DenominationEntry(denomination: denom);
     }
 
-    _billEntries =
-        CashDenominations.bills.map(_findOrCreate).toList();
-    _coinEntries =
-        CashDenominations.coins.map(_findOrCreate).toList();
+    _billEntries = CashDenominations.bills.map(_findOrCreate).toList();
+    _coinEntries = CashDenominations.coins.map(_findOrCreate).toList();
   }
 
   List<DenominationEntry> get _allEntries => [..._billEntries, ..._coinEntries];
 
-  double get _total =>
-      _allEntries.fold(0.0, (sum, e) => sum + e.subtotal);
+  double get _total => _allEntries.fold(0.0, (sum, e) => sum + e.subtotal);
 
   void _notify() => widget.onChanged(_allEntries, _total);
 
@@ -170,8 +167,10 @@ class _DenominationRowState extends State<_DenominationRow> {
               textAlign: TextAlign.center,
               decoration: const InputDecoration(
                 isDense: true,
-                contentPadding:
-                    EdgeInsets.symmetric(horizontal: 6, vertical: 6),
+                contentPadding: EdgeInsets.symmetric(
+                  horizontal: 6,
+                  vertical: 6,
+                ),
                 border: OutlineInputBorder(),
                 hintText: '0',
               ),
@@ -197,14 +196,28 @@ class _DenominationRowState extends State<_DenominationRow> {
           // Subtotal de esta fila
           SizedBox(
             width: 72,
-            child: Text(
-              subtotal > 0 ? '\$${subtotal.toStringAsFixed(2)}' : '—',
-              textAlign: TextAlign.right,
-              style: TextStyle(
-                fontSize: 13,
-                color: subtotal > 0
-                    ? Theme.of(context).colorScheme.primary
-                    : Colors.grey,
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 300),
+              transitionBuilder: (child, animation) => FadeTransition(
+                opacity: animation,
+                child: SlideTransition(
+                  position: Tween<Offset>(
+                    begin: const Offset(0, 0.3),
+                    end: Offset.zero,
+                  ).animate(animation),
+                  child: child,
+                ),
+              ),
+              child: Text(
+                subtotal > 0 ? '\$${subtotal.toStringAsFixed(2)}' : '—',
+                key: ValueKey(subtotal),
+                textAlign: TextAlign.right,
+                style: TextStyle(
+                  fontSize: 13,
+                  color: subtotal > 0
+                      ? Theme.of(context).colorScheme.primary
+                      : Colors.grey,
+                ),
               ),
             ),
           ),
@@ -291,19 +304,29 @@ class _TotalRow extends StatelessWidget {
     );
   }
 
-  Widget _subtotalLine(BuildContext ctx, String label, double amount,
-      {required bool bold}) {
+  Widget _subtotalLine(
+    BuildContext ctx,
+    String label,
+    double amount, {
+    required bool bold,
+  }) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 2),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label,
-              style: TextStyle(
-                  fontWeight: bold ? FontWeight.bold : FontWeight.normal)),
-          Text('\$${amount.toStringAsFixed(2)}',
-              style: TextStyle(
-                  fontWeight: bold ? FontWeight.bold : FontWeight.normal)),
+          Text(
+            label,
+            style: TextStyle(
+              fontWeight: bold ? FontWeight.bold : FontWeight.normal,
+            ),
+          ),
+          Text(
+            '\$${amount.toStringAsFixed(2)}',
+            style: TextStyle(
+              fontWeight: bold ? FontWeight.bold : FontWeight.normal,
+            ),
+          ),
         ],
       ),
     );
@@ -325,55 +348,66 @@ class CashBreakdownSummary extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final billEntries =
-        breakdown.entries.where((e) => !e.denomination.isCoin && e.quantity > 0).toList();
-    final coinEntries =
-        breakdown.entries.where((e) => e.denomination.isCoin && e.quantity > 0).toList();
+    final billEntries = breakdown.entries
+        .where((e) => !e.denomination.isCoin && e.quantity > 0)
+        .toList();
+    final coinEntries = breakdown.entries
+        .where((e) => e.denomination.isCoin && e.quantity > 0)
+        .toList();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(title,
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+        Text(
+          title,
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+        ),
         const SizedBox(height: 6),
         if (billEntries.isNotEmpty) ...[
-          const Text('Billetes',
-              style: TextStyle(fontSize: 12, color: Colors.grey)),
+          const Text(
+            'Billetes',
+            style: TextStyle(fontSize: 12, color: Colors.grey),
+          ),
           ...billEntries.map((e) => _ReadOnlyRow(entry: e)),
         ],
         if (coinEntries.isNotEmpty) ...[
           const SizedBox(height: 4),
-          const Text('Monedas',
-              style: TextStyle(fontSize: 12, color: Colors.grey)),
+          const Text(
+            'Monedas',
+            style: TextStyle(fontSize: 12, color: Colors.grey),
+          ),
           ...coinEntries.map((e) => _ReadOnlyRow(entry: e)),
         ],
         const SizedBox(height: 6),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text('Billetes:',
-                style: TextStyle(fontSize: 12)),
-            Text('\$${breakdown.totalBills.toStringAsFixed(2)}',
-                style: const TextStyle(fontSize: 12)),
+            const Text('Billetes:', style: TextStyle(fontSize: 12)),
+            Text(
+              '\$${breakdown.totalBills.toStringAsFixed(2)}',
+              style: const TextStyle(fontSize: 12),
+            ),
           ],
         ),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text('Monedas:',
-                style: TextStyle(fontSize: 12)),
-            Text('\$${breakdown.totalCoins.toStringAsFixed(2)}',
-                style: const TextStyle(fontSize: 12)),
+            const Text('Monedas:', style: TextStyle(fontSize: 12)),
+            Text(
+              '\$${breakdown.totalCoins.toStringAsFixed(2)}',
+              style: const TextStyle(fontSize: 12),
+            ),
           ],
         ),
         const Divider(height: 10),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text('Total:',
-                style: TextStyle(fontWeight: FontWeight.bold)),
-            Text('\$${breakdown.grandTotal.toStringAsFixed(2)}',
-                style: const TextStyle(fontWeight: FontWeight.bold)),
+            const Text('Total:', style: TextStyle(fontWeight: FontWeight.bold)),
+            Text(
+              '\$${breakdown.grandTotal.toStringAsFixed(2)}',
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
           ],
         ),
       ],
@@ -393,14 +427,20 @@ class _ReadOnlyRow extends StatelessWidget {
         children: [
           SizedBox(
             width: 50,
-            child: Text(entry.denomination.label,
-                style: const TextStyle(fontSize: 12)),
+            child: Text(
+              entry.denomination.label,
+              style: const TextStyle(fontSize: 12),
+            ),
           ),
-          Text('× ${entry.quantity}',
-              style: const TextStyle(fontSize: 12, color: Colors.grey)),
+          Text(
+            '× ${entry.quantity}',
+            style: const TextStyle(fontSize: 12, color: Colors.grey),
+          ),
           const Spacer(),
-          Text('\$${entry.subtotal.toStringAsFixed(2)}',
-              style: const TextStyle(fontSize: 12)),
+          Text(
+            '\$${entry.subtotal.toStringAsFixed(2)}',
+            style: const TextStyle(fontSize: 12),
+          ),
         ],
       ),
     );
