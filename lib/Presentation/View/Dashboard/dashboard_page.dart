@@ -79,66 +79,76 @@ class _DashboardPageState extends State<DashboardPage> {
     return PreferredSize(
       preferredSize: const Size.fromHeight(kToolbarHeight),
       child: ClipRRect(
-        borderRadius: const BorderRadius.only(
-          bottomLeft: Radius.circular(20),
-          bottomRight: Radius.circular(20),
-        ),
-        child: AppBar(
-          title: Column(
-            children: [
-              const Text(
-                'Panel de Control',
-                style: TextStyle(
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.threeColor,
-                  fontSize: 18,
-                ),
+        clipBehavior: Clip.hardEdge,
+        borderRadius: const BorderRadius.vertical(bottom: Radius.circular(25)),
+        child: Container(
+          decoration: const BoxDecoration(
+            color: AppColors.blackOverlay,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black26,
+                blurRadius: 5,
+                offset: Offset(0, 3),
               ),
-              if (_currentUser != null)
-                Text(
-                  'Bienvenido, ${_currentUser!['name'] ?? _currentUser!['nombreCompleto'] ?? 'Usuario'}',
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w300,
-                    color: AppColors.threeColor,
-                  ),
-                ),
             ],
           ),
-          iconTheme: const IconThemeData(color: AppColors.threeColor),
-          backgroundColor: AppColors.primaryLogo,
-          elevation: 4,
-          centerTitle: true,
-          actions: [
-            // Indicador de estado de caja
-            Container(
-              margin: const EdgeInsets.only(right: 16),
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: _hayCajaAbierta ? Colors.green : Colors.red,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    _hayCajaAbierta ? Icons.check_circle : Icons.lock,
-                    color: Colors.white,
-                    size: 16,
+          child: AppBar(
+            surfaceTintColor: Colors.transparent,
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            centerTitle: true,
+            iconTheme: const IconThemeData(color: AppColors.whiteOverlay),
+            title: Column(
+              children: [
+                const Text(
+                  'Panel de Control',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.whiteOverlay,
+                    fontSize: 18,
                   ),
-                  const SizedBox(width: 4),
+                ),
+                if (_currentUser != null)
                   Text(
-                    _hayCajaAbierta ? 'Caja Abierta' : 'Caja Cerrada',
+                    'Bienvenido, ${_currentUser!['name'] ?? _currentUser!['nombreCompleto'] ?? 'Usuario'}',
                     style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w300,
+                      color: AppColors.whiteOverlay,
                     ),
                   ),
-                ],
-              ),
+              ],
             ),
-          ],
+            actions: [
+              Container(
+                margin: const EdgeInsets.only(right: 16),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: _hayCajaAbierta ? Colors.green : Colors.red,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      _hayCajaAbierta ? Icons.check_circle : Icons.lock,
+                      color: Colors.white,
+                      size: 16,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      _hayCajaAbierta ? 'Caja Abierta' : 'Caja Cerrada',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -167,7 +177,7 @@ class _DashboardPageState extends State<DashboardPage> {
                 visualDensity: VisualDensity.compact,
               ),
             ],
-            decoration: BoxDecoration(color: AppColors.primaryLogo),
+            decoration: const BoxDecoration(color: AppColors.blackOverlay),
           ),
           ListTile(
             leading: const Icon(Icons.dashboard),
