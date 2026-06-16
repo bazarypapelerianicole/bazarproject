@@ -59,7 +59,7 @@ class PosProductosSection extends StatelessWidget {
         if (controller.cart.isNotEmpty) ...[
           const SizedBox(height: 12),
           Card(
-            elevation: 0,
+            elevation: 4,
             color: Colors.white,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(14),

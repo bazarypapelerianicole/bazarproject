@@ -216,15 +216,27 @@ class _PosScaffoldState extends State<_PosScaffold> {
                       const PosReceiptTypeCard()
                           .animate()
                           .fadeIn(duration: 350.ms)
-                          .slideY(begin: 0.1, end: 0, duration: 350.ms, curve: Curves.easeOut),
+                          .slideY(
+                            begin: 0.1,
+                            end: 0,
+                            duration: 350.ms,
+                            curve: Curves.easeOut,
+                          ),
                       const SizedBox(height: 16),
                       // ── Cliente
                       PosClienteSection(
-                        onShowClientSearch: (ctx, _) => _showClientSearch(ctx),
-                      )
+                            onShowClientSearch: (ctx, _) =>
+                                _showClientSearch(ctx),
+                          )
                           .animate()
                           .fadeIn(delay: 80.ms, duration: 350.ms)
-                          .slideY(begin: 0.1, end: 0, delay: 80.ms, duration: 350.ms, curve: Curves.easeOut),
+                          .slideY(
+                            begin: 0.1,
+                            end: 0,
+                            delay: 80.ms,
+                            duration: 350.ms,
+                            curve: Curves.easeOut,
+                          ),
                       const SizedBox(height: 16),
                       // ── Local
                       if (posCtrl.stores.isNotEmpty)
@@ -232,11 +244,16 @@ class _PosScaffoldState extends State<_PosScaffold> {
                           value: posCtrl.selectedStoreId,
                           decoration: InputDecoration(
                             labelText: 'Local',
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
                             filled: true,
                             fillColor: Colors.white,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(25),
+                              borderSide: BorderSide.none,
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 20,
+                              vertical: 15,
+                            ),
                           ),
                           items: posCtrl.stores.map((store) {
                             return DropdownMenuItem<int>(
@@ -249,30 +266,54 @@ class _PosScaffoldState extends State<_PosScaffold> {
                       const SizedBox(height: 16),
                       // ── Productos / Carrito
                       PosProductosSection(
-                        onShowProductSearch: (ctx, _) =>
-                            _showProductSearch(ctx),
-                      )
+                            onShowProductSearch: (ctx, _) =>
+                                _showProductSearch(ctx),
+                          )
                           .animate()
                           .fadeIn(delay: 160.ms, duration: 350.ms)
-                          .slideY(begin: 0.1, end: 0, delay: 160.ms, duration: 350.ms, curve: Curves.easeOut),
+                          .slideY(
+                            begin: 0.1,
+                            end: 0,
+                            delay: 160.ms,
+                            duration: 350.ms,
+                            curve: Curves.easeOut,
+                          ),
                       const SizedBox(height: 16),
                       // ── Forma de pago
                       const PosFormaPagoSection()
                           .animate()
                           .fadeIn(delay: 240.ms, duration: 350.ms)
-                          .slideY(begin: 0.1, end: 0, delay: 240.ms, duration: 350.ms, curve: Curves.easeOut),
+                          .slideY(
+                            begin: 0.1,
+                            end: 0,
+                            delay: 240.ms,
+                            duration: 350.ms,
+                            curve: Curves.easeOut,
+                          ),
                       const SizedBox(height: 16),
                       // ── Pagos recibidos
                       PosPagosRecibidosSection(total: total)
                           .animate()
                           .fadeIn(delay: 300.ms, duration: 350.ms)
-                          .slideY(begin: 0.1, end: 0, delay: 300.ms, duration: 350.ms, curve: Curves.easeOut),
+                          .slideY(
+                            begin: 0.1,
+                            end: 0,
+                            delay: 300.ms,
+                            duration: 350.ms,
+                            curve: Curves.easeOut,
+                          ),
                       const SizedBox(height: 16),
                       // ── Resumen de venta
                       PosResumenVentaCard(subtotal: cartTotal)
                           .animate()
                           .fadeIn(delay: 360.ms, duration: 350.ms)
-                          .slideY(begin: 0.1, end: 0, delay: 360.ms, duration: 350.ms, curve: Curves.easeOut),
+                          .slideY(
+                            begin: 0.1,
+                            end: 0,
+                            delay: 360.ms,
+                            duration: 350.ms,
+                            curve: Curves.easeOut,
+                          ),
                       const SizedBox(height: 20),
                       // ── Botones finales
                       Row(

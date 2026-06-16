@@ -116,6 +116,7 @@ class BackgroundJobService {
 
   Future<void> _processNextJob() async {
     if (_isRunning) return;
+    if (!DatabaseService.isOpen) return;
     _isRunning = true;
 
     try {
@@ -183,6 +184,11 @@ class BackgroundJobService {
           where: 'id = ?',
           whereArgs: [jobId],
         );
+      }
+    } on DatabaseException catch (e) {
+      // La BD fue cerrada mientras el job estaba en cola; se ignora silenciosamente.
+      if (e.toString().contains('database_closed')) {
+        stop();
       }
     } finally {
       _isRunning = false;

@@ -1,4 +1,5 @@
 import 'package:bazarnicole/Presentation/Controller/pos_controller.dart';
+import 'package:bazarnicole/Presentation/Utils/Colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -39,9 +40,8 @@ class _PosProductSearchDialogState extends State<PosProductSearchDialog> {
   void _selectPrev() {
     if (_products.isEmpty) return;
     setState(
-      () =>
-          _selectedIndex =
-              (_selectedIndex - 1 + _products.length) % _products.length,
+      () => _selectedIndex =
+          (_selectedIndex - 1 + _products.length) % _products.length,
     );
   }
 
@@ -72,7 +72,10 @@ class _PosProductSearchDialogState extends State<PosProductSearchDialog> {
       child: Focus(
         autofocus: true,
         child: Dialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          backgroundColor: AppColors.whiteOverlay,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
           child: SizedBox(
             width: 580,
             height: 600,
@@ -180,7 +183,10 @@ class _PosProductSearchDialogState extends State<PosProductSearchDialog> {
                         const Expanded(
                           child: Text(
                             'Use las flechas para navegar, Enter para seleccionar',
-                            style: TextStyle(fontSize: 12, color: Colors.black54),
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.black54,
+                            ),
                           ),
                         ),
                         Container(
@@ -219,8 +225,10 @@ class _PosProductSearchDialogState extends State<PosProductSearchDialog> {
                           child: Text('No se encontraron productos'),
                         );
                       }
-                      final safeIndex =
-                          _selectedIndex.clamp(0, ctrl.products.length - 1);
+                      final safeIndex = _selectedIndex.clamp(
+                        0,
+                        ctrl.products.length - 1,
+                      );
                       final selectedProduct = ctrl.products[safeIndex];
 
                       return Column(
@@ -234,7 +242,8 @@ class _PosProductSearchDialogState extends State<PosProductSearchDialog> {
                                 final stock =
                                     ((product['stock'] as num?)?.toInt()) ?? 0;
                                 final price =
-                                    ((product['price'] as num?)?.toDouble()) ?? 0;
+                                    ((product['price'] as num?)?.toDouble()) ??
+                                    0;
                                 final isSelected = index == safeIndex;
 
                                 return GestureDetector(
@@ -245,13 +254,19 @@ class _PosProductSearchDialogState extends State<PosProductSearchDialog> {
                                     padding: const EdgeInsets.all(12),
                                     decoration: BoxDecoration(
                                       color: isSelected
-                                          ? Colors.blue.shade50
-                                          : Colors.grey.shade50,
+                                          ? AppColors.blackOverlay.withOpacity(
+                                              0.3,
+                                            )
+                                          : AppColors.blackOverlay.withOpacity(
+                                              0.1,
+                                            ),
                                       borderRadius: BorderRadius.circular(10),
                                       border: Border.all(
                                         color: isSelected
-                                            ? Colors.blue.shade300
-                                            : Colors.grey.shade200,
+                                            ? AppColors.blackOverlay
+                                                  .withOpacity(0.3)
+                                            : AppColors.blackOverlay
+                                                  .withOpacity(0.1),
                                       ),
                                     ),
                                     child: Row(
@@ -262,12 +277,13 @@ class _PosProductSearchDialogState extends State<PosProductSearchDialog> {
                                                 CrossAxisAlignment.start,
                                             children: [
                                               Text(
-                                                product['name']?.toString() ?? '',
+                                                product['name']?.toString() ??
+                                                    '',
                                                 style: TextStyle(
                                                   fontWeight: FontWeight.w700,
                                                   color: isSelected
-                                                      ? Colors.blue.shade800
-                                                      : Colors.black87,
+                                                      ? AppColors.blackOverlay
+                                                      : AppColors.blackOverlay,
                                                 ),
                                               ),
                                               Text(
@@ -299,7 +315,8 @@ class _PosProductSearchDialogState extends State<PosProductSearchDialog> {
                                         ),
                                         if (isSelected)
                                           CircleAvatar(
-                                            backgroundColor: Colors.blue.shade600,
+                                            backgroundColor:
+                                                AppColors.blackOverlay,
                                             radius: 16,
                                             child: const Icon(
                                               Icons.check,
@@ -339,9 +356,11 @@ class _PosProductSearchDialogState extends State<PosProductSearchDialog> {
                             margin: const EdgeInsets.fromLTRB(16, 6, 16, 0),
                             padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
-                              color: Colors.blue.shade50,
+                              color: AppColors.blackOverlay.withOpacity(0.1),
                               borderRadius: BorderRadius.circular(10),
-                              border: Border.all(color: Colors.blue.shade100),
+                              border: Border.all(
+                                color: AppColors.blackOverlay.withOpacity(0.2),
+                              ),
                             ),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -350,7 +369,7 @@ class _PosProductSearchDialogState extends State<PosProductSearchDialog> {
                                   'Descripción:',
                                   style: TextStyle(
                                     fontSize: 12,
-                                    color: Colors.blue.shade700,
+                                    color: AppColors.blackOverlay,
                                     fontWeight: FontWeight.w600,
                                   ),
                                 ),
@@ -364,7 +383,7 @@ class _PosProductSearchDialogState extends State<PosProductSearchDialog> {
                                 Row(
                                   children: [
                                     Text(
-                                      'Precio de Venta: \$${((selectedProduct['price'] as num?)?.toDouble() ?? 0).toStringAsFixed(2)}',
+                                      'Pvp: \$${((selectedProduct['price'] as num?)?.toDouble() ?? 0).toStringAsFixed(2)}',
                                       style: TextStyle(
                                         fontSize: 12,
                                         color: Colors.orange.shade800,
@@ -406,7 +425,7 @@ class _PosProductSearchDialogState extends State<PosProductSearchDialog> {
                       const SizedBox(width: 12),
                       FilledButton.icon(
                         style: FilledButton.styleFrom(
-                          backgroundColor: Colors.blue.shade700,
+                          backgroundColor: AppColors.blackOverlay,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10),
                           ),

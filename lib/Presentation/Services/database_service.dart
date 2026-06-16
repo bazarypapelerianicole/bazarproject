@@ -2248,6 +2248,8 @@ class DatabaseService {
     };
   }
 
+  static bool get isOpen => _database != null && _database!.isOpen;
+
   static Future<void> closeDatabase() async {
     if (_database != null) {
       await _database!.close();
