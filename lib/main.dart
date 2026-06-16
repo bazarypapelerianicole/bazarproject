@@ -39,25 +39,23 @@ Future<void> main() async {
 
     // Configuración básica que funciona en Windows
     await windowManager.waitUntilReadyToShow(null, () async {
+      await windowManager.setSize(const Size(800, 600));
+      await windowManager.setMinimumSize(const Size(400, 300));
+      await windowManager.setResizable(true);
+      await windowManager.setMinimizable(true);
+      await windowManager.setMaximizable(true);
+      await windowManager.setClosable(true);
+      await windowManager.setTitle(
+        'Sistema de Gestión Comercial – Bazar & Tienda',
+      );
       await windowManager.show();
       await windowManager.focus();
     });
 
-    // Configurar después de mostrar
-    await windowManager.setSize(const Size(800, 600));
-    await windowManager.setMinimumSize(const Size(400, 300));
-    await windowManager.setResizable(true);
-    await windowManager.setMinimizable(true);
-    await windowManager.setMaximizable(true);
-    await windowManager.setClosable(true);
-    await windowManager.setTitle(
-      'Sistema de Gestión Comercial – Bazar & Tienda',
-    );
-
     // Para Windows, intentar restaurar si está minimizado
     if (Platform.isWindows) {
       await Future.delayed(const Duration(milliseconds: 200));
-      await windowManager.restore(); // Asegurar que no esté minimizado
+      await windowManager.restore();
       await windowManager.focus();
     }
   } // 🔧 INICIALIZACIÓN ESPECÍFICA POR PLATAFORMA
