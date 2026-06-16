@@ -218,10 +218,7 @@ class CatalogDetailWidget extends StatelessWidget {
                           const SizedBox(height: 24),
 
                           // ── Código QR de la categoría ───────────
-                          _CategoryQr(
-                            categoryName: name,
-                            accentColor: _accent,
-                          ),
+                          _CategoryQr(categoryName: name, accentColor: _accent),
 
                           const SizedBox(height: 24),
 

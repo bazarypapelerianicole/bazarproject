@@ -129,12 +129,12 @@ class GoogleDriveBackupService {
           'BazarNicole_Backup_${now.year}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}_${now.hour.toString().padLeft(2, '0')}${now.minute.toString().padLeft(2, '0')}';
 
       // Carpeta destino fija en Drive: "bazarypapeleria"
-      const String _bazarFolderId = '1mksspeR2VoZuSj92LIke0dxobma6U0Ke';
+      const String bazarFolderId = '1mksspeR2VoZuSj92LIke0dxobma6U0Ke';
 
       final rootFolderId = await _createDriveFolder(
         driveApi,
         folderName,
-        _bazarFolderId,
+        bazarFolderId,
       );
 
       // 3. Crear subcarpeta para JSONs
@@ -156,8 +156,8 @@ class GoogleDriveBackupService {
       final dbPath = await _getDbPath();
       final db = await _openDb(dbPath);
 
-      // Solo se exportan productos y categorías al catálogo de Drive.
-      const tables = ['products', 'categories'];
+      // Se exportan productos, categorías y tiendas al catálogo de Drive.
+      const tables = ['products', 'categories', 'stores'];
       final List<String> uploadedFiles = [];
 
       for (int i = 0; i < tables.length; i++) {

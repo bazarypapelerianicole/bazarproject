@@ -17,7 +17,7 @@ class WebCatalogView extends StatefulWidget {
 
 class _WebCatalogViewState extends State<WebCatalogView>
     with SingleTickerProviderStateMixin {
-  late TabController _tabController;
+  TabController? _tabController;
   String _search = '';
 
   /// Datos reales de Drive (null = aún cargando o no autenticado).
@@ -25,16 +25,24 @@ class _WebCatalogViewState extends State<WebCatalogView>
   bool _driveLoading = false;
   String? _driveError;
 
+  List<CatalogSection> get _sections => _driveData?.sections ?? [];
+
+  void _initTabController() {
+    _tabController?.dispose();
+    final count = _sections.isEmpty ? 1 : _sections.length;
+    _tabController = TabController(length: count, vsync: this);
+  }
+
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _tabController = TabController(length: 1, vsync: this);
     _loadDriveData();
   }
 
   @override
   void dispose() {
-    _tabController.dispose();
+    _tabController?.dispose();
     super.dispose();
   }
 
@@ -59,7 +67,12 @@ class _WebCatalogViewState extends State<WebCatalogView>
 
     try {
       final data = await DriveDataService.fetchCatalogData();
-      if (mounted) setState(() => _driveData = data);
+      if (mounted) {
+        setState(() {
+          _driveData = data;
+          _initTabController();
+        });
+      }
     } catch (e) {
       if (mounted) setState(() => _driveError = e.toString());
     } finally {
@@ -75,7 +88,12 @@ class _WebCatalogViewState extends State<WebCatalogView>
     try {
       await DriveDataService.signIn();
       final data = await DriveDataService.fetchCatalogData();
-      if (mounted) setState(() => _driveData = data);
+      if (mounted) {
+        setState(() {
+          _driveData = data;
+          _initTabController();
+        });
+      }
     } catch (e) {
       if (mounted) setState(() => _driveError = e.toString());
     } finally {
@@ -83,58 +101,11 @@ class _WebCatalogViewState extends State<WebCatalogView>
     }
   }
 
-  // ── Helpers para construir CategoryInfo enriquecida ────────────────────────
-
-  /// Devuelve la CategoryInfo base (estática) enriquecida con datos de Drive.
-  CategoryInfo _infoFor(String categoryName, CatalogStore store) {
-    CategoryInfo base = WebCatalog.infoFor(categoryName, store);
-
-    if (_driveData == null) return base;
-
-    // Inyectar imagen real desde Drive si existe
-    final driveImage = DriveDataService.findImageForCategory(
-      _driveData!.imageThumbnails,
-      categoryName,
-    );
-    if (driveImage != null) {
-      base = base.withImageUrl(driveImage);
-    }
-
-    // Inyectar productos reales
-    final rawProducts =
-        _driveData!.productsByCategory[categoryName] ?? const [];
-    if (rawProducts.isNotEmpty) {
-      final entries = rawProducts
-          .map(
-            (p) => CatalogProductEntry(
-              id: p.id,
-              name: p.name,
-              sku: p.sku,
-              price: p.price,
-              stock: p.stock,
-            ),
-          )
-          .toList();
-      base = base.withProducts(entries);
-    }
-
-    return base;
-  }
-
   /// Filtra categorías por búsqueda.
-  List<String> _filtered(List<String> items) {
+  List<CatalogCategory> _filtered(List<CatalogCategory> items) {
     if (_search.isEmpty) return items;
     final q = _search.toLowerCase();
-    return items.where((e) => e.toLowerCase().contains(q)).toList();
-  }
-
-  /// Categorías que realmente tienen productos en Drive (o todas si no hay Drive data).
-  List<String> _categoriesFor(List<String> staticList) {
-    if (_driveData == null) return staticList;
-    // Mostrar únicamente categorías con al menos 1 producto real en Drive.
-    // Si una categoría estática no tiene datos en Drive, igual se muestra
-    // para que el catálogo visual no quede vacío.
-    return staticList;
+    return items.where((c) => c.name.toLowerCase().contains(q)).toList();
   }
 
   @override
@@ -212,24 +183,26 @@ class _WebCatalogViewState extends State<WebCatalogView>
               ),
             ),
         ],
-        bottom: TabBar(
-          controller: _tabController,
-          indicatorColor: Colors.white,
-          labelColor: Colors.white,
-          unselectedLabelColor: Colors.white60,
-          tabs: CatalogStore.values
-              .map(
-                (s) => Tab(
-                  icon: Icon(
-                    s == CatalogStore.bazar
-                        ? Icons.shopping_bag_outlined
-                        : Icons.menu_book_outlined,
-                  ),
-                  text: s.label,
-                ),
-              )
-              .toList(),
-        ),
+        bottom: _sections.isEmpty
+            ? null
+            : TabBar(
+                controller: _tabController,
+                indicatorColor: Colors.white,
+                labelColor: Colors.white,
+                unselectedLabelColor: Colors.white60,
+                tabs: _sections
+                    .map(
+                      (s) => Tab(
+                        icon: Icon(
+                          s.storeId == 1
+                              ? Icons.shopping_bag_outlined
+                              : Icons.menu_book_outlined,
+                        ),
+                        text: s.storeName,
+                      ),
+                    )
+                    .toList(),
+              ),
       ),
       body: Column(
         children: [
@@ -265,25 +238,43 @@ class _WebCatalogViewState extends State<WebCatalogView>
 
           // Contenido de tabs
           Expanded(
-            child: TabBarView(
-              controller: _tabController,
-              children: [
-                _CatalogGrid(
-                  store: CatalogStore.bazar,
-                  items: _filtered(_categoriesFor(WebCatalog.bazarCategories)),
-                  isWide: isWide,
-                  infoBuilder: (name) => _infoFor(name, CatalogStore.bazar),
-                ),
-                _CatalogGrid(
-                  store: CatalogStore.tienda,
-                  items: _filtered(
-                    _categoriesFor(WebCatalog.tiendaCategories),
+            child: _driveLoading && _sections.isEmpty
+                ? const Center(child: CircularProgressIndicator())
+                : _sections.isEmpty
+                ? Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.cloud_off_outlined,
+                          size: 48,
+                          color: AppColors.greyOverlay,
+                        ),
+                        const SizedBox(height: 12),
+                        const Text(
+                          'Conecta con Google Drive para ver el catálogo',
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 12),
+                        ElevatedButton.icon(
+                          onPressed: _signInAndLoad,
+                          icon: const Icon(Icons.login),
+                          label: const Text('Conectar Drive'),
+                        ),
+                      ],
+                    ),
+                  )
+                : TabBarView(
+                    controller: _tabController,
+                    children: _sections
+                        .map(
+                          (section) => _CatalogGrid(
+                            categories: _filtered(section.categories),
+                            isWide: isWide,
+                          ),
+                        )
+                        .toList(),
                   ),
-                  isWide: isWide,
-                  infoBuilder: (name) => _infoFor(name, CatalogStore.tienda),
-                ),
-              ],
-            ),
           ),
 
           // Pie de página
@@ -405,23 +396,14 @@ class _DriveBanner extends StatelessWidget {
 // ── Grid de categorías ───────────────────────────────────────────────────────
 
 class _CatalogGrid extends StatelessWidget {
-  final CatalogStore store;
-  final List<String> items;
+  final List<CatalogCategory> categories;
   final bool isWide;
 
-  /// Builder que devuelve la CategoryInfo (enriquecida con datos Drive) para cada nombre.
-  final CategoryInfo Function(String name) infoBuilder;
-
-  const _CatalogGrid({
-    required this.store,
-    required this.items,
-    required this.isWide,
-    required this.infoBuilder,
-  });
+  const _CatalogGrid({required this.categories, required this.isWide});
 
   @override
   Widget build(BuildContext context) {
-    if (items.isEmpty) {
+    if (categories.isEmpty) {
       return Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -445,11 +427,16 @@ class _CatalogGrid extends StatelessWidget {
         crossAxisSpacing: 16,
         childAspectRatio: childAspectRatio,
       ),
-      itemCount: items.length,
+      itemCount: categories.length,
       itemBuilder: (context, i) {
-        final name = items[i];
-        final info = infoBuilder(name);
-        return CatalogCategoryCard(name: name, store: store, info: info);
+        final category = categories[i];
+        final store =
+            CatalogStore.fromId(category.storeId) ?? CatalogStore.bazar;
+        return CatalogCategoryCard(
+          name: category.name,
+          store: store,
+          info: category,
+        );
       },
     );
   }

@@ -1,6 +1,7 @@
 // ignore_for_file: file_names
 
 import 'dart:convert';
+import 'package:bazarnicole/Presentation/Template/catalog_template.dart';
 import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:googleapis/drive/v3.dart' as drive;
@@ -14,6 +15,7 @@ class DriveProduct {
   final double price;
   final int stock;
   final String categoryName;
+  final String storeName;
 
   const DriveProduct({
     required this.id,
@@ -22,6 +24,7 @@ class DriveProduct {
     required this.price,
     required this.stock,
     required this.categoryName,
+    this.storeName = '',
   });
 }
 
@@ -36,10 +39,15 @@ class CatalogDriveData {
   /// Email del usuario autenticado.
   final String userEmail;
 
+  /// Secciones del catálogo construidas desde los JSON de Drive.
+  /// Listas vacías si no se pudo construir el catálogo.
+  final List<CatalogSection> sections;
+
   const CatalogDriveData({
     required this.productsByCategory,
     required this.imageThumbnails,
     required this.userEmail,
+    this.sections = const [],
   });
 
   bool get hasData => productsByCategory.isNotEmpty;
@@ -146,15 +154,18 @@ class DriveDataService {
       final results = await Future.wait([
         _downloadJson(driveApi, jsonFolderId, 'products.json'),
         _downloadJson(driveApi, jsonFolderId, 'categories.json'),
+        _downloadJson(driveApi, jsonFolderId, 'stores.json'),
       ]);
 
       final productsJson = results[0];
       final categoriesJson = results[1];
+      final storesJson = results[2];
 
       // 4. Parsear datos
       final productsByCategory = _buildProductsByCategory(
         productsJson: productsJson,
         categoriesJson: categoriesJson,
+        storesJson: storesJson,
       );
 
       // 5. Listar imágenes
@@ -163,10 +174,19 @@ class DriveDataService {
         imagesFolderId,
       );
 
+      // 6. Construir secciones del catálogo desde los JSON crudos
+      final sections = CatalogBuilder.buildFromJson(
+        productsJson: productsJson,
+        categoriesJson: categoriesJson,
+        storesJson: storesJson,
+        imageThumbnails: imageThumbnails,
+      );
+
       return CatalogDriveData(
         productsByCategory: productsByCategory,
         imageThumbnails: imageThumbnails,
         userEmail: _account!.email,
+        sections: sections,
       );
     } finally {
       client.close();
@@ -291,6 +311,7 @@ class DriveDataService {
   static Map<String, List<DriveProduct>> _buildProductsByCategory({
     required List<Map<String, dynamic>> productsJson,
     required List<Map<String, dynamic>> categoriesJson,
+    required List<Map<String, dynamic>> storesJson,
   }) {
     // Mapa categoryId → categoryName
     final categoryNames = <int, String>{};
@@ -298,6 +319,14 @@ class DriveDataService {
       final id = (c['id'] as num?)?.toInt();
       final name = c['name'] as String?;
       if (id != null && name != null) categoryNames[id] = name;
+    }
+
+    // Mapa storeId → storeName
+    final storeNames = <int, String>{};
+    for (final s in storesJson) {
+      final id = (s['id'] as num?)?.toInt();
+      final name = s['name'] as String?;
+      if (id != null && name != null) storeNames[id] = name;
     }
 
     final Map<String, List<DriveProduct>> byCategory = {};
@@ -308,6 +337,7 @@ class DriveDataService {
       final sku = p['sku'] as String? ?? '';
       final price = (p['price'] as num?)?.toDouble() ?? 0;
       final categoryId = (p['category_id'] as num?)?.toInt();
+      final storeId = (p['store_id'] as num?)?.toInt();
       // Stock directo desde la tabla products (campo stock si existe)
       final stock = (p['stock'] as num?)?.toInt() ?? 0;
 
@@ -317,6 +347,8 @@ class DriveDataService {
           (categoryId != null ? categoryNames[categoryId] : null) ??
           'Sin categoría';
 
+      final storeName = (storeId != null ? storeNames[storeId] : null) ?? '';
+
       final product = DriveProduct(
         id: id,
         name: name,
@@ -324,6 +356,7 @@ class DriveDataService {
         price: price,
         stock: stock,
         categoryName: categoryName,
+        storeName: storeName,
       );
 
       byCategory.putIfAbsent(categoryName, () => []).add(product);
