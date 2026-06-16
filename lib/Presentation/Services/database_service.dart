@@ -397,7 +397,8 @@ class DatabaseService {
     await db.execute('''
       CREATE TABLE IF NOT EXISTS categories (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT NOT NULL UNIQUE
+        name TEXT NOT NULL UNIQUE,
+        store_id INTEGER
       )
     ''');
 
@@ -761,6 +762,14 @@ class DatabaseService {
       definition: 'TEXT',
     );
 
+    // Migración: agregar store_id a categories para aislar categorías por tienda
+    await _ensureColumn(
+      db,
+      table: 'categories',
+      column: 'store_id',
+      definition: 'INTEGER',
+    );
+
     // Migración de la tabla users (por si existía antes con menos columnas)
     await _ensureColumn(
       db,
@@ -851,6 +860,7 @@ class DatabaseService {
 
     await _seedStores(db);
     await _seedCatalog(db);
+    await _runCatalogIntegrityMigration(db);
   }
 
   /// Crea las tablas y índices de la capa OLAP Big Data.
@@ -1094,13 +1104,18 @@ class DatabaseService {
       if (storeId == null) continue; // tienda no existe en DB
 
       for (final categoryEntry in storeEntry.value.entries) {
-        final categoryId = await _ensureCategory(db, categoryEntry.key);
+        final categoryId = await _ensureCategory(
+          db,
+          categoryEntry.key,
+          storeId: storeId,
+        );
 
         for (final rawName in categoryEntry.value) {
           final productName = _cleanName(rawName);
+          // Buscar por nombre Y tienda para evitar mezclar productos de distintos locales
           final existing = await db.rawQuery(
-            'SELECT id FROM products WHERE lower(name) = ?',
-            [productName.toLowerCase()],
+            'SELECT id FROM products WHERE lower(name) = ? AND store_id = ?',
+            [productName.toLowerCase(), storeId],
           );
 
           int productId;
@@ -1142,6 +1157,211 @@ class DatabaseService {
     }
   }
 
+  // ════════════════════════════════════════════════════════════════════════
+  // AUDITORÍA E INTEGRIDAD DEL CATÁLOGO
+  // ════════════════════════════════════════════════════════════════════════
+
+  /// Construye mapas de validación desde el catálogo maestro.
+  /// Retorna: { productKey → (storeName, categoryName) }
+  static Map<String, _CatalogEntry> _buildCatalogLookup() {
+    final lookup = <String, _CatalogEntry>{};
+    for (final storeEntry in _catalogByStore.entries) {
+      for (final catEntry in storeEntry.value.entries) {
+        for (final product in catEntry.value) {
+          lookup[product.trim().toLowerCase()] = _CatalogEntry(
+            storeName: storeEntry.key,
+            categoryName: catEntry.key,
+          );
+        }
+      }
+    }
+    return lookup;
+  }
+
+  /// Corrección segura: solo ejecuta UPDATEs, nunca elimina registros.
+  /// Se llama automáticamente desde [_ensureBusinessSchema].
+  static Future<void> _runCatalogIntegrityMigration(DatabaseExecutor db) async {
+    final lookup = _buildCatalogLookup();
+
+    // Obtener tiendas
+    final stores = await db.rawQuery('SELECT id, name FROM stores');
+    final storeNameToId = <String, int>{
+      for (final r in stores) r['name'] as String: (r['id'] as num).toInt(),
+    };
+
+    // Obtener todos los productos con su tienda y categoría actual
+    final products = await db.rawQuery('''
+      SELECT
+        p.id,
+        p.name,
+        p.store_id,
+        p.category_id,
+        c.name  AS category_name,
+        s.name  AS store_name
+      FROM products p
+      LEFT JOIN categories c ON c.id = p.category_id
+      LEFT JOIN stores s ON s.id = p.store_id
+    ''');
+
+    for (final p in products) {
+      final productKey = (p['name'] as String? ?? '').trim().toLowerCase();
+      final entry = lookup[productKey];
+      if (entry == null) continue; // fuera del catálogo → no tocar
+
+      final expectedStoreId = storeNameToId[entry.storeName];
+      if (expectedStoreId == null) continue;
+
+      final currentStoreId = p['store_id'] as int?;
+      final currentCategoryId = p['category_id'] as int?;
+      final productId = (p['id'] as num).toInt();
+
+      // Obtener (o crear) la categoría correcta para la tienda correcta
+      final correctCategoryId = await _ensureCategory(
+        db,
+        entry.categoryName,
+        storeId: expectedStoreId,
+      );
+
+      final storeWrong = currentStoreId != expectedStoreId;
+      final categoryWrong = currentCategoryId != correctCategoryId;
+
+      if (!storeWrong && !categoryWrong) continue;
+
+      final sets = <String>[];
+      final args = <dynamic>[];
+
+      if (storeWrong) {
+        sets.add('store_id = ?');
+        args.add(expectedStoreId);
+      }
+      if (categoryWrong) {
+        sets.add('category_id = ?');
+        args.add(correctCategoryId);
+      }
+      args.add(productId);
+
+      await db.rawUpdate(
+        'UPDATE products SET ${sets.join(', ')} WHERE id = ?',
+        args,
+      );
+    }
+
+    // Reparar categorías del catálogo que no tengan store_id asignado
+    for (final storeEntry in _catalogByStore.entries) {
+      final storeId = storeNameToId[storeEntry.key];
+      if (storeId == null) continue;
+      for (final categoryName in storeEntry.value.keys) {
+        await db.rawUpdate(
+          '''UPDATE categories
+             SET store_id = ?
+             WHERE lower(name) = ? AND store_id IS NULL''',
+          [storeId, categoryName.toLowerCase()],
+        );
+      }
+    }
+  }
+
+  /// Auditoría pública: devuelve un reporte de integridad del catálogo.
+  /// No modifica datos; solo lee y clasifica.
+  ///
+  /// Campos retornados:
+  /// - `correct`            : productos cuya tienda y categoría son correctas
+  /// - `corrected_products` : productos que serían corregidos (simulación)
+  /// - `out_of_catalog`     : productos que no aparecen en el catálogo maestro
+  /// - `duplicates_found`   : grupos de productos con el mismo nombre (lower)
+  /// - `duplicates`         : lista de nombres duplicados
+  /// - `risks`              : descripciones de inconsistencias detectadas
+  static Future<Map<String, dynamic>> runCatalogIntegrityAudit() async {
+    final db = await database;
+    final lookup = _buildCatalogLookup();
+
+    final stores = await db.rawQuery('SELECT id, name FROM stores');
+    final storeNameToId = <String, int>{
+      for (final r in stores) r['name'] as String: (r['id'] as num).toInt(),
+    };
+
+    final products = await db.rawQuery('''
+      SELECT
+        p.id,
+        p.name,
+        p.store_id,
+        p.category_id,
+        c.name  AS category_name,
+        s.name  AS store_name
+      FROM products p
+      LEFT JOIN categories c ON c.id = p.category_id
+      LEFT JOIN stores s ON s.id = p.store_id
+    ''');
+
+    int correct = 0;
+    int wouldCorrect = 0;
+    int outOfCatalog = 0;
+    final risks = <String>[];
+
+    for (final p in products) {
+      final productKey = (p['name'] as String? ?? '').trim().toLowerCase();
+      final entry = lookup[productKey];
+
+      if (entry == null) {
+        outOfCatalog++;
+        continue;
+      }
+
+      final expectedStoreId = storeNameToId[entry.storeName];
+      final currentStoreId = p['store_id'] as int?;
+
+      // Para la comparación de categoría buscamos por nombre
+      final catRows = await db.rawQuery(
+        'SELECT id FROM categories WHERE lower(name) = ? LIMIT 1',
+        [entry.categoryName.toLowerCase()],
+      );
+      final expectedCategoryId = catRows.isNotEmpty
+          ? (catRows.first['id'] as num).toInt()
+          : null;
+
+      final storeWrong =
+          expectedStoreId != null && currentStoreId != expectedStoreId;
+      final categoryWrong =
+          expectedCategoryId != null &&
+          (p['category_id'] as int?) != expectedCategoryId;
+
+      if (storeWrong || categoryWrong) {
+        wouldCorrect++;
+        final msg = StringBuffer('⚠ "${p['name']}": ');
+        if (storeWrong) {
+          msg.write('tienda "${p['store_name']}" → "${entry.storeName}"; ');
+        }
+        if (categoryWrong) {
+          msg.write(
+            'categoría "${p['category_name']}" → "${entry.categoryName}"',
+          );
+        }
+        risks.add(msg.toString().trim());
+      } else {
+        correct++;
+      }
+    }
+
+    // Detectar duplicados por nombre (lower)
+    final dupRows = await db.rawQuery('''
+      SELECT name, COUNT(*) AS cnt
+      FROM products
+      GROUP BY lower(name)
+      HAVING COUNT(*) > 1
+      ORDER BY cnt DESC
+    ''');
+
+    return {
+      'correct': correct,
+      'corrected_products': wouldCorrect,
+      'out_of_catalog': outOfCatalog,
+      'duplicates_found': dupRows.length,
+      'duplicates': dupRows.map((d) => '${d['name']} (×${d['cnt']})').toList(),
+      'risks': risks,
+      'total_audited': products.length,
+    };
+  }
+
   static Future<void> _ensureColumn(
     DatabaseExecutor db, {
     required String table,
@@ -1157,12 +1377,66 @@ class DatabaseService {
 
   static Future<int> _ensureCategory(
     DatabaseExecutor db,
-    String? categoryName,
-  ) async {
+    String? categoryName, {
+    int? storeId,
+  }) async {
     final name = _cleanName(
       categoryName?.isNotEmpty == true ? categoryName! : 'Sin categoría',
     );
 
+    if (storeId != null) {
+      // Buscar categoría específica de esta tienda primero
+      final existingForStore = await db.rawQuery(
+        'SELECT id FROM categories WHERE name = ? AND store_id = ? LIMIT 1',
+        [name, storeId],
+      );
+      if (existingForStore.isNotEmpty) {
+        return (existingForStore.first['id'] as num).toInt();
+      }
+
+      // Buscar si ya existe con ese nombre (sin store_id o de otra tienda)
+      final existingGlobal = await db.rawQuery(
+        'SELECT id, store_id FROM categories WHERE name = ? LIMIT 1',
+        [name],
+      );
+
+      if (existingGlobal.isNotEmpty) {
+        final catId = (existingGlobal.first['id'] as num).toInt();
+        final existingStoreId = existingGlobal.first['store_id'];
+        // Si no tiene store_id asignado aún, asignarlo
+        if (existingStoreId == null) {
+          await db.rawUpdate(
+            'UPDATE categories SET store_id = ? WHERE id = ?',
+            [storeId, catId],
+          );
+        }
+        // Si ya pertenece a otra tienda, crear nueva entrada con nombre compuesto
+        // para no romper la restricción UNIQUE(name). Esto solo ocurre si dos
+        // tiendas comparten exactamente el mismo nombre de categoría.
+        else if (existingStoreId != storeId) {
+          final altName = '$name [$storeId]';
+          await db.rawInsert(
+            'INSERT OR IGNORE INTO categories (name, store_id) VALUES (?, ?)',
+            [altName, storeId],
+          );
+          final altRows = await db.rawQuery(
+            'SELECT id FROM categories WHERE name = ? AND store_id = ? LIMIT 1',
+            [altName, storeId],
+          );
+          return (altRows.first['id'] as num).toInt();
+        }
+        return catId;
+      }
+
+      // No existe: crear con store_id
+      final newId = await db.rawInsert(
+        'INSERT INTO categories (name, store_id) VALUES (?, ?)',
+        [name, storeId],
+      );
+      return newId;
+    }
+
+    // Modo legado sin contexto de tienda
     await db.rawInsert('INSERT OR IGNORE INTO categories (name) VALUES (?)', [
       name,
     ]);
@@ -2962,4 +3236,13 @@ class DatabaseService {
       return {};
     }
   }
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// Clase auxiliar interna para el catálogo de integridad
+// ────────────────────────────────────────────────────────────────────────────
+class _CatalogEntry {
+  const _CatalogEntry({required this.storeName, required this.categoryName});
+  final String storeName;
+  final String categoryName;
 }
