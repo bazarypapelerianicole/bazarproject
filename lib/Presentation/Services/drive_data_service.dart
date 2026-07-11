@@ -84,7 +84,7 @@ class DriveDataService {
   // ID fijo de la carpeta raíz "bazarypapeleria" en Drive.
   static final String _bazarFolderId = dotenv.env['BAZARFOLDERID']!;
   // ID fijo del backup más reciente: BazarNicole_Backup_20260615_2020
-  static final String _backupFolderId = dotenv.env['BACKUPFOLDERID']!;
+  //static final String _backupFolderId = dotenv.env['BACKUPFOLDERID']!;
   // API Key pública de Google — solo lectura en carpetas compartidas públicamente.
   static final String _apiKey = dotenv.env['GOOGLE_API_KEY']!;
 
