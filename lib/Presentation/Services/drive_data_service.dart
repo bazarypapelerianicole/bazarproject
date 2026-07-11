@@ -194,9 +194,9 @@ class DriveDataService {
   static Future<String> _publicFindLatestBackupFolder() async {
     final uri = _driveFilesUri({
       'q':
-          "'$_bazarFolderId' in parents "
-          "and mimeType='application/vnd.google-apps.folder' "
-          "and trashed=false "
+          "'$_bazarFolderId' in parents and trashed=false"
+          "and mimeType='application/vnd.google-apps.folder'"
+          "and trashed=false"
           "and name contains 'BazarNicole_Backup_'",
       'orderBy': 'createdTime desc',
       'pageSize': '1',
@@ -228,10 +228,21 @@ class DriveDataService {
 
   static Future<Map<String, dynamic>> _publicGet(Uri uri) async {
     final resp = await http.get(uri);
+
+    debugPrint("URL:");
+    debugPrint(uri.toString());
+
+    debugPrint("STATUS:");
+    debugPrint(resp.statusCode.toString());
+
+    debugPrint("BODY:");
+    debugPrint(resp.body);
+
     if (resp.statusCode != 200) {
-      throw Exception('Drive API error ${resp.statusCode}: ${resp.body}');
+      throw Exception(resp.body);
     }
-    return jsonDecode(resp.body) as Map<String, dynamic>;
+
+    return jsonDecode(resp.body);
   }
 
   /// Busca una subcarpeta por nombre usando API Key.
