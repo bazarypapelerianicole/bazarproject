@@ -27,12 +27,6 @@ class _WebCatalogViewState extends State<WebCatalogView>
 
   List<CatalogSection> get _sections => _driveData?.sections ?? [];
 
-  void _initTabController() {
-    _tabController?.dispose();
-    final count = _sections.isEmpty ? 1 : _sections.length;
-    _tabController = TabController(length: count, vsync: this);
-  }
-
   @override
   void initState() {
     super.initState();
@@ -57,14 +51,32 @@ class _WebCatalogViewState extends State<WebCatalogView>
     });
     try {
       final data = await DriveDataService.fetchPublic();
+
+      if (!mounted) return;
+
+      final controller = TabController(
+        length: data.sections.isEmpty ? 1 : data.sections.length,
+        vsync: this,
+      );
+
+      _tabController?.dispose();
+
+      setState(() {
+        _driveData = data;
+        _tabController = controller;
+      });
+    } catch (e, stack) {
+      debugPrint("=================================");
+      debugPrint("ERROR EN fetchPublic()");
+      debugPrint(e.toString());
+      debugPrint(stack.toString());
+      debugPrint("=================================");
+
       if (mounted) {
         setState(() {
-          _driveData = data;
-          _initTabController();
+          _driveError = e.toString();
         });
       }
-    } catch (e) {
-      if (mounted) setState(() => _driveError = e.toString());
     } finally {
       if (mounted) setState(() => _driveLoading = false);
     }
