@@ -129,7 +129,7 @@ class GoogleDriveBackupService {
           'BazarNicole_Backup_${now.year}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}_${now.hour.toString().padLeft(2, '0')}${now.minute.toString().padLeft(2, '0')}';
 
       // Carpeta destino fija en Drive: "bazarypapeleria"
-      const String bazarFolderId = '1mksspeR2VoZuSj92LIke0dxobma6U0Ke';
+      const String bazarFolderId = '10bKLs-XzG0G2H1tqLJ16A5FkT5JfI39M';
 
       final rootFolderId = await _createDriveFolder(
         driveApi,

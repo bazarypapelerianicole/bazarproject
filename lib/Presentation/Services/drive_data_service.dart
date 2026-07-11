@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:googleapis/drive/v3.dart' as drive;
 import 'package:http/http.dart' as http;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 /// Producto real proveniente del backup de Drive.
 class DriveProduct {
@@ -81,13 +82,11 @@ class _AuthClient extends http.BaseClient {
 ///         (archivos de imagen)
 class DriveDataService {
   // ID fijo de la carpeta raíz "bazarypapeleria" en Drive.
-  static const _bazarFolderId = '1mksspeR2VoZuSj92LIke0dxobma6U0Ke';
-
+  static final String _bazarFolderId = dotenv.env['BAZARFOLDERID']!;
   // ID fijo del backup más reciente: BazarNicole_Backup_20260615_2020
-  static const _backupFolderId = '14jkB_xNTPtFgNM4CdPhDMHorlAWHPEZE';
-
+  static final String _backupFolderId = dotenv.env['BACKUPFOLDERID']!;
   // API Key pública de Google — solo lectura en carpetas compartidas públicamente.
-  static const _apiKey = 'AIzaSyDlhgSJdJTO1plLjJOFM1g8dBQ8f0U_RUY';
+  static final String _apiKey = dotenv.env['GOOGLE_API_KEY']!;
 
   // URL base de Drive REST API v3
   static const _driveBase = 'https://www.googleapis.com/drive/v3';
@@ -139,7 +138,7 @@ class DriveDataService {
   static Future<CatalogDriveData> fetchPublic() async {
     try {
       // El backup folder es conocido y fijo — no necesita búsqueda dinámica.
-      const backupFolderId = _backupFolderId;
+      final backupFolderId = _backupFolderId;
 
       // 1. Localizar subcarpetas tablas_json e imagenes
       final jsonFolderId = await _publicFindSubfolder(
