@@ -138,7 +138,8 @@ class DriveDataService {
   static Future<CatalogDriveData> fetchPublic() async {
     try {
       // El backup folder es conocido y fijo — no necesita búsqueda dinámica.
-      final backupFolderId = _backupFolderId;
+      //final backupFolderId = _backupFolderId;
+      final backupFolderId = await _publicFindLatestBackupFolder();
 
       // 1. Localizar subcarpetas tablas_json e imagenes
       final jsonFolderId = await _publicFindSubfolder(
@@ -188,6 +189,33 @@ class DriveDataService {
       debugPrint('[DriveDataService.fetchPublic] error: $e');
       rethrow;
     }
+  }
+
+  static Future<String> _publicFindLatestBackupFolder() async {
+    final uri = _driveFilesUri({
+      'q':
+          "'$_bazarFolderId' in parents "
+          "and mimeType='application/vnd.google-apps.folder' "
+          "and trashed=false "
+          "and name contains 'BazarNicole_Backup_'",
+      'orderBy': 'createdTime desc',
+      'pageSize': '1',
+      'fields': 'files(id,name,createdTime)',
+    });
+
+    final data = await _publicGet(uri);
+
+    final files = (data['files'] as List?)?.cast<Map<String, dynamic>>();
+
+    if (files == null || files.isEmpty) {
+      throw Exception('No existe ningún backup.');
+    }
+
+    debugPrint(
+      'Backup encontrado: ${files.first['name']} (${files.first['id']})',
+    );
+
+    return files.first['id'] as String;
   }
 
   // ── Helpers públicos (API Key) ────────────────────────────────────────────
