@@ -5,6 +5,8 @@ import 'package:bazarnicole/Presentation/Services/database_service.dart';
 import 'package:bazarnicole/Presentation/Services/background_job_service.dart';
 import 'package:bazarnicole/Presentation/Services/database_maintenance_service.dart';
 import 'package:bazarnicole/Presentation/Utils/Colors.dart';
+import 'package:bazarnicole/Presentation/display/database_initializer_native.dart';
+import 'package:bazarnicole/Presentation/display/window_manager_initializer.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -62,7 +64,9 @@ Future<void> main() async {
       await windowManager.focus();
     }
   } // 🔧 INICIALIZACIÓN ESPECÍFICA POR PLATAFORMA
-  await _initializePlatformSpecific();
+  // Inicializadores por plataforma (nativa / web)
+  await initializeWindowManager();
+  await initializeDatabasePlatform();
 
   // 🗄️ INICIALIZAR BASE DE DATOS DE FORMA SEGURA
   await _initDatabaseSafely();
@@ -93,20 +97,6 @@ Future<void> main() async {
     runApp(MyApp(initialRoute: initialRoute));
   } catch (e) {
     runApp(MyApp(initialRoute: AppRoutes.login));
-  }
-}
-
-// 🚀 INICIALIZACIÓN ESPECÍFICA POR PLATAFORMA
-Future<void> _initializePlatformSpecific() async {
-  if (kIsWeb) {
-    return;
-  }
-
-  if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
-    sqfliteFfiInit();
-    databaseFactory = databaseFactoryFfi;
-  } else if (Platform.isIOS || Platform.isAndroid) {
-    // No hacer nada, usar el SQLite nativo de la plataforma
   }
 }
 

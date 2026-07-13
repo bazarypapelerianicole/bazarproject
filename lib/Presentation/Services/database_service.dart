@@ -362,14 +362,16 @@ class DatabaseService {
       onUpgrade: (db, oldVersion, newVersion) async =>
           _ensureBusinessSchema(db),
       onOpen: (db) async {
+        // PRAGMAs que DEVUELVEN un resultado
+        await db.rawQuery('PRAGMA journal_mode=WAL');
         // ── PRAGMAs de rendimiento enterprise (ejecutar en cada apertura) ──
-        await db.execute('PRAGMA journal_mode = WAL');
-        await db.execute('PRAGMA synchronous = NORMAL');
-        await db.execute('PRAGMA cache_size = -65536'); // 64 MB RAM cache
-        await db.execute('PRAGMA temp_store = MEMORY');
-        await db.execute('PRAGMA mmap_size = 536870912'); // 512 MB mmap
-        await db.execute('PRAGMA busy_timeout = 10000'); // 10 seg timeout
-        await db.execute('PRAGMA wal_autocheckpoint = 1000');
+
+        await db.rawQuery('PRAGMA synchronous=NORMAL');
+        await db.rawQuery('PRAGMA cache_size=-65536');
+        await db.rawQuery('PRAGMA temp_store=MEMORY');
+        await db.rawQuery('PRAGMA mmap_size=536870912');
+        await db.rawQuery('PRAGMA busy_timeout=10000');
+        await db.rawQuery('PRAGMA wal_autocheckpoint=1000');
         await db.execute('PRAGMA foreign_keys = ON');
         await _ensureBusinessSchema(db);
       },

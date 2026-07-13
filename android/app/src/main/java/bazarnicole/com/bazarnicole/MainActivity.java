@@ -1,4 +1,4 @@
-package bazarnicole.com.bazarnicole.bazarnicole;
+package bazarnicole.com.bazarnicole;
 
 import io.flutter.embedding.android.FlutterActivity;
 
