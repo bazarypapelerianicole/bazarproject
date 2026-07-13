@@ -21,7 +21,6 @@ import 'package:bazarnicole/Presentation/Controller/reports_controller.dart';
 import 'package:bazarnicole/Presentation/Context/providers.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:path/path.dart';
-import 'package:window_manager/window_manager.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
@@ -39,31 +38,6 @@ Future<void> main() async {
   await initializeDateFormatting('es', null);
 
   // 🖥️ CONFIGURAR TAMAÑO DE VENTANA PARA DESKTOP
-  if (!kIsWeb && (Platform.isWindows || Platform.isLinux || Platform.isMacOS)) {
-    await windowManager.ensureInitialized();
-
-    // Configuración básica que funciona en Windows
-    await windowManager.waitUntilReadyToShow(null, () async {
-      await windowManager.setSize(const Size(800, 600));
-      await windowManager.setMinimumSize(const Size(400, 300));
-      await windowManager.setResizable(true);
-      await windowManager.setMinimizable(true);
-      await windowManager.setMaximizable(true);
-      await windowManager.setClosable(true);
-      await windowManager.setTitle(
-        'Sistema de Gestión Comercial – Bazar & Tienda',
-      );
-      await windowManager.show();
-      await windowManager.focus();
-    });
-
-    // Para Windows, intentar restaurar si está minimizado
-    if (Platform.isWindows) {
-      await Future.delayed(const Duration(milliseconds: 200));
-      await windowManager.restore();
-      await windowManager.focus();
-    }
-  } // 🔧 INICIALIZACIÓN ESPECÍFICA POR PLATAFORMA
   // Inicializadores por plataforma (nativa / web)
   await initializeWindowManager();
   await initializeDatabasePlatform();

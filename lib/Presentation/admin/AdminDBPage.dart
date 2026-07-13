@@ -49,7 +49,7 @@ class _AdminDBPageState extends State<AdminDBPage>
     if (Platform.isAndroid || Platform.isIOS) {
       // Para móviles, usar el método estándar
       final path = await getDatabasesPath();
-      _actualDbPath = '$path/data.db';
+      _actualDbPath = '$path/bazarnicole.db';
     } else {
       // Para desktop, usar el DatabaseLocationService para obtener la ruta correcta
       _actualDbPath = await DatabaseLocationService.getDatabasePath();
@@ -287,11 +287,11 @@ class _AdminDBPageState extends State<AdminDBPage>
         if (Platform.isAndroid || Platform.isIOS) {
           // Para móviles, obtener la ruta real de la base de datos
           final String realDbPath = await getDatabasesPath();
-          final String fullDbPath = '$realDbPath/data.db';
+          final String fullDbPath = '$realDbPath/bazarnicole.db';
 
           // Hacer backup de la DB actual
           final String backupPath =
-              '$realDbPath/data.db.backup.${DateTime.now().millisecondsSinceEpoch}';
+              '$realDbPath/bazarnicole.db.backup.${DateTime.now().millisecondsSinceEpoch}';
 
           if (await File(fullDbPath).exists()) {
             await File(fullDbPath).copy(backupPath);
@@ -354,7 +354,7 @@ class _AdminDBPageState extends State<AdminDBPage>
       if (Platform.isAndroid || Platform.isIOS) {
         // Para móviles, obtener la ruta real de la base de datos
         final String dbDirectory = await getDatabasesPath();
-        realDbPath = '$dbDirectory/data.db';
+        realDbPath = '$dbDirectory/bazarnicole.db';
       } else {
         // Para desktop, usar la ruta obtenida del LocationService
         realDbPath = path;
@@ -370,7 +370,9 @@ class _AdminDBPageState extends State<AdminDBPage>
       }
 
       // Cargar el archivo desde assets
-      final ByteData data = await rootBundle.load('assets/database/data.db');
+      final ByteData data = await rootBundle.load(
+        'assets/database/bazarnicole.db',
+      );
 
       // Escribir los bytes al archivo de destino
       final List<int> bytes = data.buffer.asUint8List();
@@ -407,7 +409,7 @@ class _AdminDBPageState extends State<AdminDBPage>
   Future<void> _exportDB() async {
     try {
       final directory = await getApplicationDocumentsDirectory();
-      final newFile = File('${directory.path}/data.db');
+      final newFile = File('${directory.path}/bazarnicole.db');
 
       final path = await dbPath; // ✅ Await para obtener la ruta real
 
@@ -415,7 +417,7 @@ class _AdminDBPageState extends State<AdminDBPage>
       if (Platform.isAndroid || Platform.isIOS) {
         // Para móviles, obtener la ruta real de la base de datos
         final String dbDirectory = await getDatabasesPath();
-        sourceDbPath = '$dbDirectory/data.db';
+        sourceDbPath = '$dbDirectory/bazarnicole.db';
       } else {
         // Para desktop, usar la ruta obtenida del LocationService
         sourceDbPath = path;
@@ -442,7 +444,7 @@ class _AdminDBPageState extends State<AdminDBPage>
       String realPath;
       if (Platform.isAndroid || Platform.isIOS) {
         final String dbDirectory = await getDatabasesPath();
-        realPath = '$dbDirectory/data.db';
+        realPath = '$dbDirectory/bazarnicole.db';
       } else {
         realPath = await dbPath;
       }
@@ -1060,7 +1062,7 @@ class _AdminDBPageState extends State<AdminDBPage>
                               if (Platform.isAndroid || Platform.isIOS) {
                                 final String dbDirectory =
                                     await getDatabasesPath();
-                                realPath = '$dbDirectory/data.db';
+                                realPath = '$dbDirectory/bazarnicole.db';
                               } else {
                                 realPath =
                                     await dbPath; // ✅ Await para obtener la ruta real
@@ -1098,7 +1100,7 @@ class _AdminDBPageState extends State<AdminDBPage>
                         future: () async {
                           if (Platform.isAndroid || Platform.isIOS) {
                             final String dbDirectory = await getDatabasesPath();
-                            return '$dbDirectory/data.db';
+                            return '$dbDirectory/bazarnicole.db';
                           } else {
                             return await dbPath; // ✅ Await para obtener la ruta real
                           }
@@ -1247,7 +1249,7 @@ class _AdminDBPageState extends State<AdminDBPage>
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    'Restaurar desde la base de datos predefinida incluida en assets/database/data.db del proyecto.',
+                    'Restaurar desde la base de datos predefinida incluida en assets/database/bazarnicole.db del proyecto.',
                     style: TextStyle(
                       color: AppColors.mediumGray,
                       fontSize: 14,
