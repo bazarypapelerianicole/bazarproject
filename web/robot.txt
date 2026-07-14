@@ -1,7 +1,7 @@
 # robots.txt para Azaktilsa WebPlatform
 # Fecha de última actualización: 2025-08-25
-# Sitio en producción: https://ceciliamoreno044-droid.github.io/catalogobazartienda/
-# Sitemap oficial: https://ceciliamoreno044-droid.github.io/catalogobazartienda/sitemap.xml
+# Sitio en producción: https://bazarypapelerianicole.github.io/PlatformWeb/
+# Sitemap oficial: https://bazarypapelerianicole.github.io/PlatformWeb/sitemap.xml
 
 User-agent: *
 # Permitir todo el contenido público
@@ -21,4 +21,4 @@ Disallow: /CNAME
 Disallow: /*?*
 
 # Sitemap principal
-Sitemap: https://ceciliamoreno044-droid.github.io/catalogobazartienda/sitemap.xml
+Sitemap: https://bazarypapelerianicole.github.io/PlatformWeb/sitemap.xml
