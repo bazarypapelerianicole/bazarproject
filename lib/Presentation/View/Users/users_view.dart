@@ -24,7 +24,7 @@ class _UsersViewState extends State<UsersView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.lightGray,
+      backgroundColor: AppColors.lightWhite,
       appBar: AppBar(
         backgroundColor: AppColors.primaryLogo,
         foregroundColor: Colors.white,

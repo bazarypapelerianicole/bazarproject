@@ -303,38 +303,56 @@ class _NewPurchaseTab extends StatelessWidget {
                                     0;
 
                                 return FilledButton.tonal(
-                                  style: FilledButton.styleFrom(
-                                    padding: const EdgeInsets.all(16),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(18),
-                                    ),
-                                    backgroundColor: AppColors.threeColor,
-                                  ),
-                                  onPressed: () =>
-                                      controller.addToCart(product),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      const Icon(Icons.inventory_2_outlined),
-                                      const Spacer(),
-                                      Text(
-                                        product['name']?.toString() ?? '',
-                                        maxLines: 2,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: const TextStyle(
-                                          fontWeight: FontWeight.bold,
+                                      style: FilledButton.styleFrom(
+                                        padding: const EdgeInsets.all(16),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            18,
+                                          ),
                                         ),
+                                        backgroundColor: AppColors.threeColor,
                                       ),
-                                      const SizedBox(height: 6),
-                                      Text(
-                                        'Precio ref. \$${price.toStringAsFixed(2)}',
+                                      onPressed: () =>
+                                          controller.addToCart(product),
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          const Icon(
+                                            Icons.inventory_2_outlined,
+                                          ),
+                                          const Spacer(),
+                                          Text(
+                                            product['name']?.toString() ?? '',
+                                            maxLines: 2,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 6),
+                                          Text(
+                                            'Precio ref. \$${price.toStringAsFixed(2)}',
+                                          ),
+                                        ],
                                       ),
-                                    ],
-                                  ),
-                                ).animate()
-                                  .fadeIn(delay: Duration(milliseconds: 30 * (index % 20)), duration: 280.ms)
-                                  .scale(begin: const Offset(0.9, 0.9), end: const Offset(1, 1), delay: Duration(milliseconds: 30 * (index % 20)), duration: 280.ms, curve: Curves.easeOut);
+                                    )
+                                    .animate()
+                                    .fadeIn(
+                                      delay: Duration(
+                                        milliseconds: 30 * (index % 20),
+                                      ),
+                                      duration: 280.ms,
+                                    )
+                                    .scale(
+                                      begin: const Offset(0.9, 0.9),
+                                      end: const Offset(1, 1),
+                                      delay: Duration(
+                                        milliseconds: 30 * (index % 20),
+                                      ),
+                                      duration: 280.ms,
+                                      curve: Curves.easeOut,
+                                    );
                               },
                             ),
                     ),
