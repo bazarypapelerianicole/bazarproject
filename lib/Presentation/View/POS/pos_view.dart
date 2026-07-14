@@ -240,28 +240,33 @@ class _PosScaffoldState extends State<_PosScaffold> {
                       const SizedBox(height: 16),
                       // ── Local
                       if (posCtrl.stores.isNotEmpty)
-                        DropdownButtonFormField<int>(
-                          value: posCtrl.selectedStoreId,
-                          decoration: InputDecoration(
-                            labelText: 'Local',
-                            filled: true,
-                            fillColor: Colors.white,
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(25),
-                              borderSide: BorderSide.none,
+                        Material(
+                          elevation: 4,
+                          shadowColor: Colors.black26,
+                          borderRadius: BorderRadius.circular(25),
+                          child: DropdownButtonFormField<int>(
+                            value: posCtrl.selectedStoreId,
+                            decoration: InputDecoration(
+                              labelText: 'Local',
+                              filled: true,
+                              fillColor: Colors.white,
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(25),
+                                borderSide: BorderSide.none,
+                              ),
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 20,
+                                vertical: 15,
+                              ),
                             ),
-                            contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 20,
-                              vertical: 15,
-                            ),
+                            items: posCtrl.stores.map((store) {
+                              return DropdownMenuItem<int>(
+                                value: (store['id'] as num).toInt(),
+                                child: Text(store['name'].toString()),
+                              );
+                            }).toList(),
+                            onChanged: posCtrl.selectStore,
                           ),
-                          items: posCtrl.stores.map((store) {
-                            return DropdownMenuItem<int>(
-                              value: (store['id'] as num).toInt(),
-                              child: Text(store['name'].toString()),
-                            );
-                          }).toList(),
-                          onChanged: posCtrl.selectStore,
                         ),
                       const SizedBox(height: 16),
                       // ── Productos / Carrito

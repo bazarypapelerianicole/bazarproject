@@ -22,6 +22,7 @@ class AppColors {
 
   static const Color duns = Color(0xffeeeee4);
   static const Color pie = Color(0xffeab676);
+  static const Color gery100 = Color.fromRGBO(245, 245, 245, 1);
   static const Color lightBlue = Color(0xffb3d4f7);
   static const Color lightGreen = Color(0xffb3f7b3);
   static const Color lightRed = Color(0xffffb3b3);

@@ -241,7 +241,7 @@ class _PosClienteDetailPanelState extends State<PosClienteDetailPanel> {
   @override
   Widget build(BuildContext context) {
     return Card(
-      elevation: 0,
+      elevation: 2,
       color: Colors.grey.shade50,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(14),

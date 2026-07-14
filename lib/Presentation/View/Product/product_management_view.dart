@@ -666,83 +666,98 @@ class _ProductManagementViewState extends State<ProductManagementView> {
                           bottom: Radius.circular(20),
                         ),
                       ),
-                      child: Row(
+                      child: Column(
                         children: [
-                          TextButton.icon(
-                            style: TextButton.styleFrom(
-                              foregroundColor: Colors.red.shade600,
-                            ),
-                            onPressed: () async {
-                              final navigator = Navigator.of(ctx);
-                              final messenger = ScaffoldMessenger.of(context);
-                              final confirm = await showDialog<bool>(
-                                context: ctx,
-                                builder: (c) => AlertDialog(
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(16),
-                                  ),
-                                  title: const Text('Eliminar producto'),
-                                  content: Text(
-                                    '¿Seguro que deseas eliminar "${item['name']}"?\n\nSe eliminará el producto y todo su inventario. Esta acción no se puede deshacer.',
-                                  ),
-                                  actions: [
-                                    TextButton(
-                                      onPressed: () => Navigator.pop(c, false),
-                                      child: const Text('Cancelar'),
-                                    ),
-                                    FilledButton(
-                                      style: FilledButton.styleFrom(
-                                        backgroundColor: Colors.red.shade600,
-                                      ),
-                                      onPressed: () => Navigator.pop(c, true),
-                                      child: const Text('Eliminar'),
-                                    ),
-                                  ],
+                          Row(
+                            children: [
+                              TextButton.icon(
+                                style: TextButton.styleFrom(
+                                  foregroundColor: Colors.red.shade600,
                                 ),
-                              );
-                              if (confirm != true) return;
-                              try {
-                                await controller.deleteProduct(
-                                  (item['id'] as num).toInt(),
-                                );
-                                if (!mounted) return;
-                                navigator.pop();
-                                messenger.showSnackBar(
-                                  SnackBar(
-                                    content: const Text('Producto eliminado'),
-                                    backgroundColor: Colors.red.shade700,
-                                    behavior: SnackBarBehavior.floating,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                  ),
-                                );
-                              } catch (e) {
-                                if (!mounted) return;
-                                messenger.showSnackBar(
-                                  SnackBar(
-                                    content: Text(
-                                      e.toString().replaceFirst(
-                                        'Exception: ',
-                                        '',
+                                onPressed: () async {
+                                  final navigator = Navigator.of(ctx);
+                                  final messenger = ScaffoldMessenger.of(
+                                    context,
+                                  );
+                                  final confirm = await showDialog<bool>(
+                                    context: ctx,
+                                    builder: (c) => AlertDialog(
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(16),
                                       ),
+                                      title: const Text('Eliminar producto'),
+                                      content: Text(
+                                        '¿Seguro que deseas eliminar "${item['name']}"?\n\nSe eliminará el producto y todo su inventario. Esta acción no se puede deshacer.',
+                                      ),
+                                      actions: [
+                                        TextButton(
+                                          onPressed: () =>
+                                              Navigator.pop(c, false),
+                                          child: const Text('Cancelar'),
+                                        ),
+                                        FilledButton(
+                                          style: FilledButton.styleFrom(
+                                            backgroundColor:
+                                                Colors.red.shade600,
+                                          ),
+                                          onPressed: () =>
+                                              Navigator.pop(c, true),
+                                          child: const Text('Eliminar'),
+                                        ),
+                                      ],
                                     ),
-                                  ),
-                                );
-                              }
-                            },
-                            icon: const Icon(Icons.delete_outline, size: 18),
-                            label: const Text('Eliminar'),
+                                  );
+                                  if (confirm != true) return;
+                                  try {
+                                    await controller.deleteProduct(
+                                      (item['id'] as num).toInt(),
+                                    );
+                                    if (!mounted) return;
+                                    navigator.pop();
+                                    messenger.showSnackBar(
+                                      SnackBar(
+                                        content: const Text(
+                                          'Producto eliminado',
+                                        ),
+                                        backgroundColor: Colors.red.shade700,
+                                        behavior: SnackBarBehavior.floating,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            12,
+                                          ),
+                                        ),
+                                      ),
+                                    );
+                                  } catch (e) {
+                                    if (!mounted) return;
+                                    messenger.showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                          e.toString().replaceFirst(
+                                            'Exception: ',
+                                            '',
+                                          ),
+                                        ),
+                                      ),
+                                    );
+                                  }
+                                },
+                                icon: const Icon(
+                                  Icons.delete_outline,
+                                  size: 18,
+                                ),
+                                label: const Text('Eliminar'),
+                              ),
+                              const Spacer(),
+                              TextButton(
+                                onPressed: () => Navigator.pop(ctx),
+                                child: const Text(
+                                  'Cancelar',
+                                  style: TextStyle(color: AppColors.primaryRed),
+                                ),
+                              ),
+                            ],
                           ),
-                          const Spacer(),
-                          TextButton(
-                            onPressed: () => Navigator.pop(ctx),
-                            child: const Text(
-                              'Cancelar',
-                              style: TextStyle(color: AppColors.primaryRed),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
                           FilledButton.icon(
                             style: FilledButton.styleFrom(
                               backgroundColor: AppColors.blackOverlay,
@@ -1590,7 +1605,7 @@ class _ProductManagementViewState extends State<ProductManagementView> {
               ((p['stock_tienda'] as num?)?.toInt() ?? 0);
           return sum + cost * stock;
         });
-
+        final isMobile = MediaQuery.of(context).size.width < 600;
         return Scaffold(
           key: _scaffoldKey,
           backgroundColor: const Color(0xFFF6F7F9),
@@ -1602,76 +1617,83 @@ class _ProductManagementViewState extends State<ProductManagementView> {
                 SliverToBoxAdapter(
                   child: Container(
                     color: AppColors.blackOverlay,
-                    padding: const EdgeInsets.fromLTRB(24, 20, 24, 20),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        IconButton(
-                          onPressed: () => Navigator.pop(context),
-                          icon: Icon(
-                            Icons.arrow_back,
-                            color: AppColors.whiteOverlay,
-                            size: 28,
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: Column(
+                    padding: EdgeInsets.fromLTRB(
+                      isMobile ? 16 : 24,
+                      20,
+                      isMobile ? 16 : 24,
+                      20,
+                    ),
+                    child: isMobile
+                        ? _mobileHeader()
+                        : Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              const Text(
-                                'Productos',
-                                style: TextStyle(
-                                  fontSize: 26,
-                                  fontWeight: FontWeight.w800,
+                              IconButton(
+                                onPressed: () => Navigator.pop(context),
+                                icon: Icon(
+                                  Icons.arrow_back,
                                   color: AppColors.whiteOverlay,
-                                  letterSpacing: -0.5,
+                                  size: 28,
                                 ),
                               ),
-                              const SizedBox(height: 4),
-                              Text(
-                                'Gestiona inventario y stock entre todos los locales.',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: Colors.grey.shade500,
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text(
+                                      'Productos',
+                                      style: TextStyle(
+                                        fontSize: 26,
+                                        fontWeight: FontWeight.w800,
+                                        color: AppColors.whiteOverlay,
+                                        letterSpacing: -0.5,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      'Gestiona inventario y stock entre todos los locales.',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        color: Colors.grey.shade500,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+                              SizedBox(
+                                height: 48,
+                                child: FilledButton.icon(
+                                  style: FilledButton.styleFrom(
+                                    backgroundColor: AppColors.whiteOverlay,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(16),
+                                    ),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 20,
+                                    ),
+                                  ),
+                                  onPressed: () => _scaffoldKey.currentState
+                                      ?.openEndDrawer(),
+                                  icon: const Icon(
+                                    Icons.add,
+                                    size: 18,
+                                    color: AppColors.primaryLogo,
+                                  ),
+                                  label: const Text(
+                                    'Nuevo Producto',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                      color: AppColors.primaryLogo,
+                                    ),
+                                  ),
                                 ),
                               ),
                             ],
                           ),
-                        ),
-                        const SizedBox(width: 16),
-                        SizedBox(
-                          height: 48,
-                          child: FilledButton.icon(
-                            style: FilledButton.styleFrom(
-                              backgroundColor: AppColors.whiteOverlay,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 20,
-                              ),
-                            ),
-                            onPressed: () =>
-                                _scaffoldKey.currentState?.openEndDrawer(),
-                            icon: const Icon(
-                              Icons.add,
-                              size: 18,
-                              color: AppColors.primaryLogo,
-                            ),
-                            label: const Text(
-                              'Nuevo Producto',
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                                color: AppColors.primaryLogo,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
                   ),
                 ),
 
@@ -1828,7 +1850,7 @@ class _ProductManagementViewState extends State<ProductManagementView> {
                         crossAxisCount: _crossAxisCount(context),
                         crossAxisSpacing: 16,
                         mainAxisSpacing: 16,
-                        childAspectRatio: 0.62,
+                        mainAxisExtent: 450,
                       ),
                     ),
                   ),
@@ -1839,6 +1861,66 @@ class _ProductManagementViewState extends State<ProductManagementView> {
           ),
         );
       },
+    );
+  }
+
+  Widget _mobileHeader() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            IconButton(
+              onPressed: () => Navigator.pop(context),
+              icon: const Icon(Icons.arrow_back, color: AppColors.whiteOverlay),
+            ),
+
+            const SizedBox(width: 8),
+
+            const Expanded(
+              child: Text(
+                "Productos",
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.whiteOverlay,
+                ),
+              ),
+            ),
+          ],
+        ),
+
+        const SizedBox(height: 8),
+
+        Text(
+          "Gestiona inventario y stock entre todos los locales.",
+          style: TextStyle(fontSize: 13, color: Colors.grey.shade500),
+        ),
+
+        const SizedBox(height: 18),
+
+        SizedBox(
+          width: double.infinity,
+          height: 48,
+          child: FilledButton.icon(
+            style: FilledButton.styleFrom(
+              backgroundColor: AppColors.whiteOverlay,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+            ),
+            onPressed: () => _scaffoldKey.currentState?.openEndDrawer(),
+            icon: const Icon(Icons.add, color: AppColors.primaryLogo),
+            label: const Text(
+              "Nuevo Producto",
+              style: TextStyle(
+                color: AppColors.primaryLogo,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

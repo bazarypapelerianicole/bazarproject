@@ -72,12 +72,12 @@ class _PosProductSearchDialogState extends State<PosProductSearchDialog> {
       child: Focus(
         autofocus: true,
         child: Dialog(
-          backgroundColor: AppColors.whiteOverlay,
+          backgroundColor: AppColors.lightWhite,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
           child: SizedBox(
-            width: 580,
+
             height: 600,
             child: Column(
               children: [
@@ -109,11 +109,38 @@ class _PosProductSearchDialogState extends State<PosProductSearchDialog> {
                       TextField(
                         controller: _codeController,
                         autofocus: true,
-                        decoration: const InputDecoration(
+                        decoration: InputDecoration(
+                          filled: true,
+                          fillColor: AppColors.whiteOverlay,
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 16,
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            borderSide: const BorderSide(
+                              color: AppColors.whiteOverlay,
+                              width: 1.5,
+                            ),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            borderSide: const BorderSide(
+                              color: AppColors.whiteOverlay,
+                              width: 1.5,
+                            ),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            borderSide: const BorderSide(
+                              color: AppColors.whiteOverlay,
+                              width: 1.5,
+                            ),
+                          ),
                           hintText:
                               'Buscar por código, código auxiliar o código de barras...',
                           prefixIcon: Icon(Icons.search),
-                          border: UnderlineInputBorder(),
+
                           isDense: true,
                         ),
                         onChanged: _updateSearch,
@@ -124,10 +151,37 @@ class _PosProductSearchDialogState extends State<PosProductSearchDialog> {
                           Expanded(
                             child: TextField(
                               controller: _nameController,
-                              decoration: const InputDecoration(
+                              decoration: InputDecoration(
+                                filled: true,
+                                fillColor: AppColors.whiteOverlay,
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 20,
+                                  vertical: 16,
+                                ),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                  borderSide: const BorderSide(
+                                    color: AppColors.whiteOverlay,
+                                    width: 1.5,
+                                  ),
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                  borderSide: const BorderSide(
+                                    color: AppColors.whiteOverlay,
+                                    width: 1.5,
+                                  ),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                  borderSide: const BorderSide(
+                                    color: AppColors.whiteOverlay,
+                                    width: 1.5,
+                                  ),
+                                ),
                                 hintText: 'Buscar por Producto...',
                                 prefixIcon: Icon(Icons.search, size: 18),
-                                border: UnderlineInputBorder(),
+
                                 isDense: true,
                               ),
                               onChanged: _updateSearch,
@@ -137,10 +191,37 @@ class _PosProductSearchDialogState extends State<PosProductSearchDialog> {
                           Expanded(
                             child: TextField(
                               controller: _descController,
-                              decoration: const InputDecoration(
+                              decoration: InputDecoration(
+                                filled: true,
+                                fillColor: AppColors.whiteOverlay,
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 20,
+                                  vertical: 16,
+                                ),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                  borderSide: const BorderSide(
+                                    color: AppColors.whiteOverlay,
+                                    width: 1.5,
+                                  ),
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                  borderSide: const BorderSide(
+                                    color: AppColors.whiteOverlay,
+                                    width: 1.5,
+                                  ),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                  borderSide: const BorderSide(
+                                    color: AppColors.whiteOverlay,
+                                    width: 1.5,
+                                  ),
+                                ),
                                 hintText: 'Buscar por Descripción...',
                                 prefixIcon: Icon(Icons.search, size: 18),
-                                border: UnderlineInputBorder(),
+
                                 isDense: true,
                               ),
                               onChanged: _updateSearch,
@@ -438,7 +519,7 @@ class _PosProductSearchDialogState extends State<PosProductSearchDialog> {
                         ),
                         onPressed: _addSelected,
                         icon: const Icon(Icons.shopping_cart_outlined),
-                        label: const Text('Agregar Producto'),
+                        label: const Text('Agregar'),
                       ),
                     ],
                   ),

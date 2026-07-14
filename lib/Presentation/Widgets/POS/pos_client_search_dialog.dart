@@ -1,4 +1,5 @@
 import 'package:bazarnicole/Presentation/Controller/pos_controller.dart';
+import 'package:bazarnicole/Presentation/Utils/Colors.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -39,6 +40,7 @@ class _PosClientSearchDialogState extends State<PosClientSearchDialog> {
     final filtered = _filtered(controller.customers);
 
     return Dialog(
+      backgroundColor: AppColors.gery100,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: SizedBox(
         width: 520,
@@ -101,10 +103,43 @@ class _PosClientSearchDialogState extends State<PosClientSearchDialog> {
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
               child: TextField(
                 autofocus: true,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
+                  filled: true,
+                  fillColor: AppColors.whiteOverlay,
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 16,
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+
+                    borderSide: const BorderSide(
+                      color: Color.fromRGBO(238, 238, 238, 1),
+                      width: 1.5,
+                    ),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+
+                    borderSide: const BorderSide(
+                      color: Color.fromRGBO(238, 238, 238, 1),
+                      width: 1.5,
+                    ),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: const BorderSide(
+                      color: Color.fromRGBO(238, 238, 238, 1),
+                      width: 1.5,
+                    ),
+                  ),
                   hintText: 'Ingrese criterio de búsqueda',
-                  prefixIcon: Icon(Icons.search, size: 20),
-                  border: UnderlineInputBorder(),
+                  hintStyle: TextStyle(color: Colors.grey.shade400),
+                  prefixIcon: const Icon(
+                    Icons.search,
+                    size: 18,
+                    color: Colors.black38,
+                  ),
                   isDense: true,
                 ),
                 onChanged: (v) => setState(() => _query = v),
@@ -132,7 +167,7 @@ class _PosClientSearchDialogState extends State<PosClientSearchDialog> {
                         vertical: 14,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.grey.shade100,
+                        color: AppColors.whiteOverlay,
                         borderRadius: BorderRadius.circular(10),
                         border: Border.all(color: Colors.grey.shade200),
                       ),
@@ -230,10 +265,23 @@ class _PosClientSearchDialogState extends State<PosClientSearchDialog> {
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
               child: Align(
                 alignment: Alignment.centerRight,
-                child: TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  style: TextButton.styleFrom(foregroundColor: Colors.red),
-                  child: const Text('Cancelar'),
+                child: Material(
+                  color: AppColors.primaryRed,
+                  elevation: 4,
+                  shadowColor: Colors.black26,
+                  borderRadius: BorderRadius.circular(25),
+                  clipBehavior: Clip.antiAlias,
+                  child: TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: TextButton.styleFrom(
+                      foregroundColor: AppColors.whiteOverlay,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 12,
+                      ),
+                    ),
+                    child: const Text('Cancelar'),
+                  ),
                 ),
               ),
             ),

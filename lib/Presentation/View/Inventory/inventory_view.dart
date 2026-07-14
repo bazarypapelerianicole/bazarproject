@@ -412,7 +412,7 @@ class _InventoryViewState extends State<InventoryView> {
 
         // Tarjetas de estado
         SizedBox(
-          height: 165,
+          height: 185,
           child: ListView(
             scrollDirection: Axis.horizontal,
             children: [
@@ -699,39 +699,51 @@ class _InventoryViewState extends State<InventoryView> {
                 ),
                 const SizedBox(width: 10),
                 Expanded(
-                  child: TextField(
-                    controller: _codeController,
-                    decoration: InputDecoration(
-                      filled: true,
-                      fillColor: AppColors.whiteOverlay,
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 16,
-                      ),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(16),
-                        borderSide: BorderSide.none,
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(16),
-                        borderSide: BorderSide.none,
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(16),
-                        borderSide: const BorderSide(
-                          color: AppColors.whiteOverlay,
-                          width: 1.5,
+                  child: Material(
+                    elevation: 4,
+                    shadowColor: Colors.black26,
+                    borderRadius: BorderRadius.circular(25),
+                    clipBehavior: Clip.antiAlias,
+                    child: TextField(
+                      controller: _codeController,
+                      decoration: InputDecoration(
+                        filled: true,
+                        fillColor: AppColors.whiteOverlay,
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 16,
                         ),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: const BorderSide(
+                            color: AppColors.whiteOverlay,
+                            width: 1.5,
+                          ),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: const BorderSide(
+                            color: AppColors.whiteOverlay,
+                            width: 1.5,
+                          ),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: const BorderSide(
+                            color: AppColors.whiteOverlay,
+                            width: 1.5,
+                          ),
+                        ),
+                        hintText:
+                            'Buscar por código, código auxiliar o código de barras...',
+                        hintStyle: const TextStyle(
+                          fontSize: 13,
+                          color: Colors.black38,
+                        ),
+                        isDense: true,
                       ),
-                      hintText:
-                          'Buscar por código, código auxiliar o código de barras...',
-                      hintStyle: const TextStyle(
-                        fontSize: 13,
-                        color: Colors.black38,
-                      ),
-                      isDense: true,
+                      onChanged: (_) => setState(() {}),
                     ),
-                    onChanged: (_) => setState(() {}),
                   ),
                 ),
                 if (_codeController.text.isNotEmpty)
@@ -759,48 +771,54 @@ class _InventoryViewState extends State<InventoryView> {
           child: Column(
             children: [
               if (provider.stores.length > 1) ...[
-                DropdownButtonFormField<int>(
-                  dropdownColor: AppColors.whiteOverlay,
-                  value: provider.selectedStoreId,
-                  focusColor: AppColors.whiteOverlay,
-                  decoration: InputDecoration(
-                    filled: true,
-                    fillColor: AppColors.whiteOverlay,
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 20,
-                      vertical: 16,
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: BorderSide.none,
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: BorderSide.none,
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: const BorderSide(
-                        color: AppColors.whiteOverlay,
-                        width: 1.5,
-                      ),
-                    ),
+                Material(
+                  color: AppColors.primaryRed,
+                  elevation: 4,
+                  shadowColor: Colors.black26,
+                  borderRadius: BorderRadius.circular(25),
+                  clipBehavior: Clip.antiAlias,
+                  child: DropdownButtonFormField<int>(
+                    dropdownColor: AppColors.whiteOverlay,
+                    value: provider.selectedStoreId,
                     focusColor: AppColors.whiteOverlay,
-                    labelText: 'Local',
-
-                    isDense: true,
-                  ),
-                  items: provider.stores
-                      .map(
-                        (s) => DropdownMenuItem<int>(
-                          value: (s['id'] as num).toInt(),
-                          child: Text(s['name'] ?? 'Tienda'),
+                    decoration: InputDecoration(
+                      filled: true,
+                      fillColor: AppColors.whiteOverlay,
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 16,
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide.none,
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide.none,
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: const BorderSide(
+                          color: AppColors.whiteOverlay,
+                          width: 1.5,
                         ),
-                      )
-                      .toList(),
-                  onChanged: (id) {
-                    if (id != null) provider.selectStore(id);
-                  },
+                      ),
+                      focusColor: AppColors.whiteOverlay,
+                      hintText: 'Local',
+                      isDense: true,
+                    ),
+                    items: provider.stores
+                        .map(
+                          (s) => DropdownMenuItem<int>(
+                            value: (s['id'] as num).toInt(),
+                            child: Text(s['name'] ?? 'Tienda'),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: (id) {
+                      if (id != null) provider.selectStore(id);
+                    },
+                  ),
                 ),
                 const SizedBox(height: 8),
               ],
@@ -809,108 +827,120 @@ class _InventoryViewState extends State<InventoryView> {
                   Expanded(
                     child: Container(
                       color: AppColors.lightGray,
-                      child: TextField(
-                        controller: _searchController,
-                        decoration: InputDecoration(
-                          filled: true,
-                          fillColor: AppColors.whiteOverlay,
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 20,
-                            vertical: 16,
-                          ),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(16),
-                            borderSide: BorderSide.none,
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(16),
-                            borderSide: BorderSide.none,
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(16),
-                            borderSide: const BorderSide(
-                              color: AppColors.whiteOverlay,
-                              width: 1.5,
+                      child: Material(
+                        elevation: 4,
+                        shadowColor: Colors.black26,
+                        borderRadius: BorderRadius.circular(25),
+                        clipBehavior: Clip.antiAlias,
+                        child: TextField(
+                          controller: _searchController,
+                          decoration: InputDecoration(
+                            filled: true,
+                            fillColor: AppColors.whiteOverlay,
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 20,
+                              vertical: 16,
                             ),
-                          ),
-                          hintText: 'Buscar por Producto...',
-                          hintStyle: TextStyle(color: Colors.grey.shade400),
-                          prefixIcon: const Icon(
-                            Icons.search,
-                            size: 18,
-                            color: Colors.black38,
-                          ),
-                          isDense: true,
-                          suffixIcon: _searchController.text.isEmpty
-                              ? null
-                              : GestureDetector(
-                                  onTap: () {
-                                    _searchController.clear();
-                                    setState(() {});
-                                  },
-                                  child: const Icon(
-                                    Icons.clear,
-                                    size: 16,
-                                    color: Colors.black38,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(16),
+                              borderSide: BorderSide.none,
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(16),
+                              borderSide: BorderSide.none,
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(16),
+                              borderSide: const BorderSide(
+                                color: AppColors.whiteOverlay,
+                                width: 1.5,
+                              ),
+                            ),
+                            hintText: 'Buscar por Producto...',
+                            hintStyle: TextStyle(color: Colors.grey.shade400),
+                            prefixIcon: const Icon(
+                              Icons.search,
+                              size: 18,
+                              color: Colors.black38,
+                            ),
+                            isDense: true,
+                            suffixIcon: _searchController.text.isEmpty
+                                ? null
+                                : GestureDetector(
+                                    onTap: () {
+                                      _searchController.clear();
+                                      setState(() {});
+                                    },
+                                    child: const Icon(
+                                      Icons.clear,
+                                      size: 16,
+                                      color: Colors.black38,
+                                    ),
                                   ),
-                                ),
-                        ),
+                          ),
 
-                        onChanged: (_) => setState(() {}),
+                          onChanged: (_) => setState(() {}),
+                        ),
                       ),
                     ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: Container(
-                      color: AppColors.lightGray,
-                      child: TextField(
-                        controller: _descController,
-                        decoration: InputDecoration(
-                          filled: true,
-                          fillColor: AppColors.whiteOverlay,
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 20,
-                            vertical: 16,
-                          ),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(16),
-                            borderSide: BorderSide.none,
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(16),
-                            borderSide: BorderSide.none,
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(16),
-                            borderSide: const BorderSide(
-                              color: AppColors.whiteOverlay,
-                              width: 1.5,
+                    child: Material(
+                      elevation: 4,
+                      shadowColor: Colors.black26,
+                      borderRadius: BorderRadius.circular(25),
+                      clipBehavior: Clip.antiAlias,
+                      child: Container(
+                        color: AppColors.lightGray,
+                        child: TextField(
+                          controller: _descController,
+                          decoration: InputDecoration(
+                            filled: true,
+                            fillColor: AppColors.whiteOverlay,
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 20,
+                              vertical: 16,
                             ),
-                          ),
-                          hintStyle: TextStyle(color: Colors.grey.shade400),
-                          hintText: 'Buscar por Descripción...',
-                          prefixIcon: const Icon(
-                            Icons.search,
-                            size: 18,
-                            color: Colors.black38,
-                          ),
-                          isDense: true,
-                          suffixIcon: _descController.text.isEmpty
-                              ? null
-                              : GestureDetector(
-                                  onTap: () {
-                                    _descController.clear();
-                                    setState(() {});
-                                  },
-                                  child: const Icon(
-                                    Icons.clear,
-                                    size: 16,
-                                    color: Colors.black38,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(16),
+                              borderSide: BorderSide.none,
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(16),
+                              borderSide: BorderSide.none,
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(16),
+                              borderSide: const BorderSide(
+                                color: AppColors.whiteOverlay,
+                                width: 1.5,
+                              ),
+                            ),
+                            hintStyle: TextStyle(color: Colors.grey.shade400),
+                            hintText: 'Buscar por Descripción...',
+                            prefixIcon: const Icon(
+                              Icons.search,
+                              size: 18,
+                              color: Colors.black38,
+                            ),
+                            isDense: true,
+                            suffixIcon: _descController.text.isEmpty
+                                ? null
+                                : GestureDetector(
+                                    onTap: () {
+                                      _descController.clear();
+                                      setState(() {});
+                                    },
+                                    child: const Icon(
+                                      Icons.clear,
+                                      size: 16,
+                                      color: Colors.black38,
+                                    ),
                                   ),
-                                ),
+                          ),
+                          onChanged: (_) => setState(() {}),
                         ),
-                        onChanged: (_) => setState(() {}),
                       ),
                     ),
                   ),
@@ -1946,60 +1976,66 @@ class _StatusCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 145,
-      margin: const EdgeInsets.only(right: 10),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(14),
-        boxShadow: const [
-          BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(0, 2)),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(7),
-            decoration: BoxDecoration(
-              color: iconBgColor,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(icon, color: iconColor, size: 18),
-          ),
-          const Spacer(),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 26,
-              fontWeight: FontWeight.bold,
-              color: valueColor,
-            ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            label,
-            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            sublabel,
-            style: const TextStyle(fontSize: 10, color: Colors.black54),
-            maxLines: 2,
-          ),
-          if (badge != null) ...[
-            const SizedBox(height: 4),
-            Text(
-              '● $badge',
-              style: TextStyle(
-                fontSize: 9,
-                color: badgeColor,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
+    return Padding(
+      padding: const EdgeInsets.all(2.0),
+      child: Container(
+        width: 145,
+        margin: const EdgeInsets.only(right: 10),
+        padding: const EdgeInsets.all(13),
+        decoration: BoxDecoration(
+          color: bgColor,
+          borderRadius: BorderRadius.circular(14),
+          boxShadow: const [
+            BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(0, 2)),
           ],
-        ],
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(7),
+                decoration: BoxDecoration(
+                  color: iconBgColor,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(icon, color: iconColor, size: 18),
+              ),
+              const Spacer(),
+              Text(
+                value,
+                style: TextStyle(
+                  fontSize: 26,
+                  fontWeight: FontWeight.bold,
+                  color: valueColor,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                label,
+                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                sublabel,
+                style: const TextStyle(fontSize: 10, color: Colors.black54),
+                maxLines: 2,
+              ),
+              if (badge != null) ...[
+                const SizedBox(height: 4),
+                Text(
+                  '● $badge',
+                  style: TextStyle(
+                    fontSize: 9,
+                    color: badgeColor,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
       ),
     );
   }

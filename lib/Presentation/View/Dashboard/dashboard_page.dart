@@ -77,6 +77,7 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   PreferredSizeWidget _buildAppBar() {
+    final isMobile = MediaQuery.of(context).size.width < 600;
     return PreferredSize(
       preferredSize: const Size.fromHeight(kToolbarHeight),
       child: ClipRRect(
@@ -128,30 +129,54 @@ class _DashboardPageState extends State<DashboardPage> {
                   color: _hayCajaAbierta ? Colors.green : Colors.red,
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      _hayCajaAbierta ? Icons.check_circle : Icons.lock,
-                      color: Colors.white,
-                      size: 16,
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      _hayCajaAbierta ? 'Caja Abierta' : 'Caja Cerrada',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
+                child: isMobile
+                    ? _mobileapp()
+                    : Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            _hayCajaAbierta ? Icons.check_circle : Icons.lock,
+                            color: Colors.white,
+                            size: 16,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            _hayCajaAbierta ? 'Caja Abierta' : 'Caja Cerrada',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
-                  ],
-                ),
               ),
             ],
           ),
         ),
       ),
+    );
+  }
+
+  Widget _mobileapp() {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(
+          _hayCajaAbierta ? Icons.check_circle : Icons.lock,
+          color: Colors.white,
+          size: 16,
+        ),
+        const SizedBox(width: 4),
+        Text(
+          _hayCajaAbierta ? 'Caja Abierta' : 'Caja Cerrada',
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 10,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ],
     );
   }
 
