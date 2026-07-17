@@ -93,6 +93,7 @@ class DriveDataService {
 
   static final GoogleSignIn _googleSignIn = GoogleSignIn(
     scopes: [drive.DriveApi.driveReadonlyScope],
+    serverClientId: dotenv.env['ID_CLIENT'],
   );
 
   static GoogleSignInAccount? _account;

@@ -3,10 +3,12 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:googleapis/drive/v3.dart' as drive;
 import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'database_location_service.dart';
 
@@ -58,6 +60,7 @@ class _AuthenticatedClient extends http.BaseClient {
 class GoogleDriveBackupService {
   static final GoogleSignIn _googleSignIn = GoogleSignIn(
     scopes: [drive.DriveApi.driveScope],
+    serverClientId: dotenv.env['ID_CLIENT'],
   );
 
   static GoogleSignInAccount? _currentUser;
@@ -76,7 +79,17 @@ class GoogleDriveBackupService {
       }
       _currentUser = account;
       return account.email;
-    } catch (e) {
+    } on PlatformException catch (e, st) {
+      debugPrint(
+        'PlatformException en signIn: code=${e.code}, message=${e.message}, details=${e.details}',
+      );
+      debugPrint(st.toString());
+      throw Exception(
+        'Error al iniciar sesión: PlatformException(code=${e.code}, message=${e.message})',
+      );
+    } catch (e, st) {
+      debugPrint('Error en signIn: $e');
+      debugPrint(st.toString());
       throw Exception('Error al iniciar sesión: $e');
     }
   }
