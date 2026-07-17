@@ -58,12 +58,31 @@ class _AuthenticatedClient extends http.BaseClient {
 
 /// Servicio para exportar la base de datos a JSON y subir a Google Drive.
 class GoogleDriveBackupService {
+  static String get _serverClientId {
+    return dotenv.env['ID_CLIENT'] ?? dotenv.env['ID_CLIENT_ANDROID'] ?? '';
+  }
+
   static final GoogleSignIn _googleSignIn = GoogleSignIn(
     scopes: [drive.DriveApi.driveScope],
-    serverClientId: dotenv.env['ID_CLIENT'],
+    serverClientId: _serverClientId,
   );
 
   static GoogleSignInAccount? _currentUser;
+
+  static bool isPlatformSupported({bool? isWeb}) {
+    final web = isWeb ?? kIsWeb;
+    return web || Platform.isAndroid || Platform.isIOS;
+  }
+
+  static String _platformLabel() {
+    if (kIsWeb) return 'web';
+    if (Platform.isAndroid) return 'Android';
+    if (Platform.isIOS) return 'iOS';
+    if (Platform.isMacOS) return 'macOS';
+    if (Platform.isWindows) return 'Windows';
+    if (Platform.isLinux) return 'Linux';
+    return 'esta plataforma';
+  }
 
   /// Retorna si hay un usuario autenticado activamente.
   static bool get isSignedIn => _currentUser != null;
@@ -72,6 +91,12 @@ class GoogleDriveBackupService {
 
   /// Inicia sesión con Google y retorna el email del usuario.
   static Future<String> signIn() async {
+    if (!isPlatformSupported()) {
+      throw Exception(
+        'Google Drive backup no está disponible en ${_platformLabel()}. Usa Android, iOS o web para iniciar sesión.',
+      );
+    }
+
     try {
       final account = await _googleSignIn.signIn();
       if (account == null) {
@@ -102,9 +127,23 @@ class GoogleDriveBackupService {
 
   /// Intenta restaurar la sesión silenciosamente.
   static Future<String?> signInSilently() async {
-    final account = await _googleSignIn.signInSilently();
-    _currentUser = account;
-    return account?.email;
+    if (!isPlatformSupported()) {
+      debugPrint(
+        'Google Drive sign-in skipped: unsupported platform ${_platformLabel()}',
+      );
+      _currentUser = null;
+      return null;
+    }
+
+    try {
+      final account = await _googleSignIn.signInSilently();
+      _currentUser = account;
+      return account?.email;
+    } catch (e) {
+      debugPrint('Google Drive sign-in silently failed: $e');
+      _currentUser = null;
+      return null;
+    }
   }
 
   /// Realiza el backup completo: JSON de tablas + imágenes a Google Drive.

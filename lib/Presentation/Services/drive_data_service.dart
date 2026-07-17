@@ -1,6 +1,7 @@
 // ignore_for_file: file_names
 
 import 'dart:convert';
+import 'dart:io';
 import 'package:bazarnicole/Presentation/Template/catalog_template.dart';
 import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -83,6 +84,26 @@ class _AuthClient extends http.BaseClient {
 class DriveDataService {
   // ID fijo de la carpeta raíz "bazarypapeleria" en Drive.
   static final String _bazarFolderId = dotenv.env['BAZARFOLDERID']!;
+
+  static String get _serverClientId {
+    return dotenv.env['ID_CLIENT'] ?? dotenv.env['ID_CLIENT_ANDROID'] ?? '';
+  }
+
+  static bool isPlatformSupported({bool? isWeb}) {
+    final web = isWeb ?? kIsWeb;
+    return web || Platform.isAndroid || Platform.isIOS;
+  }
+
+  static String _platformLabel() {
+    if (kIsWeb) return 'web';
+    if (Platform.isAndroid) return 'Android';
+    if (Platform.isIOS) return 'iOS';
+    if (Platform.isMacOS) return 'macOS';
+    if (Platform.isWindows) return 'Windows';
+    if (Platform.isLinux) return 'Linux';
+    return 'esta plataforma';
+  }
+
   // ID fijo del backup más reciente: BazarNicole_Backup_20260615_2020
   //static final String _backupFolderId = dotenv.env['BACKUPFOLDERID']!;
   // API Key pública de Google — solo lectura en carpetas compartidas públicamente.
@@ -93,7 +114,7 @@ class DriveDataService {
 
   static final GoogleSignIn _googleSignIn = GoogleSignIn(
     scopes: [drive.DriveApi.driveReadonlyScope],
-    serverClientId: dotenv.env['ID_CLIENT'],
+    serverClientId: _serverClientId,
   );
 
   static GoogleSignInAccount? _account;
@@ -106,17 +127,32 @@ class DriveDataService {
   /// Intenta restaurar la sesión de Google silenciosamente.
   /// Retorna el email si logró autenticarse, null si no.
   static Future<String?> signInSilently() async {
+    if (!isPlatformSupported()) {
+      debugPrint(
+        '[DriveDataService] signInSilently skipped on unsupported platform ${_platformLabel()}',
+      );
+      _account = null;
+      return null;
+    }
+
     try {
       _account = await _googleSignIn.signInSilently();
       return _account?.email;
     } catch (e) {
       debugPrint('[DriveDataService] signInSilently error: $e');
+      _account = null;
       return null;
     }
   }
 
   /// Lanza el flujo explícito de inicio de sesión con Google.
   static Future<String> signIn() async {
+    if (!isPlatformSupported()) {
+      throw Exception(
+        'Google Drive backup no está disponible en ${_platformLabel()}. Usa Android, iOS o web para iniciar sesión.',
+      );
+    }
+
     final account = await _googleSignIn.signIn();
     if (account == null) throw Exception('Inicio de sesión cancelado');
     _account = account;

@@ -1,0 +1,47 @@
+{
+    "project_info": {
+        "project_id": "universal-talon-502117-h2",
+        "project_number": "676289285632",
+        "storage_bucket": "universal-talon-502117-h2.firebasestorage.app"
+    },
+    "client": [
+        {
+            "client_info": {
+                "mobilesdk_app_id": "1:676289285632:android:0d3f2f2f7d1d4f4e6d8b0b",
+                "android_client_info": {
+                    "package_name": "bazarnicole.com.bazarnicole"
+                }
+            },
+            "oauth_client": [
+                {
+                    "client_id": "676289285632-41vlcin56n3lv4hd8oiuvb7n56dm6vsm.apps.googleusercontent.com",
+                    "client_type": 1
+                },
+                {
+                    "client_id": "676289285632-36qeh5hnhvi1r9evhq07b2eirmlcop2g.apps.googleusercontent.com",
+                    "client_type": 1
+                }
+            ],
+            "api_key": [
+                {
+                    "current_key": "AIzaSyBLfVFy5ZelS2IYPDe8TB3a8bqrY5ZJ9Uw"
+                }
+            ],
+            "services": {
+                "analytics_service": {
+                    "status": 1
+                },
+                "appinvite_service": {
+                    "status": 1
+                },
+                "google_signin_service": {
+                    "status": 2
+                },
+                "ads_service": {
+                    "status": 0
+                }
+            }
+        }
+    ],
+    "configuration_version": "1"
+}
