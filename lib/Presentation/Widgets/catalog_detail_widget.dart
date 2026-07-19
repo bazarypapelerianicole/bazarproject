@@ -387,7 +387,7 @@ class _CategoryQr extends StatelessWidget {
   const _CategoryQr({required this.categoryName, required this.accentColor});
 
   String get _qrUrl =>
-      'https://ceciliamoreno044-droid.github.io/catalogobazartienda/#/catalog?categoria=${Uri.encodeComponent(categoryName)}';
+      'https://bazarypapelerianicole.github.io/PlatformWeb/#/catalog?categoria=${Uri.encodeComponent(categoryName)}';
 
   @override
   Widget build(BuildContext context) {
@@ -525,7 +525,7 @@ class _ProductRow extends StatelessWidget {
   const _ProductRow({required this.product, required this.color});
 
   String get _qrUrl =>
-      'https://ceciliamoreno044-droid.github.io/catalogobazartienda/#/catalog?sku=${Uri.encodeComponent(product.sku.isNotEmpty ? product.sku : product.id.toString())}';
+      'https://bazarypapelerianicole.github.io/PlatformWeb/#/catalog?sku=${Uri.encodeComponent(product.sku.isNotEmpty ? product.sku : product.id.toString())}';
 
   @override
   Widget build(BuildContext context) {
