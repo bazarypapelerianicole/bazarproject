@@ -20,6 +20,10 @@
                 {
                     "client_id": "676289285632-36qeh5hnhvi1r9evhq07b2eirmlcop2g.apps.googleusercontent.com",
                     "client_type": 1
+                },
+                {
+                    "client_id": "676289285632-9n7ve6voobra1oqecdhmhgqrf3u6jmr8.apps.googleusercontent.com",
+                    "client_type": 1
                 }
             ],
             "api_key": [
