@@ -5,13 +5,15 @@ import 'dart:io';
 import 'package:bazarnicole/Presentation/Utils/Colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:url_launcher/url_launcher.dart';
-import '../services/database_location_service.dart';
-import '../services/google_drive_backup_service.dart';
+import '../Services/database_config.dart';
+import '../Services/database_location_service.dart';
+import '../Services/google_drive_backup_service.dart';
 
 class AdminDBPage extends StatefulWidget {
   const AdminDBPage({super.key});
@@ -46,14 +48,7 @@ class _AdminDBPageState extends State<AdminDBPage>
   Future<String> get dbPath async {
     if (_actualDbPath != null) return _actualDbPath!;
 
-    if (Platform.isAndroid || Platform.isIOS) {
-      // Para móviles, usar el método estándar
-      final path = await getDatabasesPath();
-      _actualDbPath = '$path/bazarnicole.db';
-    } else {
-      // Para desktop, usar el DatabaseLocationService para obtener la ruta correcta
-      _actualDbPath = await DatabaseLocationService.getDatabasePath();
-    }
+    _actualDbPath = await DatabaseLocationService.getDatabasePath();
 
     return _actualDbPath!;
   }
@@ -70,6 +65,9 @@ class _AdminDBPageState extends State<AdminDBPage>
     setState(() => _isLoading = true);
     try {
       final path = await dbPath; // ✅ Await para obtener la ruta
+
+      debugPrint('Opening database:');
+      debugPrint(path);
 
       if (Platform.isAndroid || Platform.isIOS) {
         // Para Android e iOS usar SQLite nativo
@@ -159,7 +157,7 @@ class _AdminDBPageState extends State<AdminDBPage>
     try {
       await Clipboard.setData(ClipboardData(text: text));
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
+        ScaffoldMessenger.of(context as BuildContext).showSnackBar(
           SnackBar(
             content: Text(
               successMessage ?? '📋 Copiado al portapapeles',
@@ -176,7 +174,7 @@ class _AdminDBPageState extends State<AdminDBPage>
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
+        ScaffoldMessenger.of(context as BuildContext).showSnackBar(
           SnackBar(
             content: Text(
               '⛔ Error al copiar: $e',
@@ -287,11 +285,13 @@ class _AdminDBPageState extends State<AdminDBPage>
         if (Platform.isAndroid || Platform.isIOS) {
           // Para móviles, obtener la ruta real de la base de datos
           final String realDbPath = await getDatabasesPath();
-          final String fullDbPath = '$realDbPath/bazarnicole.db';
+          final String fullDbPath = join(realDbPath, DatabaseConfig.dbName);
 
           // Hacer backup de la DB actual
-          final String backupPath =
-              '$realDbPath/bazarnicole.db.backup.${DateTime.now().millisecondsSinceEpoch}';
+          final String backupPath = join(
+            realDbPath,
+            '${DatabaseConfig.dbName}.backup.${DateTime.now().millisecondsSinceEpoch}',
+          );
 
           if (await File(fullDbPath).exists()) {
             await File(fullDbPath).copy(backupPath);
@@ -350,15 +350,7 @@ class _AdminDBPageState extends State<AdminDBPage>
 
       final path = await dbPath; // ✅ Await para obtener la ruta real
 
-      String realDbPath;
-      if (Platform.isAndroid || Platform.isIOS) {
-        // Para móviles, obtener la ruta real de la base de datos
-        final String dbDirectory = await getDatabasesPath();
-        realDbPath = '$dbDirectory/bazarnicole.db';
-      } else {
-        // Para desktop, usar la ruta obtenida del LocationService
-        realDbPath = path;
-      }
+      final String realDbPath = path;
 
       // Hacer backup de la DB actual
       final String backupPath =
@@ -371,7 +363,7 @@ class _AdminDBPageState extends State<AdminDBPage>
 
       // Cargar el archivo desde assets
       final ByteData data = await rootBundle.load(
-        'assets/database/bazarnicole.db',
+        DatabaseConfig.assetDbPath,
       );
 
       // Escribir los bytes al archivo de destino
@@ -409,7 +401,7 @@ class _AdminDBPageState extends State<AdminDBPage>
   Future<void> _exportDB() async {
     try {
       final directory = await getApplicationDocumentsDirectory();
-      final newFile = File('${directory.path}/bazarnicole.db');
+      final newFile = File(join(directory.path, DatabaseConfig.dbName));
 
       final path = await dbPath; // ✅ Await para obtener la ruta real
 
@@ -417,7 +409,7 @@ class _AdminDBPageState extends State<AdminDBPage>
       if (Platform.isAndroid || Platform.isIOS) {
         // Para móviles, obtener la ruta real de la base de datos
         final String dbDirectory = await getDatabasesPath();
-        sourceDbPath = '$dbDirectory/bazarnicole.db';
+        sourceDbPath = join(dbDirectory, DatabaseConfig.dbName);
       } else {
         // Para desktop, usar la ruta obtenida del LocationService
         sourceDbPath = path;
@@ -444,7 +436,7 @@ class _AdminDBPageState extends State<AdminDBPage>
       String realPath;
       if (Platform.isAndroid || Platform.isIOS) {
         final String dbDirectory = await getDatabasesPath();
-        realPath = '$dbDirectory/bazarnicole.db';
+        realPath = join(dbDirectory, DatabaseConfig.dbName);
       } else {
         realPath = await dbPath;
       }
@@ -1058,15 +1050,7 @@ class _AdminDBPageState extends State<AdminDBPage>
                               size: 16,
                             ),
                             onPressed: () async {
-                              String realPath;
-                              if (Platform.isAndroid || Platform.isIOS) {
-                                final String dbDirectory =
-                                    await getDatabasesPath();
-                                realPath = '$dbDirectory/bazarnicole.db';
-                              } else {
-                                realPath =
-                                    await dbPath; // ✅ Await para obtener la ruta real
-                              }
+                              final String realPath = await dbPath;
                               _copyToClipboard(
                                 realPath,
                                 successMessage:
@@ -1098,12 +1082,7 @@ class _AdminDBPageState extends State<AdminDBPage>
                       ),
                       FutureBuilder<String>(
                         future: () async {
-                          if (Platform.isAndroid || Platform.isIOS) {
-                            final String dbDirectory = await getDatabasesPath();
-                            return '$dbDirectory/bazarnicole.db';
-                          } else {
-                            return await dbPath; // ✅ Await para obtener la ruta real
-                          }
+                          return await dbPath;
                         }(),
                         builder: (context, snapshot) {
                           return Text(
@@ -1249,7 +1228,7 @@ class _AdminDBPageState extends State<AdminDBPage>
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    'Restaurar desde la base de datos predefinida incluida en assets/database/bazarnicole.db del proyecto.',
+                    'Restaurar desde la base de datos predefinida incluida en ${DatabaseConfig.assetDbPath} del proyecto.',
                     style: TextStyle(
                       color: AppColors.mediumGray,
                       fontSize: 14,

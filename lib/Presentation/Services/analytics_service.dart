@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:isolate';
 
+import 'package:flutter/foundation.dart';
 import 'package:sqflite/sqflite.dart';
 
 import 'database_service.dart';
@@ -516,6 +517,9 @@ class AnalyticsService {
     required String toDate,
   }) async {
     // El Isolate abre su propia conexión de solo lectura
+    debugPrint('Opening database:');
+    debugPrint(dbPath);
+
     final db = await openDatabase(
       dbPath,
       readOnly: true,

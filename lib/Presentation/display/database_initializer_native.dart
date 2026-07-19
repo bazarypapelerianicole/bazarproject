@@ -3,7 +3,8 @@ import 'package:bazarnicole/Presentation/Services/database_service.dart';
 import 'package:flutter/services.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:flutter/foundation.dart';
-import '../services/database_location_service.dart';
+import '../Services/database_config.dart';
+import '../Services/database_location_service.dart';
 
 /// Inicialización de base de datos para entornos nativos (desktop, mobile).
 Future<void> initializeDatabasePlatform() async {
@@ -35,7 +36,7 @@ Future<void> _initMobileDatabase() async {
   final File dbFile = File(dbPath);
 
   if (!await dbFile.exists()) {
-    final ByteData data = await rootBundle.load('assets/database/data.db');
+    final ByteData data = await rootBundle.load(DatabaseConfig.assetDbPath);
     final List<int> bytes = data.buffer.asUint8List(
       data.offsetInBytes,
       data.lengthInBytes,
@@ -43,6 +44,9 @@ Future<void> _initMobileDatabase() async {
 
     await dbFile.writeAsBytes(bytes, flush: true);
   }
+
+  debugPrint('Opening database:');
+  debugPrint(dbPath);
 
   final db = await openDatabase(dbPath, version: 1, readOnly: false);
   await db.close();
@@ -55,6 +59,9 @@ Future<void> _safeFallbackDatabaseInit() async {
       final File dbFile = File(dbPath);
       if (await dbFile.exists()) {
         try {
+          debugPrint('Opening database:');
+          debugPrint(dbPath);
+
           final db = await openDatabase(dbPath, readOnly: true);
           await db.close();
           return;
@@ -63,13 +70,16 @@ Future<void> _safeFallbackDatabaseInit() async {
         }
       }
 
-      final ByteData data = await rootBundle.load('assets/database/data.db');
+      final ByteData data = await rootBundle.load(DatabaseConfig.assetDbPath);
       final List<int> bytes = data.buffer.asUint8List(
         data.offsetInBytes,
         data.lengthInBytes,
       );
 
       await dbFile.writeAsBytes(bytes, flush: true);
+      debugPrint('Opening database:');
+      debugPrint(dbPath);
+
       final db = await openDatabase(dbPath);
       await db.close();
     }

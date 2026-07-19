@@ -3,11 +3,12 @@ import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:flutter/foundation.dart';
+import 'database_config.dart';
 
 /// Servicio para detectar automáticamente la ubicación de la base de datos
 /// según el sistema operativo y el contexto de ejecución (desarrollo vs ejecutable)
 class DatabaseLocationService {
-  static const String _databaseName = 'assets/database/bazarnicole.db';
+  static const String _databaseName = DatabaseConfig.dbName;
 
   /// Obtener la ruta de la base de datos según el sistema operativo
   static Future<String> getDatabasePath() async {

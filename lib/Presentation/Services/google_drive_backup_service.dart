@@ -292,14 +292,13 @@ class GoogleDriveBackupService {
   // ─── Métodos privados ──────────────────────────────────────────────────────
 
   static Future<String> _getDbPath() async {
-    if (Platform.isAndroid || Platform.isIOS) {
-      final path = await getDatabasesPath();
-      return '$path/data.db';
-    }
     return DatabaseLocationService.getDatabasePath();
   }
 
   static Future<Database> _openDb(String path) async {
+    debugPrint('Opening database:');
+    debugPrint(path);
+
     if (Platform.isAndroid || Platform.isIOS) {
       return openDatabase(path, readOnly: true);
     }

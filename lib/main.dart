@@ -4,6 +4,8 @@ import 'package:bazarnicole/Presentation/Services/auth_service.dart';
 import 'package:bazarnicole/Presentation/Services/database_service.dart';
 import 'package:bazarnicole/Presentation/Services/background_job_service.dart';
 import 'package:bazarnicole/Presentation/Services/database_maintenance_service.dart';
+import 'package:bazarnicole/Presentation/Services/database_config.dart';
+import 'package:bazarnicole/Presentation/Services/database_location_service.dart';
 import 'package:bazarnicole/Presentation/Utils/Colors.dart';
 import 'package:bazarnicole/Presentation/display/database_initializer_native.dart';
 import 'package:bazarnicole/Presentation/display/window_manager_initializer.dart';
@@ -20,7 +22,6 @@ import 'package:bazarnicole/Presentation/Controller/purchases_controller.dart';
 import 'package:bazarnicole/Presentation/Controller/reports_controller.dart';
 import 'package:bazarnicole/Presentation/Context/providers.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
-import 'package:path/path.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
@@ -94,15 +95,13 @@ Future<void> _initDatabaseSafely() async {
 // 🔧 INICIALIZACIÓN DIRECTA PARA MÓVILES (EVITA SIGSEGV)
 Future<void> _initMobileDatabase() async {
   try {
-    final dbPath = join(await getDatabasesPath(), 'bazarnicole.db');
+    final dbPath = await DatabaseLocationService.getDatabasePath();
 
     final File dbFile = File(dbPath);
 
     // Verificar si existe
     if (!await dbFile.exists()) {
-      final ByteData data = await rootBundle.load(
-        'assets/database/bazarnicole.db',
-      );
+      final ByteData data = await rootBundle.load(DatabaseConfig.assetDbPath);
       final List<int> bytes = data.buffer.asUint8List(
         data.offsetInBytes,
         data.lengthInBytes,
@@ -112,6 +111,9 @@ Future<void> _initMobileDatabase() async {
     }
 
     // Verificar que se puede abrir
+    debugPrint('Opening database:');
+    debugPrint(dbPath);
+
     final db = await openDatabase(dbPath, version: 1, readOnly: false);
 
     // Cerrar inmediatamente - solo verificamos que funcione
@@ -128,12 +130,15 @@ Future<void> _safeFallbackDatabaseInit() async {
   try {
     // Solo para plataformas móviles, usar el método tradicional
     if (Platform.isIOS || Platform.isAndroid) {
-      final dbPath = join(await getDatabasesPath(), 'bazarnicole.db');
+      final dbPath = await DatabaseLocationService.getDatabasePath();
 
       // Verificar si existe y es válida
       final File dbFile = File(dbPath);
       if (await dbFile.exists()) {
         try {
+          debugPrint('Opening database:');
+          debugPrint(dbPath);
+
           final db = await openDatabase(
             dbPath,
             readOnly: true, // Solo lectura para verificación
@@ -147,9 +152,7 @@ Future<void> _safeFallbackDatabaseInit() async {
 
       // Copiar desde assets solo si es necesario
       try {
-        final ByteData data = await rootBundle.load(
-          'assets/database/bazarnicole.db',
-        );
+        final ByteData data = await rootBundle.load(DatabaseConfig.assetDbPath);
         final List<int> bytes = data.buffer.asUint8List(
           data.offsetInBytes,
           data.lengthInBytes,
@@ -158,6 +161,9 @@ Future<void> _safeFallbackDatabaseInit() async {
         await dbFile.writeAsBytes(bytes, flush: true);
 
         // Verificar que se puede abrir
+        debugPrint('Opening database:');
+        debugPrint(dbPath);
+
         final db = await openDatabase(dbPath);
         await db.close();
       } catch (e) {

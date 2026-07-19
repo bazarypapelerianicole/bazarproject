@@ -2,10 +2,12 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:math';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:sqflite/sqflite.dart';
 
 import 'backup_service.dart';
+import 'database_config.dart';
 import 'database_location_service.dart';
 
 /// Genera un ID de 20 caracteres aleatorios estilo Firebase (letras y números).
@@ -344,7 +346,7 @@ class DatabaseService {
 
     if (!await DatabaseLocationService.databaseExists(path)) {
       try {
-        final data = await rootBundle.load('assets/database/bazarnicole.db');
+        final data = await rootBundle.load(DatabaseConfig.assetDbPath);
         final bytes = data.buffer.asUint8List(
           data.offsetInBytes,
           data.lengthInBytes,
@@ -354,6 +356,9 @@ class DatabaseService {
         throw Exception('No se pudo copiar la base de datos desde assets: $e');
       }
     }
+
+    debugPrint('Opening database:');
+    debugPrint(path);
 
     final db = await openDatabase(
       path,
