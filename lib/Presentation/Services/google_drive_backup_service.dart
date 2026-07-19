@@ -71,7 +71,7 @@ class GoogleDriveBackupService {
 
   static bool isPlatformSupported({bool? isWeb}) {
     final web = isWeb ?? kIsWeb;
-    return web || Platform.isAndroid || Platform.isIOS;
+    return web || Platform.isAndroid || Platform.isIOS || Platform.isMacOS;
   }
 
   static String _platformLabel() {
@@ -93,7 +93,7 @@ class GoogleDriveBackupService {
   static Future<String> signIn() async {
     if (!isPlatformSupported()) {
       throw Exception(
-        'Google Drive backup no está disponible en ${_platformLabel()}. Usa Android, iOS o web para iniciar sesión.',
+        'Google Drive backup no está disponible en ${_platformLabel()}. Usa Android, iOS, macOS o web para iniciar sesión.',
       );
     }
 
