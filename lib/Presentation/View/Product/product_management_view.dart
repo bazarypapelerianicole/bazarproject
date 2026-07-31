@@ -118,6 +118,8 @@ class _ProductManagementViewState extends State<ProductManagementView> {
   final _searchController = TextEditingController();
   int? _selectedStoreId;
   List<String> _imagePaths = [];
+  bool _isUploadingImages = false;
+  bool _isSavingProduct = false;
   final _scaffoldKey = GlobalKey<ScaffoldState>();
 
   @override
@@ -149,17 +151,24 @@ class _ProductManagementViewState extends State<ProductManagementView> {
   // ════════════════ LÓGICA DE NEGOCIO — sin cambios ════════════════════════
 
   Future<void> _pickImages() async {
-    final controller = context.read<ProductManagementController>();
-    final picker = ImagePicker();
-    final picked = await picker.pickMultiImage(imageQuality: 80);
-    if (picked.isNotEmpty) {
+    try {
+      final controller = context.read<ProductManagementController>();
+      final picker = ImagePicker();
+      final picked = await picker.pickMultiImage(imageQuality: 80);
+      if (picked.isEmpty) return;
+      setState(() => _isUploadingImages = true);
       final uploaded = await controller.uploadImages(
         picked.map((image) => image.path).toList(),
       );
       if (!mounted) return;
-      setState(() {
-        _imagePaths = [..._imagePaths, ...uploaded];
-      });
+      setState(() => _imagePaths = [..._imagePaths, ...uploaded]);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
+      );
+    } finally {
+      if (mounted) setState(() => _isUploadingImages = false);
     }
   }
 
@@ -177,6 +186,7 @@ class _ProductManagementViewState extends State<ProductManagementView> {
       stocks[id] = int.tryParse(source) ?? 0;
     }
 
+    setState(() => _isSavingProduct = true);
     try {
       await controller.createProduct(
         name: _nameController.text,
@@ -246,6 +256,8 @@ class _ProductManagementViewState extends State<ProductManagementView> {
           ),
         ),
       );
+    } finally {
+      if (mounted) setState(() => _isSavingProduct = false);
     }
   }
 
@@ -288,6 +300,8 @@ class _ProductManagementViewState extends State<ProductManagementView> {
         item['images'] != null && (item['images'] as String).isNotEmpty
             ? (item['images'] as String).split(',')
             : [];
+    bool isUploadingEditImages = false;
+    bool isSavingEdit = false;
     final bazarStockController = TextEditingController(
       text: ((item['stock_bazar'] as num?)?.toInt() ?? 0).toString(),
     );
@@ -599,11 +613,16 @@ class _ProductManagementViewState extends State<ProductManagementView> {
                                               top: 4,
                                               right: 4,
                                               child: GestureDetector(
-                                                onTap: () => setDialogState(() {
-                                                  editImages = List.from(
-                                                    editImages,
-                                                  )..removeAt(entry.key);
-                                                }),
+                                                onTap: isUploadingEditImages ||
+                                                        isSavingEdit
+                                                    ? null
+                                                    : () => setDialogState(() {
+                                                          editImages =
+                                                              List.from(
+                                                            editImages,
+                                                          )..removeAt(
+                                                                  entry.key);
+                                                        }),
                                                 child: Container(
                                                   width: 20,
                                                   height: 20,
@@ -624,10 +643,23 @@ class _ProductManagementViewState extends State<ProductManagementView> {
                                       }),
                                       InkWell(
                                         onTap: () async {
-                                          final picker = ImagePicker();
-                                          final picked = await picker
-                                              .pickMultiImage(imageQuality: 80);
-                                          if (picked.isNotEmpty) {
+                                          if (isUploadingEditImages ||
+                                              isSavingEdit) {
+                                            return;
+                                          }
+                                          try {
+                                            final picker = ImagePicker();
+                                            final picked =
+                                                await picker.pickMultiImage(
+                                              imageQuality: 80,
+                                            );
+                                            if (picked.isEmpty) {
+                                              return;
+                                            }
+                                            setDialogState(
+                                              () =>
+                                                  isUploadingEditImages = true,
+                                            );
                                             final uploaded =
                                                 await controller.uploadImages(
                                               picked
@@ -636,12 +668,34 @@ class _ProductManagementViewState extends State<ProductManagementView> {
                                                   )
                                                   .toList(),
                                             );
+                                            if (!ctx.mounted) return;
                                             setDialogState(() {
                                               editImages = [
                                                 ...editImages,
                                                 ...uploaded,
                                               ];
                                             });
+                                          } catch (e) {
+                                            if (!mounted) return;
+                                            ScaffoldMessenger.of(
+                                              context,
+                                            ).showSnackBar(
+                                              SnackBar(
+                                                content: Text(
+                                                  e.toString().replaceFirst(
+                                                        'Exception: ',
+                                                        '',
+                                                      ),
+                                                ),
+                                              ),
+                                            );
+                                          } finally {
+                                            if (ctx.mounted) {
+                                              setDialogState(
+                                                () => isUploadingEditImages =
+                                                    false,
+                                              );
+                                            }
                                           }
                                         },
                                         borderRadius: BorderRadius.circular(10),
@@ -657,26 +711,49 @@ class _ProductManagementViewState extends State<ProductManagementView> {
                                               10,
                                             ),
                                           ),
-                                          child: Column(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.center,
-                                            children: [
-                                              Icon(
-                                                Icons
-                                                    .add_photo_alternate_outlined,
-                                                color: Colors.grey.shade400,
-                                                size: 24,
-                                              ),
-                                              const SizedBox(height: 4),
-                                              Text(
-                                                'Añadir',
-                                                style: TextStyle(
-                                                  fontSize: 10,
-                                                  color: Colors.grey.shade400,
+                                          child: isUploadingEditImages
+                                              ? const Column(
+                                                  mainAxisAlignment:
+                                                      MainAxisAlignment.center,
+                                                  children: [
+                                                    SizedBox(
+                                                      width: 22,
+                                                      height: 22,
+                                                      child:
+                                                          CircularProgressIndicator(
+                                                        strokeWidth: 2,
+                                                      ),
+                                                    ),
+                                                    SizedBox(height: 6),
+                                                    Text(
+                                                      'Subiendo',
+                                                      style: TextStyle(
+                                                          fontSize: 10),
+                                                    ),
+                                                  ],
+                                                )
+                                              : Column(
+                                                  mainAxisAlignment:
+                                                      MainAxisAlignment.center,
+                                                  children: [
+                                                    Icon(
+                                                      Icons
+                                                          .add_photo_alternate_outlined,
+                                                      color:
+                                                          Colors.grey.shade400,
+                                                      size: 24,
+                                                    ),
+                                                    const SizedBox(height: 4),
+                                                    Text(
+                                                      'Añadir',
+                                                      style: TextStyle(
+                                                        fontSize: 10,
+                                                        color: Colors
+                                                            .grey.shade400,
+                                                      ),
+                                                    ),
+                                                  ],
                                                 ),
-                                              ),
-                                            ],
-                                          ),
                                         ),
                                       ),
                                     ],
@@ -709,74 +786,81 @@ class _ProductManagementViewState extends State<ProductManagementView> {
                                 style: TextButton.styleFrom(
                                   foregroundColor: Colors.red.shade600,
                                 ),
-                                onPressed: () async {
-                                  final navigator = Navigator.of(ctx);
-                                  final messenger = ScaffoldMessenger.of(
-                                    context,
-                                  );
-                                  final confirm = await showDialog<bool>(
-                                    context: ctx,
-                                    builder: (c) => AlertDialog(
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(16),
-                                      ),
-                                      title: const Text('Eliminar producto'),
-                                      content: Text(
-                                        '¿Seguro que deseas eliminar "${item['name']}"?\n\nSe eliminará el producto y todo su inventario. Esta acción no se puede deshacer.',
-                                      ),
-                                      actions: [
-                                        TextButton(
-                                          onPressed: () =>
-                                              Navigator.pop(c, false),
-                                          child: const Text('Cancelar'),
-                                        ),
-                                        FilledButton(
-                                          style: FilledButton.styleFrom(
-                                            backgroundColor:
-                                                Colors.red.shade600,
-                                          ),
-                                          onPressed: () =>
-                                              Navigator.pop(c, true),
-                                          child: const Text('Eliminar'),
-                                        ),
-                                      ],
-                                    ),
-                                  );
-                                  if (confirm != true) return;
-                                  try {
-                                    await controller.deleteProduct(
-                                      (item['id'] as num).toInt(),
-                                    );
-                                    if (!mounted) return;
-                                    navigator.pop();
-                                    messenger.showSnackBar(
-                                      SnackBar(
-                                        content: const Text(
-                                          'Producto eliminado',
-                                        ),
-                                        backgroundColor: Colors.red.shade700,
-                                        behavior: SnackBarBehavior.floating,
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(
-                                            12,
-                                          ),
-                                        ),
-                                      ),
-                                    );
-                                  } catch (e) {
-                                    if (!mounted) return;
-                                    messenger.showSnackBar(
-                                      SnackBar(
-                                        content: Text(
-                                          e.toString().replaceFirst(
-                                                'Exception: ',
-                                                '',
+                                onPressed: isUploadingEditImages || isSavingEdit
+                                    ? null
+                                    : () async {
+                                        final navigator = Navigator.of(ctx);
+                                        final messenger = ScaffoldMessenger.of(
+                                          context,
+                                        );
+                                        final confirm = await showDialog<bool>(
+                                          context: ctx,
+                                          builder: (c) => AlertDialog(
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(16),
+                                            ),
+                                            title:
+                                                const Text('Eliminar producto'),
+                                            content: Text(
+                                              '¿Seguro que deseas eliminar "${item['name']}"?\n\nSe eliminará el producto y todo su inventario. Esta acción no se puede deshacer.',
+                                            ),
+                                            actions: [
+                                              TextButton(
+                                                onPressed: () =>
+                                                    Navigator.pop(c, false),
+                                                child: const Text('Cancelar'),
                                               ),
-                                        ),
-                                      ),
-                                    );
-                                  }
-                                },
+                                              FilledButton(
+                                                style: FilledButton.styleFrom(
+                                                  backgroundColor:
+                                                      Colors.red.shade600,
+                                                ),
+                                                onPressed: () =>
+                                                    Navigator.pop(c, true),
+                                                child: const Text('Eliminar'),
+                                              ),
+                                            ],
+                                          ),
+                                        );
+                                        if (confirm != true) return;
+                                        try {
+                                          await controller.deleteProduct(
+                                            (item['id'] as num).toInt(),
+                                          );
+                                          if (!mounted) return;
+                                          navigator.pop();
+                                          messenger.showSnackBar(
+                                            SnackBar(
+                                              content: const Text(
+                                                'Producto eliminado',
+                                              ),
+                                              backgroundColor:
+                                                  Colors.red.shade700,
+                                              behavior:
+                                                  SnackBarBehavior.floating,
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(
+                                                  12,
+                                                ),
+                                              ),
+                                            ),
+                                          );
+                                        } catch (e) {
+                                          if (!mounted) return;
+                                          messenger.showSnackBar(
+                                            SnackBar(
+                                              content: Text(
+                                                e.toString().replaceFirst(
+                                                      'Exception: ',
+                                                      '',
+                                                    ),
+                                              ),
+                                            ),
+                                          );
+                                        }
+                                      },
                                 icon: const Icon(
                                   Icons.delete_outline,
                                   size: 18,
@@ -804,83 +888,108 @@ class _ProductManagementViewState extends State<ProductManagementView> {
                                 vertical: 12,
                               ),
                             ),
-                            onPressed: () async {
-                              final navigator = Navigator.of(ctx);
-                              final messenger = ScaffoldMessenger.of(context);
-                              try {
-                                final productId = (item['id'] as num).toInt();
-                                final stockByStore = <int, int>{};
-                                for (final store in controller.stores) {
-                                  final sid = (store['id'] as num).toInt();
-                                  final storeName = store['name'] as String;
-                                  stockByStore[sid] = storeName == 'Bazar'
-                                      ? int.tryParse(
-                                            bazarStockController.text,
-                                          ) ??
-                                          0
-                                      : int.tryParse(
-                                            tiendaStockController.text,
-                                          ) ??
-                                          0;
-                                }
-                                await controller.updateProductWithStock(
-                                  productId: productId,
-                                  name: nameController.text,
-                                  category: categoryController.text,
-                                  sku: skuController.text,
-                                  auxCode: auxCodeController.text,
-                                  description: descriptionController.text,
-                                  tags: tagsController.text,
-                                  price: double.tryParse(
-                                        priceController.text.replaceAll(
-                                          ',',
-                                          '.',
-                                        ),
-                                      ) ??
-                                      0,
-                                  costPrice: double.tryParse(
-                                        costPriceController.text.replaceAll(
-                                          ',',
-                                          '.',
-                                        ),
-                                      ) ??
-                                      0,
-                                  ivaRate: double.tryParse(
-                                        ivaRateController.text.replaceAll(
-                                          ',',
-                                          '.',
-                                        ),
-                                      ) ??
-                                      0,
-                                  profitIva: double.tryParse(
-                                        profitIvaController.text.replaceAll(
-                                          ',',
-                                          '.',
-                                        ),
-                                      ) ??
-                                      0,
-                                  storeId: editStoreId,
-                                  images: editImages,
-                                  stockByStore: stockByStore,
-                                );
-                                if (!mounted) return;
-                                navigator.pop();
-                              } catch (e) {
-                                if (!mounted) return;
-                                messenger.showSnackBar(
-                                  SnackBar(
-                                    content: Text(
-                                      e.toString().replaceFirst(
-                                            'Exception: ',
-                                            '',
+                            onPressed: isUploadingEditImages || isSavingEdit
+                                ? null
+                                : () async {
+                                    final navigator = Navigator.of(ctx);
+                                    final messenger =
+                                        ScaffoldMessenger.of(context);
+                                    setDialogState(() => isSavingEdit = true);
+                                    try {
+                                      final productId =
+                                          (item['id'] as num).toInt();
+                                      final stockByStore = <int, int>{};
+                                      for (final store in controller.stores) {
+                                        final sid =
+                                            (store['id'] as num).toInt();
+                                        final storeName =
+                                            store['name'] as String;
+                                        stockByStore[sid] = storeName == 'Bazar'
+                                            ? int.tryParse(
+                                                  bazarStockController.text,
+                                                ) ??
+                                                0
+                                            : int.tryParse(
+                                                  tiendaStockController.text,
+                                                ) ??
+                                                0;
+                                      }
+                                      await controller.updateProductWithStock(
+                                        productId: productId,
+                                        name: nameController.text,
+                                        category: categoryController.text,
+                                        sku: skuController.text,
+                                        auxCode: auxCodeController.text,
+                                        description: descriptionController.text,
+                                        tags: tagsController.text,
+                                        price: double.tryParse(
+                                              priceController.text.replaceAll(
+                                                ',',
+                                                '.',
+                                              ),
+                                            ) ??
+                                            0,
+                                        costPrice: double.tryParse(
+                                              costPriceController.text
+                                                  .replaceAll(
+                                                ',',
+                                                '.',
+                                              ),
+                                            ) ??
+                                            0,
+                                        ivaRate: double.tryParse(
+                                              ivaRateController.text.replaceAll(
+                                                ',',
+                                                '.',
+                                              ),
+                                            ) ??
+                                            0,
+                                        profitIva: double.tryParse(
+                                              profitIvaController.text
+                                                  .replaceAll(
+                                                ',',
+                                                '.',
+                                              ),
+                                            ) ??
+                                            0,
+                                        storeId: editStoreId,
+                                        images: editImages,
+                                        stockByStore: stockByStore,
+                                      );
+                                      if (!mounted) return;
+                                      navigator.pop();
+                                    } catch (e) {
+                                      if (!mounted) return;
+                                      messenger.showSnackBar(
+                                        SnackBar(
+                                          content: Text(
+                                            e.toString().replaceFirst(
+                                                  'Exception: ',
+                                                  '',
+                                                ),
                                           ),
+                                        ),
+                                      );
+                                    } finally {
+                                      if (ctx.mounted) {
+                                        setDialogState(
+                                            () => isSavingEdit = false);
+                                      }
+                                    }
+                                  },
+                            icon: isSavingEdit
+                                ? const SizedBox(
+                                    width: 16,
+                                    height: 16,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: Colors.white,
                                     ),
-                                  ),
-                                );
-                              }
-                            },
-                            icon: const Icon(Icons.check, size: 16),
-                            label: const Text('Guardar cambios'),
+                                  )
+                                : const Icon(Icons.check, size: 16),
+                            label: Text(
+                              isSavingEdit ? 'Guardando...' : 'Guardar cambios',
+                            ),
                           ),
                         ],
                       ),
@@ -1186,10 +1295,14 @@ class _ProductManagementViewState extends State<ProductManagementView> {
                                       top: 4,
                                       right: 4,
                                       child: GestureDetector(
-                                        onTap: () => setState(() {
-                                          _imagePaths = List.from(_imagePaths)
-                                            ..removeAt(entry.key);
-                                        }),
+                                        onTap: _isUploadingImages ||
+                                                _isSavingProduct
+                                            ? null
+                                            : () => setState(() {
+                                                  _imagePaths = List.from(
+                                                    _imagePaths,
+                                                  )..removeAt(entry.key);
+                                                }),
                                         child: Container(
                                           width: 20,
                                           height: 20,
@@ -1209,7 +1322,9 @@ class _ProductManagementViewState extends State<ProductManagementView> {
                                 );
                               }),
                               InkWell(
-                                onTap: _pickImages,
+                                onTap: _isUploadingImages || _isSavingProduct
+                                    ? null
+                                    : _pickImages,
                                 borderRadius: BorderRadius.circular(10),
                                 child: Container(
                                   width: 84,
@@ -1221,24 +1336,45 @@ class _ProductManagementViewState extends State<ProductManagementView> {
                                     ),
                                     borderRadius: BorderRadius.circular(10),
                                   ),
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Icon(
-                                        Icons.add_photo_alternate_outlined,
-                                        color: Colors.grey.shade400,
-                                        size: 24,
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        'Añadir',
-                                        style: TextStyle(
-                                          fontSize: 10,
-                                          color: Colors.grey.shade400,
+                                  child: _isUploadingImages
+                                      ? const Column(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          children: [
+                                            SizedBox(
+                                              width: 24,
+                                              height: 24,
+                                              child: CircularProgressIndicator(
+                                                strokeWidth: 2,
+                                              ),
+                                            ),
+                                            SizedBox(height: 6),
+                                            Text(
+                                              'Subiendo',
+                                              style: TextStyle(fontSize: 10),
+                                            ),
+                                          ],
+                                        )
+                                      : Column(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          children: [
+                                            Icon(
+                                              Icons
+                                                  .add_photo_alternate_outlined,
+                                              color: Colors.grey.shade400,
+                                              size: 24,
+                                            ),
+                                            const SizedBox(height: 4),
+                                            Text(
+                                              'Añadir',
+                                              style: TextStyle(
+                                                fontSize: 10,
+                                                color: Colors.grey.shade400,
+                                              ),
+                                            ),
+                                          ],
                                         ),
-                                      ),
-                                    ],
-                                  ),
                                 ),
                               ),
                             ],
@@ -1273,8 +1409,12 @@ class _ProductManagementViewState extends State<ProductManagementView> {
                     borderRadius: BorderRadius.circular(14),
                   ),
                 ),
-                onPressed: controller.isLoading ? null : _saveProduct,
-                icon: controller.isLoading
+                onPressed: controller.isLoading ||
+                        _isSavingProduct ||
+                        _isUploadingImages
+                    ? null
+                    : _saveProduct,
+                icon: controller.isLoading || _isSavingProduct
                     ? const SizedBox(
                         width: 18,
                         height: 18,
@@ -1285,7 +1425,11 @@ class _ProductManagementViewState extends State<ProductManagementView> {
                       )
                     : const Icon(Icons.check_circle_outline, size: 18),
                 label: Text(
-                  controller.isLoading ? 'Guardando...' : 'Guardar producto',
+                  _isUploadingImages
+                      ? 'Subiendo imágenes...'
+                      : (controller.isLoading || _isSavingProduct)
+                          ? 'Guardando...'
+                          : 'Guardar producto',
                   style: const TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w600,

@@ -68,19 +68,16 @@ class _AuthClient extends http.BaseClient {
   }
 }
 
-/// Servicio para leer datos del catálogo desde el backup en Google Drive.
+/// Servicio para leer datos del catálogo desde Google Drive.
 ///
 /// Estructura esperada en Drive:
 ///   bazarypapeleria/
-///     BazarNicole_Backup_YYYYMMDD_HHMM/
-///       tablas_json/
-///         products.json
-///         categories.json
-///         inventory.json
-///         stores.json
-///         ...
-///       imagenes/
-///         (archivos de imagen)
+///     Backup/
+///       productos.json
+///       categories.json
+///       stores.json
+///     Imagenes/
+///       (archivos de imagen)
 class DriveDataService {
   // ID fijo de la carpeta raíz "bazarypapeleria" en Drive.
   static final String _bazarFolderId = dotenv.env['BAZARFOLDERID']!;
@@ -174,23 +171,17 @@ class DriveDataService {
   /// "Cualquier persona con el enlace puede ver".
   static Future<CatalogDriveData> fetchPublic() async {
     try {
-      // El backup folder es conocido y fijo — no necesita búsqueda dinámica.
-      //final backupFolderId = _backupFolderId;
-      final backupFolderId = await _publicFindLatestBackupFolder();
-
-      // 1. Localizar subcarpetas tablas_json e imagenes
-      final jsonFolderId = await _publicFindSubfolder(
-        backupFolderId,
-        'tablas_json',
-      );
+      // JSON e imágenes viven en carpetas hermanas permanentes. No se busca
+      // Backup/imagenes: cada fileId de producto apunta a Imagenes directamente.
+      final jsonFolderId = await _publicFindSubfolder(_bazarFolderId, 'Backup');
       final imagesFolderId = await _publicFindSubfolder(
-        backupFolderId,
-        'imagenes',
+        _bazarFolderId,
+        'Imagenes',
       );
 
       // 2. Descargar JSON en paralelo
       final results = await Future.wait([
-        _publicDownloadJson(jsonFolderId, 'products.json'),
+        _publicDownloadJson(jsonFolderId, 'productos.json'),
         _publicDownloadJson(jsonFolderId, 'categories.json'),
         _publicDownloadJson(jsonFolderId, 'stores.json'),
       ]);
@@ -226,33 +217,6 @@ class DriveDataService {
       debugPrint('[DriveDataService.fetchPublic] error: $e');
       rethrow;
     }
-  }
-
-  static Future<String> _publicFindLatestBackupFolder() async {
-    final uri = _driveFilesUri({
-      'q':
-          "'$_bazarFolderId' in parents and trashed=false"
-          "and mimeType='application/vnd.google-apps.folder'"
-          "and trashed=false"
-          "and name contains 'BazarNicole_Backup_'",
-      'orderBy': 'createdTime desc',
-      'pageSize': '1',
-      'fields': 'files(id,name,createdTime)',
-    });
-
-    final data = await _publicGet(uri);
-
-    final files = (data['files'] as List?)?.cast<Map<String, dynamic>>();
-
-    if (files == null || files.isEmpty) {
-      throw Exception('No existe ningún backup.');
-    }
-
-    debugPrint(
-      'Backup encontrado: ${files.first['name']} (${files.first['id']})',
-    );
-
-    return files.first['id'] as String;
   }
 
   // ── Helpers públicos (API Key) ────────────────────────────────────────────
@@ -392,24 +356,21 @@ class DriveDataService {
     final driveApi = drive.DriveApi(client);
 
     try {
-      // 1. Encontrar la carpeta de backup más reciente
-      final backupFolderId = await _findLatestBackupFolder(driveApi);
-
-      // 2. Localizar subcarpeta de JSONs
+      // JSON e imágenes son carpetas hermanas permanentes bajo la raíz.
       final jsonFolderId = await _findSubfolder(
         driveApi,
-        backupFolderId,
-        'tablas_json',
+        _bazarFolderId,
+        'Backup',
       );
       final imagesFolderId = await _findSubfolder(
         driveApi,
-        backupFolderId,
-        'imagenes',
+        _bazarFolderId,
+        'Imagenes',
       );
 
       // 3. Descargar solo products.json y categories.json
       final results = await Future.wait([
-        _downloadJson(driveApi, jsonFolderId, 'products.json'),
+        _downloadJson(driveApi, jsonFolderId, 'productos.json'),
         _downloadJson(driveApi, jsonFolderId, 'categories.json'),
         _downloadJson(driveApi, jsonFolderId, 'stores.json'),
       ]);

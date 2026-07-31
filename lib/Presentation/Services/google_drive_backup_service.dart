@@ -135,18 +135,24 @@ class GoogleDriveBackupService {
       debugPrint(
         'Google Drive sign-in skipped: unsupported platform ${_platformLabel()}',
       );
-      _currentUser = null;
-      return null;
+      return _currentUser?.email;
     }
 
+    // AdminDBPage inicia esta restauración de forma asíncrona. No debe borrar
+    // una sesión que el usuario haya iniciado manualmente mientras la llamada
+    // silenciosa seguía pendiente; esa misma sesión es la que reutiliza el
+    // módulo de productos.
+    final activeUser = _currentUser;
     try {
       final account = await _googleSignIn.signInSilently();
-      _currentUser = account;
-      return account?.email;
+      if (account != null) {
+        _currentUser = account;
+        return account.email;
+      }
+      return activeUser?.email;
     } catch (e) {
       debugPrint('Google Drive sign-in silently failed: $e');
-      _currentUser = null;
-      return null;
+      return activeUser?.email;
     }
   }
 
@@ -154,28 +160,48 @@ class GoogleDriveBackupService {
   static String publicImageUrl(String fileId) =>
       'https://drive.google.com/uc?export=view&id=$fileId';
 
+  /// Obtiene la misma cuenta usada por el backup.
+  ///
+  /// Si la app fue recreada, `_currentUser` se pierde aunque Google conserve
+  /// la autorización. Primero se restaura sin interfaz y, solo si el SDK no
+  /// entrega la cuenta, se relanza su flujo oficial para recuperar esa sesión.
+  static Future<GoogleSignInAccount> _activeAccount() async {
+    final current = _currentUser;
+    if (current != null) return current;
+
+    await signInSilently();
+    final restored = _currentUser;
+    if (restored != null) return restored;
+
+    await signIn();
+    final signedIn = _currentUser;
+    if (signedIn == null) {
+      throw Exception('No fue posible recuperar la sesión de Google Drive.');
+    }
+    return signedIn;
+  }
+
   /// Sube una imagen elegida por el usuario y devuelve su `fileId`.
   ///
   /// El archivo se comparte como lectura pública porque el catálogo web se
   /// carga sin una sesión de Google. SQLite debe guardar únicamente el ID.
   static Future<String> uploadProductImage(String localPath) async {
-    if (_currentUser == null) {
-      await signInSilently();
-    }
-    if (_currentUser == null) {
-      throw Exception(
-        'Inicia sesión con Google antes de seleccionar imágenes.',
-      );
-    }
+    final account = await _activeAccount();
 
     final image = File(localPath);
     if (!await image.exists()) {
       throw Exception('La imagen seleccionada ya no está disponible.');
     }
 
-    final auth = await _currentUser!.authentication;
+    final auth = await account.authentication;
+    final accessToken = auth.accessToken;
+    if (accessToken == null || accessToken.isEmpty) {
+      throw Exception(
+        'No se obtuvo un token válido de Google. Vuelve a iniciar sesión.',
+      );
+    }
     final client = _AuthenticatedClient(http.Client(), {
-      'Authorization': 'Bearer ${auth.accessToken}',
+      'Authorization': 'Bearer $accessToken',
     });
     final api = drive.DriveApi(client);
     try {
@@ -212,10 +238,16 @@ class GoogleDriveBackupService {
 
   /// Elimina una imagen que ya no pertenece a ningún producto.
   static Future<void> deleteProductImage(String fileId) async {
-    if (fileId.isEmpty || _currentUser == null) return;
-    final auth = await _currentUser!.authentication;
+    final account = _currentUser;
+    if (fileId.isEmpty || account == null) return;
+    final auth = await account.authentication;
+    final accessToken = auth.accessToken;
+    if (accessToken == null || accessToken.isEmpty) {
+      debugPrint('No se pudo eliminar $fileId: token de Google no disponible.');
+      return;
+    }
     final client = _AuthenticatedClient(http.Client(), {
-      'Authorization': 'Bearer ${auth.accessToken}',
+      'Authorization': 'Bearer $accessToken',
     });
     try {
       await drive.DriveApi(client).files.delete(fileId);
@@ -403,7 +435,11 @@ class GoogleDriveBackupService {
     }
 
     final created = await driveApi.files.create(folder);
-    return created.id!;
+    final id = created.id;
+    if (id == null || id.isEmpty) {
+      throw Exception('Google Drive no devolvió el ID de la carpeta "$name".');
+    }
+    return id;
   }
 
   static Future<String> _findOrCreateImagesFolder(drive.DriveApi api) async {
