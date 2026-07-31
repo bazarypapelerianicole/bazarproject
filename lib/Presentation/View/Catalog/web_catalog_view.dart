@@ -16,7 +16,7 @@ class WebCatalogView extends StatefulWidget {
 }
 
 class _WebCatalogViewState extends State<WebCatalogView>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   TabController? _tabController;
   String _search = '';
 
@@ -30,7 +30,6 @@ class _WebCatalogViewState extends State<WebCatalogView>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 1, vsync: this);
     _loadDriveData();
   }
 
@@ -54,16 +53,15 @@ class _WebCatalogViewState extends State<WebCatalogView>
 
       if (!mounted) return;
 
-      final controller = TabController(
+      _tabController?.dispose();
+
+      _tabController = TabController(
         length: data.sections.isEmpty ? 1 : data.sections.length,
         vsync: this,
       );
 
-      _tabController?.dispose();
-
       setState(() {
         _driveData = data;
-        _tabController = controller;
       });
     } catch (e, stack) {
       debugPrint("=================================");
