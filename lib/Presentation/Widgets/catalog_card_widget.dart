@@ -73,7 +73,7 @@ class _CatalogCategoryCardState extends State<CatalogCategoryCard>
               children: [
                 // ── Imagen de portada ──────────────────────────────────
                 _CardImage(
-                  imageFile: widget.info.imageFile,
+                  heroImages: widget.info.heroImages,
                   accentColor: _accentColor,
                 ),
 
@@ -178,32 +178,29 @@ class _CatalogCategoryCardState extends State<CatalogCategoryCard>
 
 /// Imagen superior de la card con gradiente overlay y badge de la tienda.
 class _CardImage extends StatelessWidget {
-  final CatalogImageFile? imageFile;
+  final List<CatalogImageFile> heroImages;
   final Color accentColor;
 
-  const _CardImage({required this.imageFile, required this.accentColor});
+  const _CardImage({required this.heroImages, required this.accentColor});
 
   @override
   Widget build(BuildContext context) {
-    final file = imageFile;
-    if (file != null) {
-      // ignore: avoid_print
-      print('[PARENT] URL enviada a DriveImage: ${file.thumbnailLink}');
-    }
     return SizedBox(
       height: 120,
       child: Stack(
         fit: StackFit.expand,
         children: [
-          // Nunca se crea un DriveImage sin un thumbnailLink válido.
-          if (file != null)
-            DriveImage(
-              url: file.thumbnailLink,
-              fit: BoxFit.cover,
-              errorWidget: _imageFallback(),
-            )
-          else
-            _imageFallback(),
+          if (heroImages.isEmpty) _imageFallback(),
+          if (heroImages.isNotEmpty)
+            PageView.builder(
+              itemCount: heroImages.length,
+              itemBuilder: (context, index) => DriveImage(
+                key: ValueKey(heroImages[index].id),
+                url: heroImages[index].thumbnailLink,
+                fit: BoxFit.cover,
+                errorWidget: _imageFallback(),
+              ),
+            ),
           // Gradiente para mejorar legibilidad del texto sobre imagen
           Positioned(
             bottom: 0,
@@ -223,6 +220,12 @@ class _CardImage extends StatelessWidget {
               ),
             ),
           ),
+          if (heroImages.length > 1)
+            Positioned(
+              right: 8,
+              bottom: 8,
+              child: _ImageCount(count: heroImages.length),
+            ),
         ],
       ),
     );
@@ -242,6 +245,44 @@ class _CardImage extends StatelessWidget {
       size: 36,
     ),
   );
+}
+
+class _ImageCount extends StatelessWidget {
+  final int count;
+
+  const _ImageCount({required this.count});
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.55),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(
+              Icons.collections_outlined,
+              size: 12,
+              color: Colors.white,
+            ),
+            const SizedBox(width: 3),
+            Text(
+              '$count',
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 10,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 /// Chip pequeño de etiqueta.

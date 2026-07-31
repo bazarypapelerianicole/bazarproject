@@ -1,16 +1,14 @@
-import 'dart:js_interop';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart' show PlatformViewHitTestBehavior;
 import 'package:web/web.dart' as web;
 
-/// Imagen remota para Flutter Web cargada por el navegador con un
-/// [web.HTMLImageElement].
+/// Imagen remota para Flutter Web cargada directamente por el navegador.
 ///
-/// `HtmlElementView.fromTagName` es la API de Flutter Web para crear y
-/// configurar un elemento HTML sin registrar un `viewType` propio. Por ello no
-/// hay fábricas globales ni registros que crezcan por cada imagen.
-class DriveImage extends StatefulWidget {
+/// Se crea un único [web.HTMLImageElement] por widget. No se precarga ni se
+/// prueba la URL con un segundo elemento, porque algunos proveedores (como
+/// Google Drive) entregan URLs y redirecciones que no son reutilizables entre
+/// dos solicitudes independientes.
+class DriveImage extends StatelessWidget {
   const DriveImage({
     super.key,
     required this.url,
@@ -27,138 +25,25 @@ class DriveImage extends StatefulWidget {
   final double? width;
   final double? height;
   final BorderRadius? borderRadius;
+
+  /// Se mantienen por compatibilidad con los consumidores existentes.
+  /// El navegador gestiona la carga directamente, por lo que no se muestra un
+  /// placeholder durante una precarga inexistente.
   final Widget? placeholder;
   final Widget? errorWidget;
 
   @override
-  State<DriveImage> createState() => _DriveImageState();
-}
-
-class _DriveImageState extends State<DriveImage> {
-  _ImageState _imageState = _ImageState.loading;
-  _ImageProbe? _probe;
-
-  @override
-  void initState() {
-    super.initState();
-    if (widget.url.isEmpty) {
-      _imageState = _ImageState.failed;
-      return;
-    }
-    _startProbe();
-  }
-
-  @override
-  void didUpdateWidget(covariant DriveImage oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.url == widget.url) return;
-
-    _disposeProbe();
-    if (widget.url.isEmpty) {
-      setState(() => _imageState = _ImageState.failed);
-      return;
-    }
-    setState(() => _imageState = _ImageState.loading);
-    _startProbe();
-  }
-
-  void _startProbe() {
-    late final _ImageProbe probe;
-    probe = _ImageProbe(
-      url: widget.url,
-      onLoad: () => _completeProbe(probe, _ImageState.ready),
-      onError: () => _completeProbe(probe, _ImageState.failed),
-    );
-    _probe = probe;
-  }
-
-  void _completeProbe(_ImageProbe probe, _ImageState state) {
-    if (!mounted || !identical(_probe, probe)) return;
-
-    _probe = null;
-    probe.dispose();
-    setState(() => _imageState = state);
-  }
-
-  void _disposeProbe() {
-    _probe?.dispose();
-    _probe = null;
-  }
-
-  @override
-  void dispose() {
-    _disposeProbe();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final renderKey = (widget.url, widget.fit, widget.borderRadius);
-    // ignore: avoid_print
-    print('[DriveImage] URL');
-    // ignore: avoid_print
-    print(widget.url);
-    final content = switch (_imageState) {
-      _ImageState.loading => widget.placeholder ?? const SizedBox.shrink(),
-      _ImageState.failed => widget.errorWidget ?? const SizedBox.shrink(),
-      _ImageState.ready => _BrowserImage(
-        key: ValueKey(renderKey),
-        url: widget.url,
-        fit: widget.fit,
-        borderRadius: widget.borderRadius,
-      ),
-    };
+    if (url.isEmpty) {
+      return SizedBox(
+        width: width,
+        height: height,
+        child: errorWidget ?? placeholder ?? const SizedBox.shrink(),
+      );
+    }
 
-    return SizedBox(width: widget.width, height: widget.height, child: content);
-  }
-}
-
-/// Carga una URL con el cargador nativo del navegador antes de crear la vista
-/// visible. Así `placeholder` y `errorWidget` ocupan el mismo espacio sin una
-/// pila de widgets ni una Platform View invisible debajo de ellos.
-class _ImageProbe {
-  _ImageProbe({
-    required String url,
-    required VoidCallback onLoad,
-    required VoidCallback onError,
-  }) : _image = web.HTMLImageElement()..alt = '' {
-    _onLoad = ((web.Event _) => onLoad()).toJS;
-    _onError = ((web.Event _) => onError()).toJS;
-    _image.addEventListener('load', _onLoad);
-    _image.addEventListener('error', _onError);
-    _image.src = url;
-  }
-
-  final web.HTMLImageElement _image;
-  late final JSFunction _onLoad;
-  late final JSFunction _onError;
-
-  void dispose() {
-    _removeListeners();
-    _image.removeAttribute('src');
-  }
-
-  void _removeListeners() {
-    _image.removeEventListener('load', _onLoad);
-    _image.removeEventListener('error', _onError);
-  }
-}
-
-class _BrowserImage extends StatelessWidget {
-  const _BrowserImage({
-    super.key,
-    required this.url,
-    required this.fit,
-    required this.borderRadius,
-  });
-
-  final String url;
-  final BoxFit fit;
-  final BorderRadius? borderRadius;
-
-  @override
-  Widget build(BuildContext context) {
-    return HtmlElementView.fromTagName(
+    final image = HtmlElementView.fromTagName(
+      key: ValueKey((url, fit, borderRadius)),
       tagName: 'img',
       hitTestBehavior: PlatformViewHitTestBehavior.transparent,
       onElementCreated: (element) {
@@ -173,17 +58,22 @@ class _BrowserImage extends StatelessWidget {
           ..objectFit = _objectFit(fit)
           ..objectPosition = 'center'
           ..pointerEvents = 'none';
+        img.setAttribute('decoding', 'async');
         if (borderRadius != null) {
           img.style.setProperty(
             'border-radius',
             _borderRadiusCss(borderRadius!),
           );
         }
-        // ignore: avoid_print
-        print('[DriveImage] Render img');
-        // ignore: avoid_print
-        print(img.src);
       },
+    );
+
+    return SizedBox(
+      width: width,
+      height: height,
+      child: borderRadius == null
+          ? image
+          : ClipRRect(borderRadius: borderRadius!, child: image),
     );
   }
 }
@@ -207,5 +97,3 @@ String _borderRadiusCss(BorderRadius radius) {
 
   return '${values(true)} / ${values(false)}';
 }
-
-enum _ImageState { loading, ready, failed }
