@@ -37,7 +37,6 @@ class DriveImage extends StatefulWidget {
 class _DriveImageState extends State<DriveImage> {
   _ImageState _imageState = _ImageState.loading;
   _ImageProbe? _probe;
-  web.HTMLImageElement? _loadedImage;
 
   @override
   void initState() {
@@ -51,7 +50,6 @@ class _DriveImageState extends State<DriveImage> {
     if (oldWidget.url == widget.url) return;
 
     _disposeProbe();
-    _loadedImage = null;
     setState(() => _imageState = _ImageState.loading);
     _startProbe();
   }
@@ -70,12 +68,7 @@ class _DriveImageState extends State<DriveImage> {
     if (!mounted || !identical(_probe, probe)) return;
 
     _probe = null;
-    _loadedImage = switch (state) {
-      _ImageState.ready => probe.takeImage(),
-      _ImageState.failed => null,
-      _ImageState.loading => null,
-    };
-    if (state != _ImageState.ready) probe.dispose();
+    probe.dispose();
     setState(() => _imageState = state);
   }
 
@@ -93,6 +86,10 @@ class _DriveImageState extends State<DriveImage> {
   @override
   Widget build(BuildContext context) {
     final renderKey = (widget.url, widget.fit, widget.borderRadius);
+    // ignore: avoid_print
+    print('[DriveImage] URL');
+    // ignore: avoid_print
+    print(widget.url);
     final content = switch (_imageState) {
       _ImageState.loading => widget.placeholder ?? const SizedBox.shrink(),
       _ImageState.failed => widget.errorWidget ?? const SizedBox.shrink(),
@@ -110,8 +107,7 @@ class _DriveImageState extends State<DriveImage> {
 
 /// Carga una URL con el cargador nativo del navegador antes de crear la vista
 /// visible. Así `placeholder` y `errorWidget` ocupan el mismo espacio sin una
-/// pila de widgets ni una Platform View invisible debajo de ellos. El mismo
-/// elemento que completa la carga se inserta después en la Platform View.
+/// pila de widgets ni una Platform View invisible debajo de ellos.
 class _ImageProbe {
   _ImageProbe({
     required String url,
@@ -132,11 +128,6 @@ class _ImageProbe {
   void dispose() {
     _removeListeners();
     _image.removeAttribute('src');
-  }
-
-  web.HTMLImageElement takeImage() {
-    _removeListeners();
-    return _image;
   }
 
   void _removeListeners() {
@@ -161,73 +152,31 @@ class _BrowserImage extends StatelessWidget {
   Widget build(BuildContext context) {
     return HtmlElementView.fromTagName(
       tagName: 'img',
-
       hitTestBehavior: PlatformViewHitTestBehavior.transparent,
-
       onElementCreated: (element) {
         final img = element as web.HTMLImageElement;
-
         img
           ..src = url
           ..alt = '';
-
         img.style
           ..width = '100%'
           ..height = '100%'
           ..display = 'block'
           ..objectFit = _objectFit(fit)
-          ..objectPosition = 'center';
+          ..objectPosition = 'center'
+          ..pointerEvents = 'none';
+        if (borderRadius != null) {
+          img.style.setProperty(
+            'border-radius',
+            _borderRadiusCss(borderRadius!),
+          );
+        }
+        // ignore: avoid_print
+        print('[DriveImage] Render img');
+        // ignore: avoid_print
+        print(img.src);
       },
     );
-  }
-}
-
-void _configureRoot(web.HTMLDivElement root, BorderRadius? borderRadius) {
-  root.style
-    ..setProperty('display', 'block')
-    ..setProperty('width', '100%')
-    ..setProperty('height', '100%')
-    ..setProperty('overflow', 'hidden')
-    ..setProperty('position', 'relative')
-    ..setProperty('pointer-events', 'none');
-
-  if (borderRadius != null) {
-    root.style.setProperty('border-radius', _borderRadiusCss(borderRadius));
-  }
-}
-
-void _configureImage(web.HTMLImageElement image, BoxFit fit) {
-  image.style
-    ..setProperty('display', 'block')
-    ..setProperty('position', 'absolute')
-    ..setProperty('pointer-events', 'none')
-    ..setProperty('left', '0')
-    ..setProperty('top', '0')
-    ..setProperty('transform', 'none')
-    ..removeProperty('object-fit')
-    ..removeProperty('object-position');
-
-  switch (fit) {
-    case BoxFit.fitWidth:
-      image.style
-        ..setProperty('width', '100%')
-        ..setProperty('height', 'auto')
-        ..setProperty('left', '0')
-        ..setProperty('top', '50%')
-        ..setProperty('transform', 'translateY(-50%)');
-    case BoxFit.fitHeight:
-      image.style
-        ..setProperty('width', 'auto')
-        ..setProperty('height', '100%')
-        ..setProperty('left', '50%')
-        ..setProperty('top', '0')
-        ..setProperty('transform', 'translateX(-50%)');
-    default:
-      image.style
-        ..setProperty('width', '100%')
-        ..setProperty('height', '100%')
-        ..setProperty('object-fit', _objectFit(fit))
-        ..setProperty('object-position', 'center');
   }
 }
 
@@ -237,7 +186,7 @@ String _objectFit(BoxFit fit) => switch (fit) {
   BoxFit.cover => 'cover',
   BoxFit.none => 'none',
   BoxFit.scaleDown => 'scale-down',
-  BoxFit.fitWidth || BoxFit.fitHeight => throw StateError('Handled above.'),
+  BoxFit.fitWidth || BoxFit.fitHeight => 'cover',
 };
 
 String _borderRadiusCss(BorderRadius radius) {
