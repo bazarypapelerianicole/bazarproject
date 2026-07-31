@@ -7,7 +7,6 @@ import 'package:flutter/services.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:googleapis/drive/v3.dart' as drive;
 import 'package:http/http.dart' as http;
-import 'package:path_provider/path_provider.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'database_location_service.dart';
@@ -280,31 +279,19 @@ class GoogleDriveBackupService {
       });
       final driveApi = drive.DriveApi(authClient);
 
-      // 2. Crear carpeta raíz en Drive con timestamp
+      // 2. Usar la carpeta permanente de JSON del catálogo.
       onProgress?.call(
         BackupProgress(
-          step: 'Creando carpeta en Drive...',
+          step: 'Preparando carpeta Backup...',
           current: 1,
           total: 10,
         ),
       );
 
-      final now = DateTime.now();
-      final folderName =
-          'BazarNicole_Backup_${now.year}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}_${now.hour.toString().padLeft(2, '0')}${now.minute.toString().padLeft(2, '0')}';
-
-      // Carpeta destino fija en Drive: "bazarypapeleria"
-      final rootFolderId = await _createDriveFolder(
+      final jsonFolderId = await _findOrCreateDriveFolder(
         driveApi,
-        folderName,
+        'Backup',
         _bazarFolderId,
-      );
-
-      // 3. Crear subcarpeta para JSONs
-      final jsonFolderId = await _createDriveFolder(
-        driveApi,
-        'tablas_json',
-        rootFolderId,
       );
 
       // 4. Exportar tablas a JSON y subir
@@ -335,43 +322,27 @@ class GoogleDriveBackupService {
 
         final rows = await db.query(table);
         final jsonContent = jsonEncode(rows);
+        final fileName = table == 'products' ? 'productos.json' : '$table.json';
         await _uploadTextFile(
           driveApi,
-          '$table.json',
+          fileName,
           jsonContent,
           jsonFolderId,
         );
-        uploadedFiles.add('$table.json');
+        uploadedFiles.add(fileName);
       }
 
       await db.close();
 
-      // 5. Crear subcarpeta para imágenes
+      // Las imágenes se mantienen solamente en /Imagenes. No se duplican
+      // dentro de Backup porque SQLite ya guarda los fileId de Drive.
       onProgress?.call(
         BackupProgress(
-          step: 'Buscando imágenes...',
+          step: 'Usando imágenes externas...',
           current: 3 + tables.length + 1,
           total: 3 + tables.length + 3,
         ),
       );
-
-      final imagesFolderId = await _createDriveFolder(
-        driveApi,
-        'imagenes',
-        rootFolderId,
-      );
-      final imagesUploaded = await _uploadImagesFolder(
-        driveApi,
-        imagesFolderId,
-        onProgress: (step) => onProgress?.call(
-          BackupProgress(
-            step: step,
-            current: 3 + tables.length + 2,
-            total: 3 + tables.length + 3,
-          ),
-        ),
-      );
-      uploadedFiles.addAll(imagesUploaded);
 
       // 6. Enlace a la carpeta
       onProgress?.call(
@@ -382,7 +353,7 @@ class GoogleDriveBackupService {
         ),
       );
 
-      final folderUrl = 'https://drive.google.com/drive/folders/$rootFolderId';
+      final folderUrl = 'https://drive.google.com/drive/folders/$jsonFolderId';
 
       authClient.close();
 
@@ -443,16 +414,23 @@ class GoogleDriveBackupService {
   }
 
   static Future<String> _findOrCreateImagesFolder(drive.DriveApi api) async {
+    return _findOrCreateDriveFolder(api, 'Imagenes', _bazarFolderId);
+  }
+
+  static Future<String> _findOrCreateDriveFolder(
+    drive.DriveApi api,
+    String name,
+    String parentId,
+  ) async {
     final found = await api.files.list(
-      q:
-          "'$_bazarFolderId' in parents and name = 'imagenes' and "
+      q: "'$parentId' in parents and name = '$name' and "
           "mimeType = 'application/vnd.google-apps.folder' and trashed = false",
       pageSize: 1,
       $fields: 'files(id)',
     );
     final files = found.files ?? const <drive.File>[];
     final id = files.isEmpty ? null : files.first.id;
-    return id ?? _createDriveFolder(api, 'imagenes', _bazarFolderId);
+    return id ?? _createDriveFolder(api, name, parentId);
   }
 
   static Future<void> _uploadTextFile(
@@ -464,67 +442,26 @@ class GoogleDriveBackupService {
     final bytes = utf8.encode(content);
     final stream = Stream.value(bytes);
 
-    final file = drive.File()
-      ..name = fileName
-      ..parents = [parentFolderId];
-
-    await driveApi.files.create(
-      file,
-      uploadMedia: drive.Media(stream, bytes.length),
+    final matches = await driveApi.files.list(
+      q: "'$parentFolderId' in parents and name = '$fileName' and trashed = false",
+      pageSize: 1,
+      $fields: 'files(id)',
     );
-  }
-
-  static Future<List<String>> _uploadImagesFolder(
-    drive.DriveApi driveApi,
-    String parentFolderId, {
-    void Function(String)? onProgress,
-  }) async {
-    final List<String> uploaded = [];
-
-    try {
-      final docsDir = await getApplicationDocumentsDirectory();
-      final imagesDir = Directory('${docsDir.path}/images');
-
-      if (!await imagesDir.exists()) {
-        onProgress?.call('No se encontró carpeta de imágenes (omitido)');
-        return uploaded;
-      }
-
-      final files = imagesDir
-          .listSync(recursive: false)
-          .whereType<File>()
-          .where((f) {
-            final ext = f.path.toLowerCase();
-            return ext.endsWith('.jpg') ||
-                ext.endsWith('.jpeg') ||
-                ext.endsWith('.png') ||
-                ext.endsWith('.webp');
-          })
-          .toList();
-
-      for (final imageFile in files) {
-        final fileName = imageFile.uri.pathSegments.last;
-        onProgress?.call('Subiendo imagen: $fileName');
-
-        final bytes = await imageFile.readAsBytes();
-        final stream = Stream.value(bytes);
-        final mimeType = _getMimeType(fileName);
-
-        final driveFile = drive.File()
+    final existing =
+        matches.files?.isNotEmpty == true ? matches.files!.first.id : null;
+    final media =
+        drive.Media(stream, bytes.length, contentType: 'application/json');
+    if (existing != null) {
+      await driveApi.files
+          .update(drive.File()..name = fileName, existing, uploadMedia: media);
+    } else {
+      await driveApi.files.create(
+        drive.File()
           ..name = fileName
-          ..parents = [parentFolderId];
-
-        await driveApi.files.create(
-          driveFile,
-          uploadMedia: drive.Media(stream, bytes.length, contentType: mimeType),
-        );
-        uploaded.add(fileName);
-      }
-    } catch (e) {
-      debugPrint('Error al subir imágenes: $e');
+          ..parents = [parentFolderId],
+        uploadMedia: media,
+      );
     }
-
-    return uploaded;
   }
 
   static String _getMimeType(String fileName) {

@@ -413,25 +413,6 @@ class DriveDataService {
 
   // ── Helpers privados ────────────────────────────────────────────────────────
 
-  /// Encuentra la carpeta de backup más reciente dentro de bazarypapeleria.
-  static Future<String> _findLatestBackupFolder(drive.DriveApi api) async {
-    final list = await api.files.list(
-      q: "'$_bazarFolderId' in parents and mimeType = 'application/vnd.google-apps.folder' and trashed = false",
-      orderBy: 'createdTime desc',
-      pageSize: 10,
-      $fields: 'files(id,name,createdTime)',
-    );
-
-    final files = list.files;
-    if (files == null || files.isEmpty) {
-      throw Exception('No se encontró ninguna carpeta de backup en Drive.');
-    }
-
-    // La primera es la más reciente (orderBy createdTime desc)
-    debugPrint('[DriveDataService] Backup folder: ${files.first.name}');
-    return files.first.id!;
-  }
-
   /// Busca una subcarpeta por nombre dentro de un folder dado.
   static Future<String> _findSubfolder(
     drive.DriveApi api,
@@ -471,12 +452,10 @@ class DriveDataService {
     }
 
     final fileId = files.first.id!;
-    final media =
-        await api.files.get(
-              fileId,
-              downloadOptions: drive.DownloadOptions.fullMedia,
-            )
-            as drive.Media;
+    final media = await api.files.get(
+      fileId,
+      downloadOptions: drive.DownloadOptions.fullMedia,
+    ) as drive.Media;
 
     final bytes = <int>[];
     await for (final chunk in media.stream) {
@@ -563,7 +542,7 @@ class DriveDataService {
 
       final categoryName =
           (categoryId != null ? categoryNames[categoryId] : null) ??
-          'Sin categoría';
+              'Sin categoría';
 
       final storeName = (storeId != null ? storeNames[storeId] : null) ?? '';
 

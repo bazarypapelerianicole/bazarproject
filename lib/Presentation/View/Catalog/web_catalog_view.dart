@@ -218,40 +218,40 @@ class _WebCatalogViewState extends State<WebCatalogView>
             child: _driveLoading && _sections.isEmpty
                 ? const Center(child: CircularProgressIndicator())
                 : _sections.isEmpty
-                ? Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.cloud_off_outlined,
-                          size: 48,
-                          color: AppColors.greyOverlay,
+                    ? Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.cloud_off_outlined,
+                              size: 48,
+                              color: AppColors.greyOverlay,
+                            ),
+                            const SizedBox(height: 12),
+                            const Text(
+                              'No se pudo cargar el catálogo',
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: 12),
+                            ElevatedButton.icon(
+                              onPressed: _loadDriveData,
+                              icon: const Icon(Icons.refresh),
+                              label: const Text('Reintentar'),
+                            ),
+                          ],
                         ),
-                        const SizedBox(height: 12),
-                        const Text(
-                          'No se pudo cargar el catálogo',
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: 12),
-                        ElevatedButton.icon(
-                          onPressed: _loadDriveData,
-                          icon: const Icon(Icons.refresh),
-                          label: const Text('Reintentar'),
-                        ),
-                      ],
-                    ),
-                  )
-                : TabBarView(
-                    controller: _tabController,
-                    children: _sections
-                        .map(
-                          (section) => _CatalogGrid(
-                            categories: _filtered(section.categories),
-                            isWide: isWide,
-                          ),
-                        )
-                        .toList(),
-                  ),
+                      )
+                    : TabBarView(
+                        controller: _tabController,
+                        children: _sections
+                            .map(
+                              (section) => _CatalogGrid(
+                                categories: _filtered(section.categories),
+                                isWide: isWide,
+                              ),
+                            )
+                            .toList(),
+                      ),
           ),
 
           // Pie de página
