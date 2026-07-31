@@ -54,17 +54,16 @@ class CatalogCategory {
     String? imageUrl,
     String? description,
     List<String>? tags,
-  }) =>
-      CatalogCategory(
-        id: id,
-        name: name,
-        storeId: storeId,
-        storeName: storeName,
-        imageUrl: imageUrl ?? this.imageUrl,
-        description: description ?? this.description,
-        tags: tags ?? this.tags,
-        products: products ?? this.products,
-      );
+  }) => CatalogCategory(
+    id: id,
+    name: name,
+    storeId: storeId,
+    storeName: storeName,
+    imageUrl: imageUrl ?? this.imageUrl,
+    description: description ?? this.description,
+    tags: tags ?? this.tags,
+    products: products ?? this.products,
+  );
 }
 
 /// Sección del catálogo agrupada por tienda.
@@ -166,15 +165,18 @@ class CatalogBuilder {
       final price = (p['price'] as num?)?.toDouble() ?? 0;
       final stock = (p['stock'] as num?)?.toInt() ?? 0;
       final categoryId = (p['category_id'] as num?)?.toInt();
-      final imageUrls = ((p['images'] as String?) ?? '')
-          .split(',')
-          .map((id) => id.trim())
-          .where(
-              (id) => id.isNotEmpty && !id.contains('/') && !id.contains('\\'))
-          .map((id) => 'https://drive.google.com/uc?export=view&id=$id')
+      final imageUrls = _imageIds(p['images'])
+          .map(
+            (id) => Uri.https('drive.usercontent.google.com', '/download', {
+              'id': id,
+              'export': 'view',
+            }, ).toString(),
+          )
           .toList();
       if (id == null || name == null || categoryId == null) continue;
-      productsByCatId.putIfAbsent(categoryId, () => []).add(
+      productsByCatId
+          .putIfAbsent(categoryId, () => [])
+          .add(
             CatalogProductEntry(
               id: id,
               name: name,
@@ -196,7 +198,9 @@ class CatalogBuilder {
       final storeName = storeNames[storeId] ?? getStoreName(storeId);
       final prods = productsByCatId[catId] ?? const [];
       final imageUrl = _findImage(imageThumbnails, catName);
-      sectionMap.putIfAbsent(storeId, () => []).add(
+      sectionMap
+          .putIfAbsent(storeId, () => [])
+          .add(
             CatalogCategory(
               id: catId,
               name: catName,
@@ -214,6 +218,19 @@ class CatalogBuilder {
     }
 
     return _toSections(sectionMap);
+  }
+
+  /// El respaldo histórico guarda IDs separados por coma, mientras que otros
+  /// exportadores pueden producir una lista JSON. Aceptamos ambos formatos y
+  /// descartamos valores vacíos antes de construir las URLs públicas.
+  static Iterable<String> _imageIds(dynamic value) {
+    final values = switch (value) {
+      String text => text.split(','),
+      Iterable<dynamic> items => items.whereType<String>(),
+      _ => const <String>[],
+    };
+
+    return values.map((id) => id.trim()).where((id) => id.isNotEmpty);
   }
 
   // ── Helpers ───────────────────────────────────────────────────────────────
@@ -271,8 +288,8 @@ class CatalogBuilder {
 
   /// Devuelve todos los productos de una sección en una lista plana.
   static List<CatalogProductEntry> flatProducts(CatalogSection section) => [
-        for (final c in section.categories) ...c.products,
-      ];
+    for (final c in section.categories) ...c.products,
+  ];
 }
 
 // ── Modelo legado — mantiene compatibilidad de compilación ───────────────────

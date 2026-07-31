@@ -330,7 +330,7 @@ class DriveDataService {
                 RegExp(r'=s\d+'),
                 '=s800',
               )
-            : 'https://drive.usercontent.google.com/download?id=${f['id']}';
+            : 'https://lh3.googleusercontent.com/d/${f['id']}';
         result[normalized] = thumb;
       }
 
@@ -452,10 +452,12 @@ class DriveDataService {
     }
 
     final fileId = files.first.id!;
-    final media = await api.files.get(
-      fileId,
-      downloadOptions: drive.DownloadOptions.fullMedia,
-    ) as drive.Media;
+    final media =
+        await api.files.get(
+              fileId,
+              downloadOptions: drive.DownloadOptions.fullMedia,
+            )
+            as drive.Media;
 
     final bytes = <int>[];
     await for (final chunk in media.stream) {
@@ -493,7 +495,7 @@ class DriveDataService {
         // Usar thumbnailLink con tamaño mayor; fallback a Google Drive viewer
         final thumb = f.thumbnailLink != null
             ? f.thumbnailLink!.replaceAll(RegExp(r'=s\d+'), '=s800')
-            : 'https://drive.usercontent.google.com/download?id=${f.id}';
+            : 'https://lh3.googleusercontent.com/d/${f.id}';
         result[normalized] = thumb;
       }
 
@@ -542,7 +544,7 @@ class DriveDataService {
 
       final categoryName =
           (categoryId != null ? categoryNames[categoryId] : null) ??
-              'Sin categoría';
+          'Sin categoría';
 
       final storeName = (storeId != null ? storeNames[storeId] : null) ?? '';
 
