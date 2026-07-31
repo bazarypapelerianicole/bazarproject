@@ -89,6 +89,7 @@ dependencies:
   data_table_2: ^2.6.0
   flutter_localization: ^0.2.3
   crypto: ^3.0.3
+  web: ^1.1.1
 
 dev_dependencies:
   flutter_test:

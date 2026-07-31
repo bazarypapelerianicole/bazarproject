@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:bazarnicole/Presentation/Template/catalog_template.dart';
 import 'package:bazarnicole/Presentation/Utils/Colors.dart';
 import 'package:bazarnicole/Presentation/Widgets/catalog_detail_widget.dart';
+import 'package:bazarnicole/Presentation/Widgets/drive_image.dart';
 
 /// Card del catálogo con imagen de portada, nombre, descripción y chips de tags.
 class CatalogCategoryCard extends StatefulWidget {
@@ -190,10 +191,10 @@ class _CardImage extends StatelessWidget {
         fit: StackFit.expand,
         children: [
           // Imagen de fondo
-          Image.network(
-            imageUrl,
+          DriveImage(
+            url: imageUrl,
             fit: BoxFit.cover,
-            errorBuilder: (_, __, ___) => Container(
+            errorWidget: Container(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [accentColor, accentColor.withValues(alpha: 0.6)],

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:bazarnicole/Presentation/Template/catalog_template.dart';
 import 'package:bazarnicole/Presentation/Utils/Colors.dart';
+import 'package:bazarnicole/Presentation/Widgets/drive_image.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
 /// Bottom sheet de detalle de una categoría del catálogo.
@@ -259,10 +260,10 @@ class _HeroImage extends StatelessWidget {
       child: Stack(
         fit: StackFit.expand,
         children: [
-          Image.network(
-            imageUrl,
+          DriveImage(
+            url: imageUrl,
             fit: BoxFit.cover,
-            errorBuilder: (_, __, ___) => Container(
+            errorWidget: Container(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [accentColor, accentColor.withValues(alpha: 0.5)],
@@ -313,6 +314,10 @@ class _ProductGallery extends StatelessWidget {
   const _ProductGallery({required this.imageUrl, required this.accentColor});
 
   String _variantUrl(String seed) {
+    final uri = Uri.tryParse(imageUrl);
+    if (uri?.host == 'drive.usercontent.google.com') {
+      return imageUrl;
+    }
     // Usa el parámetro ?w= para ligeras variaciones de encuadre
     final base = imageUrl.contains('?') ? imageUrl.split('?').first : imageUrl;
     return '$base?w=300&q=70&fit=crop&crop=entropy&s=$seed';
@@ -327,21 +332,17 @@ class _ProductGallery extends StatelessWidget {
         itemCount: _seeds.length,
         separatorBuilder: (_, __) => const SizedBox(width: 8),
         itemBuilder: (_, i) {
-          return ClipRRect(
+          return DriveImage(
+            url: _variantUrl(_seeds[i]),
+            width: 90,
+            height: 90,
+            fit: BoxFit.cover,
             borderRadius: BorderRadius.circular(10),
-            child: SizedBox(
-              width: 90,
-              height: 90,
-              child: Image.network(
-                _variantUrl(_seeds[i]),
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => Container(
-                  color: accentColor.withValues(alpha: 0.12),
-                  child: Icon(
-                    Icons.image_outlined,
-                    color: accentColor.withValues(alpha: 0.4),
-                  ),
-                ),
+            errorWidget: Container(
+              color: accentColor.withValues(alpha: 0.12),
+              child: Icon(
+                Icons.image_outlined,
+                color: accentColor.withValues(alpha: 0.4),
               ),
             ),
           );
@@ -548,20 +549,17 @@ class _ProductRow extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           // Imagen pública construida desde el fileId de Drive.
-          ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: SizedBox(
-              width: 34,
-              height: 34,
-              child: product.imageUrls.isNotEmpty
-                  ? Image.network(
-                      product.imageUrls.first,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => _productIcon(),
-                    )
-                  : _productIcon(),
-            ),
-          ),
+          product.imageUrls.isNotEmpty
+              ? DriveImage(
+                  url: product.imageUrls.first,
+                  width: 34,
+                  height: 34,
+                  fit: BoxFit.cover,
+                  borderRadius: BorderRadius.circular(8),
+                  errorWidget: _productIcon(),
+                )
+              : SizedBox(width: 34, height: 34, child: _productIcon()),
+
           const SizedBox(width: 10),
           // Nombre y SKU
           Expanded(
