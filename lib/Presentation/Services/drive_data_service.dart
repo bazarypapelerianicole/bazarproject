@@ -330,7 +330,7 @@ class DriveDataService {
                 RegExp(r'=s\d+'),
                 '=s800',
               )
-            : 'https://lh3.googleusercontent.com/d/${f['id']}';
+            : 'https://drive.usercontent.google.com/download?id=${f['id']}';
         result[normalized] = thumb;
       }
 
@@ -493,7 +493,7 @@ class DriveDataService {
         // Usar thumbnailLink con tamaño mayor; fallback a Google Drive viewer
         final thumb = f.thumbnailLink != null
             ? f.thumbnailLink!.replaceAll(RegExp(r'=s\d+'), '=s800')
-            : 'https://lh3.googleusercontent.com/d/${f.id}';
+            : 'https://drive.usercontent.google.com/download?id=${f.id}';
         result[normalized] = thumb;
       }
 
