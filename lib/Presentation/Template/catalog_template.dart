@@ -6,6 +6,22 @@
 
 // ── Modelos ─────────────────────────────────────────────────────────────────
 
+/// Archivo de imagen tal como lo devuelve la API de Google Drive.
+///
+/// [thumbnailLink] se conserva sin transformaciones para que el navegador
+/// cargue directamente la URL de Drive.
+class CatalogImageFile {
+  final String id;
+  final String name;
+  final String thumbnailLink;
+
+  const CatalogImageFile({
+    required this.id,
+    required this.name,
+    required this.thumbnailLink,
+  });
+}
+
 /// Producto mínimo expuesto en el catálogo público.
 class CatalogProductEntry {
   final int id;
@@ -14,8 +30,8 @@ class CatalogProductEntry {
   final double price;
   final int stock;
 
-  /// URLs públicas derivadas de los fileId guardados en SQLite.
-  final List<String> imageUrls;
+  /// Archivos de Drive asociados al producto, con su thumbnail original.
+  final List<CatalogImageFile> imageFiles;
 
   const CatalogProductEntry({
     required this.id,
@@ -23,7 +39,7 @@ class CatalogProductEntry {
     required this.sku,
     this.price = 0,
     this.stock = 0,
-    this.imageUrls = const [],
+    this.imageFiles = const [],
   });
 }
 
@@ -33,7 +49,7 @@ class CatalogCategory {
   final String name;
   final int storeId;
   final String storeName;
-  final String imageUrl;
+  final CatalogImageFile? imageFile;
   final String description;
   final List<String> tags;
   final List<CatalogProductEntry> products;
@@ -43,7 +59,7 @@ class CatalogCategory {
     required this.name,
     required this.storeId,
     this.storeName = '',
-    this.imageUrl = '',
+    this.imageFile,
     this.description = '',
     this.tags = const [],
     this.products = const [],
@@ -51,7 +67,7 @@ class CatalogCategory {
 
   CatalogCategory copyWith({
     List<CatalogProductEntry>? products,
-    String? imageUrl,
+    CatalogImageFile? imageFile,
     String? description,
     List<String>? tags,
   }) => CatalogCategory(
@@ -59,7 +75,7 @@ class CatalogCategory {
     name: name,
     storeId: storeId,
     storeName: storeName,
-    imageUrl: imageUrl ?? this.imageUrl,
+    imageFile: imageFile ?? this.imageFile,
     description: description ?? this.description,
     tags: tags ?? this.tags,
     products: products ?? this.products,
@@ -134,12 +150,12 @@ class CatalogBuilder {
   /// - [productsJson]    → contenido de products.json
   /// - [categoriesJson]  → contenido de categories.json
   /// - [storesJson]      → contenido de stores.json (opcional)
-  /// - [imageThumbnails] → mapa normalizedName→url de imágenes de Drive
+  /// - [imageFiles] → archivos de imagen con su `thumbnailLink` de Drive
   static List<CatalogSection> buildFromJson({
     required List<Map<String, dynamic>> productsJson,
     required List<Map<String, dynamic>> categoriesJson,
     List<Map<String, dynamic>> storesJson = const [],
-    Map<String, String> imageThumbnails = const {},
+    List<CatalogImageFile> imageFiles = const [],
   }) {
     // 1. Índice de categorías: id → datos raw
     final categoryIndex = <int, Map<String, dynamic>>{};
@@ -165,13 +181,9 @@ class CatalogBuilder {
       final price = (p['price'] as num?)?.toDouble() ?? 0;
       final stock = (p['stock'] as num?)?.toInt() ?? 0;
       final categoryId = (p['category_id'] as num?)?.toInt();
-      final imageUrls = _imageIds(p['images'])
-          .map(
-            (id) => Uri.https('drive.usercontent.google.com', '/download', {
-              'id': id,
-              'export': 'view',
-            }, ).toString(),
-          )
+      final productImageFiles = _imageIds(p['images'])
+          .map((id) => _findImageById(imageFiles, id))
+          .whereType<CatalogImageFile>()
           .toList();
       if (id == null || name == null || categoryId == null) continue;
       productsByCatId
@@ -183,7 +195,7 @@ class CatalogBuilder {
               sku: sku,
               price: price,
               stock: stock,
-              imageUrls: imageUrls,
+              imageFiles: productImageFiles,
             ),
           );
     }
@@ -197,7 +209,7 @@ class CatalogBuilder {
       final storeId = (catData['store_id'] as num?)?.toInt() ?? 0;
       final storeName = storeNames[storeId] ?? getStoreName(storeId);
       final prods = productsByCatId[catId] ?? const [];
-      final imageUrl = _findImage(imageThumbnails, catName);
+      final imageFile = _findImageByName(imageFiles, catName);
       sectionMap
           .putIfAbsent(storeId, () => [])
           .add(
@@ -206,7 +218,7 @@ class CatalogBuilder {
               name: catName,
               storeId: storeId,
               storeName: storeName,
-              imageUrl: imageUrl,
+              imageFile: imageFile,
               products: prods,
             ),
           );
@@ -255,14 +267,28 @@ class CatalogBuilder {
     ];
   }
 
-  static String _findImage(Map<String, String> thumbnails, String catName) {
-    if (thumbnails.isEmpty) return '';
+  static CatalogImageFile? _findImageByName(
+    List<CatalogImageFile> imageFiles,
+    String catName,
+  ) {
     final key = _normalize(catName);
-    if (thumbnails.containsKey(key)) return thumbnails[key]!;
-    for (final e in thumbnails.entries) {
-      if (e.key.contains(key) || key.contains(e.key)) return e.value;
+    for (final file in imageFiles) {
+      final fileName = _normalize(file.name);
+      if (fileName == key || fileName.contains(key) || key.contains(fileName)) {
+        return file;
+      }
     }
-    return '';
+    return null;
+  }
+
+  static CatalogImageFile? _findImageById(
+    List<CatalogImageFile> imageFiles,
+    String id,
+  ) {
+    for (final file in imageFiles) {
+      if (file.id == id) return file;
+    }
+    return null;
   }
 
   static String _normalize(String s) {

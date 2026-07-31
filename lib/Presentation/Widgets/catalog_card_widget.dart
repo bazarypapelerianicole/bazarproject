@@ -73,7 +73,7 @@ class _CatalogCategoryCardState extends State<CatalogCategoryCard>
               children: [
                 // ── Imagen de portada ──────────────────────────────────
                 _CardImage(
-                  imageUrl: widget.info.imageUrl,
+                  imageFile: widget.info.imageFile,
                   accentColor: _accentColor,
                 ),
 
@@ -178,37 +178,32 @@ class _CatalogCategoryCardState extends State<CatalogCategoryCard>
 
 /// Imagen superior de la card con gradiente overlay y badge de la tienda.
 class _CardImage extends StatelessWidget {
-  final String imageUrl;
+  final CatalogImageFile? imageFile;
   final Color accentColor;
 
-  const _CardImage({required this.imageUrl, required this.accentColor});
+  const _CardImage({required this.imageFile, required this.accentColor});
 
   @override
   Widget build(BuildContext context) {
+    final file = imageFile;
+    if (file != null) {
+      // ignore: avoid_print
+      print('[PARENT] URL enviada a DriveImage: ${file.thumbnailLink}');
+    }
     return SizedBox(
       height: 120,
       child: Stack(
         fit: StackFit.expand,
         children: [
-          // Imagen de fondo
-          DriveImage(
-            url: imageUrl,
-            fit: BoxFit.cover,
-            errorWidget: Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [accentColor, accentColor.withValues(alpha: 0.6)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-              ),
-              child: Icon(
-                Icons.image_not_supported_outlined,
-                color: Colors.white54,
-                size: 36,
-              ),
-            ),
-          ),
+          // Nunca se crea un DriveImage sin un thumbnailLink válido.
+          if (file != null)
+            DriveImage(
+              url: file.thumbnailLink,
+              fit: BoxFit.cover,
+              errorWidget: _imageFallback(),
+            )
+          else
+            _imageFallback(),
           // Gradiente para mejorar legibilidad del texto sobre imagen
           Positioned(
             bottom: 0,
@@ -232,6 +227,21 @@ class _CardImage extends StatelessWidget {
       ),
     );
   }
+
+  Widget _imageFallback() => Container(
+    decoration: BoxDecoration(
+      gradient: LinearGradient(
+        colors: [accentColor, accentColor.withValues(alpha: 0.6)],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      ),
+    ),
+    child: const Icon(
+      Icons.image_not_supported_outlined,
+      color: Colors.white54,
+      size: 36,
+    ),
+  );
 }
 
 /// Chip pequeño de etiqueta.

@@ -35,8 +35,8 @@ class CatalogDriveData {
   /// Categorías con sus productos reales. Key = nombre de categoría.
   final Map<String, List<DriveProduct>> productsByCategory;
 
-  /// Mapa de nombre de archivo (sin extensión, normalizado) → thumbnailLink de Drive.
-  final Map<String, String> imageThumbnails;
+  /// Archivos de imagen con el `thumbnailLink` original de Google Drive.
+  final List<CatalogImageFile> imageFiles;
 
   /// Email del usuario autenticado.
   final String userEmail;
@@ -47,7 +47,7 @@ class CatalogDriveData {
 
   const CatalogDriveData({
     required this.productsByCategory,
-    required this.imageThumbnails,
+    required this.imageFiles,
     required this.userEmail,
     this.sections = const [],
   });
@@ -191,7 +191,7 @@ class DriveDataService {
       final storesJson = results[2];
 
       // 3. Listar imágenes
-      final imageThumbnails = await _publicListImageThumbnails(imagesFolderId);
+      final imageFiles = await _publicListImageThumbnails(imagesFolderId);
 
       // 4. Construir mapa legacy y secciones
       final productsByCategory = _buildProductsByCategory(
@@ -204,12 +204,12 @@ class DriveDataService {
         productsJson: productsJson,
         categoriesJson: categoriesJson,
         storesJson: storesJson,
-        imageThumbnails: imageThumbnails,
+        imageFiles: imageFiles,
       );
 
       return CatalogDriveData(
         productsByCategory: productsByCategory,
-        imageThumbnails: imageThumbnails,
+        imageFiles: imageFiles,
         userEmail: '',
         sections: sections,
       );
@@ -302,10 +302,10 @@ class DriveDataService {
   }
 
   /// Lista thumbnails de imágenes en un folder usando API Key.
-  static Future<Map<String, String>> _publicListImageThumbnails(
+  static Future<List<CatalogImageFile>> _publicListImageThumbnails(
     String folderId,
   ) async {
-    final Map<String, String> result = {};
+    final result = <CatalogImageFile>[];
     String? pageToken;
 
     do {
@@ -322,16 +322,18 @@ class DriveDataService {
           (data['files'] as List?)?.cast<Map<String, dynamic>>() ?? [];
 
       for (final f in files) {
+        final id = f['id'] as String?;
         final name = f['name'] as String?;
-        if (name == null) continue;
-        final normalized = _normalizeName(name);
-        final thumb = f['thumbnailLink'] != null
-            ? (f['thumbnailLink'] as String).replaceAll(
-                RegExp(r'=s\d+'),
-                '=s800',
-              )
-            : 'https://drive.usercontent.google.com/download?id=${f['id']}';
-        result[normalized] = thumb;
+        final thumbnailLink = f['thumbnailLink'] as String?;
+        if (id == null ||
+            name == null ||
+            thumbnailLink == null ||
+            thumbnailLink.isEmpty) {
+          continue;
+        }
+        result.add(
+          CatalogImageFile(id: id, name: name, thumbnailLink: thumbnailLink),
+        );
       }
 
       pageToken = data['nextPageToken'] as String?;
@@ -387,22 +389,19 @@ class DriveDataService {
       );
 
       // 5. Listar imágenes
-      final imageThumbnails = await _listImageThumbnails(
-        driveApi,
-        imagesFolderId,
-      );
+      final imageFiles = await _listImageThumbnails(driveApi, imagesFolderId);
 
       // 6. Construir secciones del catálogo desde los JSON crudos
       final sections = CatalogBuilder.buildFromJson(
         productsJson: productsJson,
         categoriesJson: categoriesJson,
         storesJson: storesJson,
-        imageThumbnails: imageThumbnails,
+        imageFiles: imageFiles,
       );
 
       return CatalogDriveData(
         productsByCategory: productsByCategory,
-        imageThumbnails: imageThumbnails,
+        imageFiles: imageFiles,
         userEmail: _account!.email,
         sections: sections,
       );
@@ -472,13 +471,12 @@ class DriveDataService {
     return [];
   }
 
-  /// Lista los archivos de imagen en el folder y retorna un mapa
-  /// normalizedName → thumbnailLink (o directLink si thumbnailLink está vacío).
-  static Future<Map<String, String>> _listImageThumbnails(
+  /// Lista los archivos de imagen en el folder con el thumbnail original.
+  static Future<List<CatalogImageFile>> _listImageThumbnails(
     drive.DriveApi api,
     String folderId,
   ) async {
-    final Map<String, String> result = {};
+    final result = <CatalogImageFile>[];
     String? pageToken;
 
     do {
@@ -490,13 +488,18 @@ class DriveDataService {
       );
 
       for (final f in list.files ?? []) {
-        if (f.name == null) continue;
-        final normalized = _normalizeName(f.name!);
-        // Usar thumbnailLink con tamaño mayor; fallback a Google Drive viewer
-        final thumb = f.thumbnailLink != null
-            ? f.thumbnailLink!.replaceAll(RegExp(r'=s\d+'), '=s800')
-            : 'https://drive.usercontent.google.com/download?id=${f.id}';
-        result[normalized] = thumb;
+        final id = f.id;
+        final name = f.name;
+        final thumbnailLink = f.thumbnailLink;
+        if (id == null ||
+            name == null ||
+            thumbnailLink == null ||
+            thumbnailLink.isEmpty) {
+          continue;
+        }
+        result.add(
+          CatalogImageFile(id: id, name: name, thumbnailLink: thumbnailLink),
+        );
       }
 
       pageToken = list.nextPageToken;
@@ -570,17 +573,6 @@ class DriveDataService {
   }
 
   // ── Utilidades ──────────────────────────────────────────────────────────────
-
-  /// Normaliza un nombre de archivo para búsqueda aproximada.
-  /// Remueve extensión, convierte a minúsculas y quita tildes.
-  static String _normalizeName(String fileName) {
-    // Quitar extensión
-    final withoutExt = fileName.contains('.')
-        ? fileName.substring(0, fileName.lastIndexOf('.'))
-        : fileName;
-
-    return _removeAccents(withoutExt.toLowerCase().trim());
-  }
 
   static String _removeAccents(String input) {
     const accents = 'áàäâãéèëêíìïîóòöôõúùüûñç';

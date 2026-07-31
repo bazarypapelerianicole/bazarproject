@@ -41,6 +41,10 @@ class _DriveImageState extends State<DriveImage> {
   @override
   void initState() {
     super.initState();
+    if (widget.url.isEmpty) {
+      _imageState = _ImageState.failed;
+      return;
+    }
     _startProbe();
   }
 
@@ -50,6 +54,10 @@ class _DriveImageState extends State<DriveImage> {
     if (oldWidget.url == widget.url) return;
 
     _disposeProbe();
+    if (widget.url.isEmpty) {
+      setState(() => _imageState = _ImageState.failed);
+      return;
+    }
     setState(() => _imageState = _ImageState.loading);
     _startProbe();
   }

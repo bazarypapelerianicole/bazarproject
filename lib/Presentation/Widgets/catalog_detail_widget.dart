@@ -66,7 +66,7 @@ class CatalogDetailWidget extends StatelessWidget {
                   children: [
                     // ── Imagen hero ────────────────────────────────
                     _HeroImage(
-                      imageUrl: info.imageUrl,
+                      imageFile: info.imageFile,
                       accentColor: _accent,
                       height: isWide ? screenHeight * 0.3 : screenHeight * 0.26,
                     ),
@@ -226,27 +226,49 @@ class CatalogDetailWidget extends StatelessWidget {
 
 /// Imagen hero en la parte superior del detalle.
 class _HeroImage extends StatelessWidget {
-  final String imageUrl;
+  final CatalogImageFile? imageFile;
   final Color accentColor;
   final double height;
 
   const _HeroImage({
-    required this.imageUrl,
+    required this.imageFile,
     required this.accentColor,
     required this.height,
   });
 
   @override
   Widget build(BuildContext context) {
+    final file = imageFile;
+    if (file != null) {
+      // ignore: avoid_print
+      print('[PARENT] URL enviada a DriveImage: ${file.thumbnailLink}');
+    }
     return SizedBox(
       height: height,
       child: Stack(
         fit: StackFit.expand,
         children: [
-          DriveImage(
-            url: imageUrl,
-            fit: BoxFit.cover,
-            errorWidget: Container(
+          if (file != null)
+            DriveImage(
+              url: file.thumbnailLink,
+              fit: BoxFit.cover,
+              errorWidget: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [accentColor, accentColor.withValues(alpha: 0.5)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                ),
+                child: const Icon(
+                  Icons.photo_library_outlined,
+                  color: Colors.white38,
+                  size: 64,
+                ),
+              ),
+            )
+          else
+            Container(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [accentColor, accentColor.withValues(alpha: 0.5)],
@@ -254,13 +276,12 @@ class _HeroImage extends StatelessWidget {
                   end: Alignment.bottomRight,
                 ),
               ),
-              child: Icon(
+              child: const Icon(
                 Icons.photo_library_outlined,
                 color: Colors.white38,
                 size: 64,
               ),
             ),
-          ),
           // Gradiente inferior
           Positioned(
             bottom: 0,
@@ -464,6 +485,13 @@ class _ProductRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final imageFile = product.imageFiles.isEmpty
+        ? null
+        : product.imageFiles.first;
+    if (imageFile != null) {
+      // ignore: avoid_print
+      print('[PARENT] URL enviada a DriveImage: ${imageFile.thumbnailLink}');
+    }
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
@@ -482,10 +510,10 @@ class _ProductRow extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // Imagen pública construida desde el fileId de Drive.
-          product.imageUrls.isNotEmpty
+          // La URL es el thumbnailLink original del archivo de Drive.
+          imageFile != null
               ? DriveImage(
-                  url: product.imageUrls.first,
+                  url: imageFile.thumbnailLink,
                   width: 34,
                   height: 34,
                   fit: BoxFit.cover,
