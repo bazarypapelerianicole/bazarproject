@@ -547,15 +547,20 @@ class _ProductRow extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // Ícono de producto
-          Container(
-            width: 34,
-            height: 34,
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(8),
+          // Imagen pública construida desde el fileId de Drive.
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: SizedBox(
+              width: 34,
+              height: 34,
+              child: product.imageUrls.isNotEmpty
+                  ? Image.network(
+                      product.imageUrls.first,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => _productIcon(),
+                    )
+                  : _productIcon(),
             ),
-            child: Icon(Icons.inventory_2_outlined, color: color, size: 18),
           ),
           const SizedBox(width: 10),
           // Nombre y SKU
@@ -619,6 +624,11 @@ class _ProductRow extends StatelessWidget {
       ),
     );
   }
+
+  Widget _productIcon() => Container(
+    color: color.withValues(alpha: 0.1),
+    child: Icon(Icons.inventory_2_outlined, color: color, size: 18),
+  );
 
   void _showQrDialog(BuildContext context) {
     showDialog(

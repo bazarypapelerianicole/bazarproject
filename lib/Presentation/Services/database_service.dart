@@ -1322,14 +1322,12 @@ class DatabaseService {
         'SELECT id FROM categories WHERE lower(name) = ? LIMIT 1',
         [entry.categoryName.toLowerCase()],
       );
-      final expectedCategoryId = catRows.isNotEmpty
-          ? (catRows.first['id'] as num).toInt()
-          : null;
+      final expectedCategoryId =
+          catRows.isNotEmpty ? (catRows.first['id'] as num).toInt() : null;
 
       final storeWrong =
           expectedStoreId != null && currentStoreId != expectedStoreId;
-      final categoryWrong =
-          expectedCategoryId != null &&
+      final categoryWrong = expectedCategoryId != null &&
           (p['category_id'] as int?) != expectedCategoryId;
 
       if (storeWrong || categoryWrong) {
@@ -1726,9 +1724,8 @@ class DatabaseService {
         [productId, fromStoreId],
       );
 
-      final available = sourceRows.isEmpty
-          ? 0
-          : (sourceRows.first['stock'] as num).toInt();
+      final available =
+          sourceRows.isEmpty ? 0 : (sourceRows.first['stock'] as num).toInt();
 
       if (available < quantity) {
         throw Exception('No hay stock suficiente en el local origen');
@@ -1783,9 +1780,8 @@ class DatabaseService {
           [productId, storeId],
         );
 
-        final available = stockRows.isEmpty
-            ? 0
-            : (stockRows.first['stock'] as num).toInt();
+        final available =
+            stockRows.isEmpty ? 0 : (stockRows.first['stock'] as num).toInt();
 
         if (available < quantity) {
           throw Exception('Stock insuficiente para completar la venta');
@@ -1850,9 +1846,8 @@ class DatabaseService {
       }
 
       final categoryId = await _ensureCategory(txn, categoryName);
-      final imagesJson = images == null
-          ? null
-          : (images.isEmpty ? null : images.join(','));
+      final imagesJson =
+          images == null ? null : (images.isEmpty ? null : images.join(','));
       await txn.rawUpdate(
         'UPDATE products SET name = ?, sku = ?, aux_code = ?, description = ?, tags = ?, category_id = ?, store_id = ?, price = ?, cost_price = ?, iva_rate = ?, profit_iva = ?, images = ? WHERE id = ?',
         [
@@ -1872,6 +1867,24 @@ class DatabaseService {
         ],
       );
     });
+  }
+
+  /// IDs de Drive asociados al producto. Las rutas locales antiguas se ignoran
+  /// para no intentar borrar archivos fuera de Google Drive.
+  static Future<List<String>> getProductImageIds(int productId) async {
+    final db = await database;
+    final rows = await db.rawQuery(
+      'SELECT images FROM products WHERE id = ? LIMIT 1',
+      [productId],
+    );
+    if (rows.isEmpty) return const [];
+    final raw = rows.first['images'] as String? ?? '';
+    return raw
+        .split(',')
+        .map((value) => value.trim())
+        .where((value) =>
+            value.isNotEmpty && !value.contains('/') && !value.contains('\\'))
+        .toList();
   }
 
   static Future<void> deleteProduct(int productId) async {
@@ -2087,9 +2100,8 @@ class DatabaseService {
       args.add(day.toString().padLeft(2, '0'));
     }
 
-    final whereClause = conditions.isEmpty
-        ? ''
-        : 'WHERE ${conditions.join(' AND ')}';
+    final whereClause =
+        conditions.isEmpty ? '' : 'WHERE ${conditions.join(' AND ')}';
 
     return db.rawQuery('''
       SELECT sa.id, sa.date, sa.total,
@@ -2140,9 +2152,8 @@ class DatabaseService {
       args.add(day.toString().padLeft(2, '0'));
     }
 
-    final whereClause = conditions.isEmpty
-        ? ''
-        : 'WHERE ${conditions.join(' AND ')}';
+    final whereClause =
+        conditions.isEmpty ? '' : 'WHERE ${conditions.join(' AND ')}';
     final result = await db.rawQuery('''
       SELECT COUNT(*) as cnt FROM sales sa
       INNER JOIN stores st ON st.id = sa.store_id
@@ -2188,9 +2199,8 @@ class DatabaseService {
       args.add('${date.toIso8601String().split('T').first}%');
     }
 
-    final whereClause = conditions.isEmpty
-        ? ''
-        : 'WHERE ${conditions.join(' AND ')}';
+    final whereClause =
+        conditions.isEmpty ? '' : 'WHERE ${conditions.join(' AND ')}';
 
     return db.rawQuery('''
       SELECT pu.id, pu.date, pu.total,
@@ -2299,9 +2309,8 @@ class DatabaseService {
     try {
       final path = await DatabaseLocationService.getDatabasePath();
       final exists = await DatabaseLocationService.databaseExists(path);
-      final size = exists
-          ? await DatabaseLocationService.getDatabaseSize(path)
-          : 0.0;
+      final size =
+          exists ? await DatabaseLocationService.getDatabaseSize(path) : 0.0;
 
       return {
         'path': path,
@@ -2546,7 +2555,7 @@ class DatabaseService {
   static Future<void> saveCashDenominations({
     required int sessionId,
     required List<Map<String, dynamic>>
-    entries, // toMap() de cada DenominationEntry
+        entries, // toMap() de cada DenominationEntry
     required String moment,
   }) async {
     final db = await database;
@@ -2707,9 +2716,8 @@ class DatabaseService {
           'SELECT stock FROM inventory WHERE product_id = ? AND store_id = ? LIMIT 1',
           [productId, storeId],
         );
-        final available = stockRows.isEmpty
-            ? 0
-            : (stockRows.first['stock'] as num).toInt();
+        final available =
+            stockRows.isEmpty ? 0 : (stockRows.first['stock'] as num).toInt();
         if (available < quantity) {
           throw Exception('Stock insuficiente para completar la venta');
         }
@@ -3037,9 +3045,8 @@ class DatabaseService {
       final totalInvested = (row['totalInvested'] as num?)?.toDouble() ?? 0.0;
       final totalSellValue = (row['totalSellValue'] as num?)?.toDouble() ?? 0.0;
       final potentialGain = totalSellValue - totalInvested;
-      final potentialROI = totalInvested > 0
-          ? (potentialGain / totalInvested) * 100
-          : 0.0;
+      final potentialROI =
+          totalInvested > 0 ? (potentialGain / totalInvested) * 100 : 0.0;
 
       return {
         'totalProducts': (row['totalProducts'] as num?)?.toInt() ?? 0,

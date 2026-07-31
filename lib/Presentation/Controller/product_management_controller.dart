@@ -1,5 +1,6 @@
 import 'package:bazarnicole/Presentation/Services/catalog_sync_service.dart';
 import 'package:bazarnicole/Presentation/Services/database_service.dart';
+import 'package:bazarnicole/Presentation/Services/google_drive_backup_service.dart';
 import 'package:flutter/foundation.dart';
 
 class ProductManagementController extends ChangeNotifier {
@@ -8,6 +9,10 @@ class ProductManagementController extends ChangeNotifier {
   List<Map<String, dynamic>> products = [];
   List<Map<String, dynamic>> stores = [];
   List<Map<String, dynamic>> categories = [];
+
+  Future<List<String>> uploadImages(List<String> localPaths) => Future.wait(
+        localPaths.map(GoogleDriveBackupService.uploadProductImage),
+      );
 
   Future<void> initialize() async {
     if (isLoading || products.isNotEmpty) return;
@@ -80,6 +85,7 @@ class ProductManagementController extends ChangeNotifier {
     int? storeId,
     List<String>? images,
   }) async {
+    final previousImages = await DatabaseService.getProductImageIds(productId);
     await DatabaseService.updateProduct(
       productId: productId,
       name: name,
@@ -95,6 +101,12 @@ class ProductManagementController extends ChangeNotifier {
       storeId: storeId,
       images: images,
     );
+    if (images != null) {
+      final current = images.toSet();
+      for (final oldId in previousImages.where((id) => !current.contains(id))) {
+        await GoogleDriveBackupService.deleteProductImage(oldId);
+      }
+    }
     await loadCatalog();
     CatalogSyncService.instance.markDirty(); // ← Producto actualizado
   }
@@ -115,6 +127,7 @@ class ProductManagementController extends ChangeNotifier {
     List<String>? images,
     Map<int, int> stockByStore = const {},
   }) async {
+    final previousImages = await DatabaseService.getProductImageIds(productId);
     await DatabaseService.updateProduct(
       productId: productId,
       name: name,
@@ -130,6 +143,12 @@ class ProductManagementController extends ChangeNotifier {
       storeId: storeId,
       images: images,
     );
+    if (images != null) {
+      final current = images.toSet();
+      for (final oldId in previousImages.where((id) => !current.contains(id))) {
+        await GoogleDriveBackupService.deleteProductImage(oldId);
+      }
+    }
     for (final entry in stockByStore.entries) {
       await DatabaseService.updateInventoryStock(
         productId: productId,
@@ -142,7 +161,11 @@ class ProductManagementController extends ChangeNotifier {
   }
 
   Future<void> deleteProduct(int productId) async {
+    final imageIds = await DatabaseService.getProductImageIds(productId);
     await DatabaseService.deleteProduct(productId);
+    for (final id in imageIds) {
+      await GoogleDriveBackupService.deleteProductImage(id);
+    }
     await loadCatalog();
     CatalogSyncService.instance.markDirty(); // ← Producto eliminado
   }

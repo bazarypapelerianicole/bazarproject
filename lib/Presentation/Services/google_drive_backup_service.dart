@@ -58,6 +58,10 @@ class _AuthenticatedClient extends http.BaseClient {
 
 /// Servicio para exportar la base de datos a JSON y subir a Google Drive.
 class GoogleDriveBackupService {
+  // Carpeta raíz compartida de los backups. Las imágenes de productos se
+  // conservan en su subcarpeta `imagenes` para que sus IDs no dependan de un
+  // backup con fecha concreta.
+  static const String _bazarFolderId = '10bKLs-XzG0G2H1tqLJ16A5FkT5JfI39M';
   static String get _serverClientId {
     return dotenv.env['ID_CLIENT'] ?? dotenv.env['ID_CLIENT_ANDROID'] ?? '';
   }
@@ -146,6 +150,83 @@ class GoogleDriveBackupService {
     }
   }
 
+  /// URL que puede consumirse directamente en el catálogo público.
+  static String publicImageUrl(String fileId) =>
+      'https://drive.google.com/uc?export=view&id=$fileId';
+
+  /// Sube una imagen elegida por el usuario y devuelve su `fileId`.
+  ///
+  /// El archivo se comparte como lectura pública porque el catálogo web se
+  /// carga sin una sesión de Google. SQLite debe guardar únicamente el ID.
+  static Future<String> uploadProductImage(String localPath) async {
+    if (_currentUser == null) {
+      await signInSilently();
+    }
+    if (_currentUser == null) {
+      throw Exception(
+        'Inicia sesión con Google antes de seleccionar imágenes.',
+      );
+    }
+
+    final image = File(localPath);
+    if (!await image.exists()) {
+      throw Exception('La imagen seleccionada ya no está disponible.');
+    }
+
+    final auth = await _currentUser!.authentication;
+    final client = _AuthenticatedClient(http.Client(), {
+      'Authorization': 'Bearer ${auth.accessToken}',
+    });
+    final api = drive.DriveApi(client);
+    try {
+      final folderId = await _findOrCreateImagesFolder(api);
+      final bytes = await image.readAsBytes();
+      final name = image.uri.pathSegments.last;
+      final created = await api.files.create(
+        drive.File()
+          ..name = '${DateTime.now().microsecondsSinceEpoch}_$name'
+          ..parents = [folderId],
+        uploadMedia: drive.Media(
+          Stream.value(bytes),
+          bytes.length,
+          contentType: _getMimeType(name),
+        ),
+        $fields: 'id',
+      );
+      final fileId = created.id;
+      if (fileId == null) {
+        throw Exception('Google Drive no devolvió el ID de la imagen.');
+      }
+
+      await api.permissions.create(
+        drive.Permission()
+          ..type = 'anyone'
+          ..role = 'reader',
+        fileId,
+      );
+      return fileId;
+    } finally {
+      client.close();
+    }
+  }
+
+  /// Elimina una imagen que ya no pertenece a ningún producto.
+  static Future<void> deleteProductImage(String fileId) async {
+    if (fileId.isEmpty || _currentUser == null) return;
+    final auth = await _currentUser!.authentication;
+    final client = _AuthenticatedClient(http.Client(), {
+      'Authorization': 'Bearer ${auth.accessToken}',
+    });
+    try {
+      await drive.DriveApi(client).files.delete(fileId);
+    } catch (e) {
+      // No se deshace la actualización de SQLite por una limpieza fallida.
+      debugPrint('No se pudo eliminar imagen de Drive ($fileId): $e');
+    } finally {
+      client.close();
+    }
+  }
+
   /// Realiza el backup completo: JSON de tablas + imágenes a Google Drive.
   /// [onProgress] se llama con cada paso.
   static Future<BackupResult> performBackup({
@@ -181,12 +262,10 @@ class GoogleDriveBackupService {
           'BazarNicole_Backup_${now.year}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}_${now.hour.toString().padLeft(2, '0')}${now.minute.toString().padLeft(2, '0')}';
 
       // Carpeta destino fija en Drive: "bazarypapeleria"
-      const String bazarFolderId = '10bKLs-XzG0G2H1tqLJ16A5FkT5JfI39M';
-
       final rootFolderId = await _createDriveFolder(
         driveApi,
         folderName,
-        bazarFolderId,
+        _bazarFolderId,
       );
 
       // 3. Crear subcarpeta para JSONs
@@ -325,6 +404,19 @@ class GoogleDriveBackupService {
 
     final created = await driveApi.files.create(folder);
     return created.id!;
+  }
+
+  static Future<String> _findOrCreateImagesFolder(drive.DriveApi api) async {
+    final found = await api.files.list(
+      q:
+          "'$_bazarFolderId' in parents and name = 'imagenes' and "
+          "mimeType = 'application/vnd.google-apps.folder' and trashed = false",
+      pageSize: 1,
+      $fields: 'files(id)',
+    );
+    final files = found.files ?? const <drive.File>[];
+    final id = files.isEmpty ? null : files.first.id;
+    return id ?? _createDriveFolder(api, 'imagenes', _bazarFolderId);
   }
 
   static Future<void> _uploadTextFile(
