@@ -98,7 +98,7 @@ class _DriveImageState extends State<DriveImage> {
       _ImageState.failed => widget.errorWidget ?? const SizedBox.shrink(),
       _ImageState.ready => _BrowserImage(
         key: ValueKey(renderKey),
-        image: _loadedImage!,
+        url: widget.url,
         fit: widget.fit,
         borderRadius: widget.borderRadius,
       ),
@@ -148,25 +148,35 @@ class _ImageProbe {
 class _BrowserImage extends StatelessWidget {
   const _BrowserImage({
     super.key,
-    required this.image,
+    required this.url,
     required this.fit,
     required this.borderRadius,
   });
 
-  final web.HTMLImageElement image;
+  final String url;
   final BoxFit fit;
   final BorderRadius? borderRadius;
 
   @override
   Widget build(BuildContext context) {
     return HtmlElementView.fromTagName(
-      tagName: 'div',
+      tagName: 'img',
+
       hitTestBehavior: PlatformViewHitTestBehavior.transparent,
+
       onElementCreated: (element) {
-        final root = element as web.HTMLDivElement;
-        _configureRoot(root, borderRadius);
-        _configureImage(image, fit);
-        root.append(image);
+        final img = element as web.HTMLImageElement;
+
+        img
+          ..src = url
+          ..alt = '';
+
+        img.style
+          ..width = '100%'
+          ..height = '100%'
+          ..display = 'block'
+          ..objectFit = _objectFit(fit)
+          ..objectPosition = 'center';
       },
     );
   }
