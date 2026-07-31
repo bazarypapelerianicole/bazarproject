@@ -5,7 +5,7 @@ import 'package:bazarnicole/Presentation/Widgets/drive_image.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
 /// Bottom sheet de detalle de una categoría del catálogo.
-/// Muestra imagen grande, descripción completa, tags y galería de placeholder.
+/// Muestra imagen grande, descripción completa, tags y productos disponibles.
 class CatalogDetailWidget extends StatelessWidget {
   final String name;
   final CatalogStore store;
@@ -201,23 +201,6 @@ class CatalogDetailWidget extends StatelessWidget {
                             const SizedBox(height: 20),
                           ],
 
-                          // ── Galería de imágenes ─────────────────
-                          Text(
-                            'Vista de productos',
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.darkGray,
-                            ),
-                          ),
-                          const SizedBox(height: 10),
-                          _ProductGallery(
-                            imageUrl: info.imageUrl,
-                            accentColor: _accent,
-                          ),
-
-                          const SizedBox(height: 24),
-
                           // ── Código QR de la categoría ───────────
                           _CategoryQr(categoryName: name, accentColor: _accent),
 
@@ -298,55 +281,6 @@ class _HeroImage extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-/// Galería de miniaturas con variaciones de la imagen principal.
-class _ProductGallery extends StatelessWidget {
-  final String imageUrl;
-  final Color accentColor;
-
-  // Variantes de seed para simular distintas fotos del mismo artículo
-  static const List<String> _seeds = ['200', '210', '220', '230'];
-
-  const _ProductGallery({required this.imageUrl, required this.accentColor});
-
-  String _variantUrl(String seed) {
-    final uri = Uri.tryParse(imageUrl);
-    if (uri?.host == 'drive.usercontent.google.com') {
-      return imageUrl;
-    }
-    // Usa el parámetro ?w= para ligeras variaciones de encuadre
-    final base = imageUrl.contains('?') ? imageUrl.split('?').first : imageUrl;
-    return '$base?w=300&q=70&fit=crop&crop=entropy&s=$seed';
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: 90,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        itemCount: _seeds.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 8),
-        itemBuilder: (_, i) {
-          return DriveImage(
-            url: _variantUrl(_seeds[i]),
-            width: 90,
-            height: 90,
-            fit: BoxFit.cover,
-            borderRadius: BorderRadius.circular(10),
-            errorWidget: Container(
-              color: accentColor.withValues(alpha: 0.12),
-              child: Icon(
-                Icons.image_outlined,
-                color: accentColor.withValues(alpha: 0.4),
-              ),
-            ),
-          );
-        },
       ),
     );
   }

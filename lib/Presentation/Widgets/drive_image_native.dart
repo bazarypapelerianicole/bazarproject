@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 
 /// Implementación nativa de [DriveImage].
+///
+/// En plataformas no web se conserva el proveedor de imágenes nativo de
+/// Flutter; el elemento HTML solo existe en la implementación web.
 class DriveImage extends StatelessWidget {
   const DriveImage({
     super.key,
