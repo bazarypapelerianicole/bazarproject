@@ -70,16 +70,17 @@ class CatalogCategory {
     CatalogImageFile? imageFile,
     String? description,
     List<String>? tags,
-  }) => CatalogCategory(
-    id: id,
-    name: name,
-    storeId: storeId,
-    storeName: storeName,
-    imageFile: imageFile ?? this.imageFile,
-    description: description ?? this.description,
-    tags: tags ?? this.tags,
-    products: products ?? this.products,
-  );
+  }) =>
+      CatalogCategory(
+        id: id,
+        name: name,
+        storeId: storeId,
+        storeName: storeName,
+        imageFile: imageFile ?? this.imageFile,
+        description: description ?? this.description,
+        tags: tags ?? this.tags,
+        products: products ?? this.products,
+      );
 }
 
 /// Sección del catálogo agrupada por tienda.
@@ -186,9 +187,7 @@ class CatalogBuilder {
           .whereType<CatalogImageFile>()
           .toList();
       if (id == null || name == null || categoryId == null) continue;
-      productsByCatId
-          .putIfAbsent(categoryId, () => [])
-          .add(
+      productsByCatId.putIfAbsent(categoryId, () => []).add(
             CatalogProductEntry(
               id: id,
               name: name,
@@ -209,10 +208,12 @@ class CatalogBuilder {
       final storeId = (catData['store_id'] as num?)?.toInt() ?? 0;
       final storeName = storeNames[storeId] ?? getStoreName(storeId);
       final prods = productsByCatId[catId] ?? const [];
-      final imageFile = _findImageByName(imageFiles, catName);
-      sectionMap
-          .putIfAbsent(storeId, () => [])
-          .add(
+      // Si no hay una portada cuyo nombre coincida con la categoría (por
+      // ejemplo, archivos con nombre timestamp), usar la primera miniatura de
+      // sus productos. Así la hero y la tarjeta muestran la misma imagen.
+      final imageFile =
+          _findImageByName(imageFiles, catName) ?? _firstProductImage(prods);
+      sectionMap.putIfAbsent(storeId, () => []).add(
             CatalogCategory(
               id: catId,
               name: catName,
@@ -291,6 +292,15 @@ class CatalogBuilder {
     return null;
   }
 
+  static CatalogImageFile? _firstProductImage(
+    List<CatalogProductEntry> products,
+  ) {
+    for (final product in products) {
+      if (product.imageFiles.isNotEmpty) return product.imageFiles.first;
+    }
+    return null;
+  }
+
   static String _normalize(String s) {
     const a = 'áàäâãéèëêíìïîóòöôõúùüûñç';
     const b = 'aaaaaeeeeiiiioooooouuuunc';
@@ -314,8 +324,8 @@ class CatalogBuilder {
 
   /// Devuelve todos los productos de una sección en una lista plana.
   static List<CatalogProductEntry> flatProducts(CatalogSection section) => [
-    for (final c in section.categories) ...c.products,
-  ];
+        for (final c in section.categories) ...c.products,
+      ];
 }
 
 // ── Modelo legado — mantiene compatibilidad de compilación ───────────────────
