@@ -29,6 +29,8 @@ class CatalogProductEntry {
   final String sku;
   final double price;
   final int stock;
+  final int? categoryId;
+  final String categoryName;
 
   /// Archivos de Drive asociados al producto, con su thumbnail original.
   final List<CatalogImageFile> imageFiles;
@@ -39,6 +41,8 @@ class CatalogProductEntry {
     required this.sku,
     this.price = 0,
     this.stock = 0,
+    this.categoryId,
+    this.categoryName = 'Sin categoría',
     this.imageFiles = const [],
   });
 }
@@ -188,14 +192,20 @@ class CatalogBuilder {
       final sku = p['sku'] as String? ?? '';
       final price = (p['price'] as num?)?.toDouble() ?? 0;
       final stock = (p['stock'] as num?)?.toInt() ?? 0;
-      final categoryId = (p['category_id'] as num?)?.toInt();
+      final categoryIdRaw = (p['category_id'] as num?)?.toInt();
+      final categoryId = categoryIdRaw != null && categoryIndex.containsKey(categoryIdRaw)
+          ? categoryIdRaw
+          : null;
+      final categoryName = categoryId != null
+          ? (categoryIndex[categoryId]!['name'] as String? ?? 'Sin categoría')
+          : 'Sin categoría';
       final productImageFiles = _imageIds(p['images'])
-          .map((id) => _findImageById(imageFiles, id))
+          .map((imageId) => _findImageById(imageFiles, imageId))
           .whereType<CatalogImageFile>()
           .toList();
-      if (id == null || name == null || categoryId == null) continue;
+      if (id == null || name == null) continue;
       productsByCatId
-          .putIfAbsent(categoryId, () => [])
+          .putIfAbsent(categoryId ?? -1, () => [])
           .add(
             CatalogProductEntry(
               id: id,
@@ -203,6 +213,8 @@ class CatalogBuilder {
               sku: sku,
               price: price,
               stock: stock,
+              categoryId: categoryId,
+              categoryName: categoryName,
               imageFiles: productImageFiles,
             ),
           );
@@ -217,8 +229,6 @@ class CatalogBuilder {
       final storeId = (catData['store_id'] as num?)?.toInt() ?? 0;
       final storeName = storeNames[storeId] ?? getStoreName(storeId);
       final prods = productsByCatId[catId] ?? const [];
-      // El encabezado se alimenta exclusivamente de las imágenes reales de
-      // los productos: no depende de una portada con un nombre específico.
       final heroImages = _heroImages(prods);
       sectionMap
           .putIfAbsent(storeId, () => [])
@@ -233,6 +243,22 @@ class CatalogBuilder {
               products: prods,
             ),
           );
+    }
+
+    if (productsByCatId.containsKey(-1)) {
+      final uncategorizedProducts = productsByCatId[-1] ?? const <CatalogProductEntry>[];
+      final heroImages = _heroImages(uncategorizedProducts.toList());
+      sectionMap.putIfAbsent(0, () => []).add(
+        CatalogCategory(
+          id: -1,
+          name: 'Sin categoría',
+          storeId: 0,
+          storeName: 'General',
+          imageFile: heroImages.isEmpty ? null : heroImages.first,
+          heroImages: heroImages,
+          products: uncategorizedProducts.toList(),
+        ),
+      );
     }
 
     // Ordenar categorías alfabéticamente dentro de cada sección

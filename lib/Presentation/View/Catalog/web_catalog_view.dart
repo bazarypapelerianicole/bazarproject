@@ -5,6 +5,213 @@ import 'package:bazarnicole/Presentation/Widgets/catalog_card_widget.dart';
 import 'package:bazarnicole/Presentation/Widgets/legal_page_widget.dart';
 import 'package:flutter/material.dart';
 
+class CatalogSearchBar extends StatelessWidget {
+  final TextEditingController controller;
+  final ValueChanged<String> onChanged;
+  final bool isCompact;
+
+  const CatalogSearchBar({
+    super.key,
+    required this.controller,
+    required this.onChanged,
+    required this.isCompact,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      height: 56,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.06),
+            blurRadius: 16,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: TextField(
+        controller: controller,
+        textInputAction: TextInputAction.search,
+        onChanged: onChanged,
+        decoration: InputDecoration(
+          hintText: 'Buscar producto',
+          prefixIcon: const Icon(Icons.search_rounded, size: 20),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(18),
+            borderSide: BorderSide.none,
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(18),
+            borderSide: BorderSide.none,
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(18),
+            borderSide: BorderSide(
+              color: theme.colorScheme.primary.withValues(alpha: 0.2),
+            ),
+          ),
+          filled: true,
+          fillColor: Colors.white,
+          contentPadding: EdgeInsets.symmetric(
+            horizontal: isCompact ? 16 : 20,
+            vertical: isCompact ? 14 : 16,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class CategoryFilter extends StatelessWidget {
+  final List<CatalogCategory> categories;
+  final CatalogCategory? selectedCategory;
+  final ValueChanged<CatalogCategory?> onChanged;
+
+  const CategoryFilter({
+    super.key,
+    required this.categories,
+    required this.selectedCategory,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      height: 56,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.06),
+            blurRadius: 16,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: DropdownMenu<CatalogCategory?>(
+        initialSelection: selectedCategory,
+        onSelected: onChanged,
+        width: double.infinity,
+        textStyle: theme.textTheme.bodyMedium,
+        inputDecorationTheme: InputDecorationTheme(
+          filled: true,
+          fillColor: Colors.white,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(18),
+            borderSide: BorderSide.none,
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(18),
+            borderSide: BorderSide.none,
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(18),
+            borderSide: BorderSide(
+              color: theme.colorScheme.primary.withValues(alpha: 0.2),
+            ),
+          ),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 14,
+          ),
+        ),
+        menuStyle: MenuStyle(
+          shape: WidgetStatePropertyAll(
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          ),
+        ),
+        dropdownMenuEntries: [
+          const DropdownMenuEntry<CatalogCategory?>(
+            value: null,
+            label: 'Todas las categorías',
+          ),
+          ...categories.map(
+            (category) => DropdownMenuEntry<CatalogCategory?>(
+              value: category,
+              label: category.name,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class CatalogFilters extends StatelessWidget {
+  final TextEditingController searchController;
+  final ValueChanged<String> onSearchChanged;
+  final List<CatalogCategory> categories;
+  final CatalogCategory? selectedCategory;
+  final ValueChanged<CatalogCategory?> onCategoryChanged;
+  final int resultCount;
+
+  const CatalogFilters({
+    super.key,
+    required this.searchController,
+    required this.onSearchChanged,
+    required this.categories,
+    required this.selectedCategory,
+    required this.onCategoryChanged,
+    required this.resultCount,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isCompact = constraints.maxWidth < 720;
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: CatalogSearchBar(
+                    controller: searchController,
+                    onChanged: onSearchChanged,
+                    isCompact: isCompact,
+                  ),
+                ),
+                if (!isCompact) const SizedBox(width: 12),
+                if (!isCompact)
+                  Expanded(
+                    child: CategoryFilter(
+                      categories: categories,
+                      selectedCategory: selectedCategory,
+                      onChanged: onCategoryChanged,
+                    ),
+                  ),
+              ],
+            ),
+            if (isCompact) ...[
+              const SizedBox(height: 12),
+              CategoryFilter(
+                categories: categories,
+                selectedCategory: selectedCategory,
+                onChanged: onCategoryChanged,
+              ),
+            ],
+            const SizedBox(height: 12),
+            Text(
+              '$resultCount productos encontrados',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: AppColors.mediumGray,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
 /// Vista pública del catálogo — solo para web.
 /// Muestra los artículos disponibles con selector de sección (Bazar / Papelería).
 /// Los datos reales (productos e imágenes) se cargan desde el backup en Google Drive.
@@ -18,6 +225,8 @@ class WebCatalogView extends StatefulWidget {
 class _WebCatalogViewState extends State<WebCatalogView>
     with TickerProviderStateMixin {
   TabController? _tabController;
+  final TextEditingController _searchController = TextEditingController();
+  CatalogCategory? _selectedCategory;
   String _search = '';
 
   /// Datos reales de Drive (null = aún cargando).
@@ -35,6 +244,7 @@ class _WebCatalogViewState extends State<WebCatalogView>
 
   @override
   void dispose() {
+    _searchController.dispose();
     _tabController?.dispose();
     super.dispose();
   }
@@ -80,43 +290,85 @@ class _WebCatalogViewState extends State<WebCatalogView>
     }
   }
 
-  /// Filtra categorías por búsqueda.
-  List<CatalogCategory> _filtered(List<CatalogCategory> items) {
-    if (_search.isEmpty) return items;
-    final q = _search.toLowerCase();
-    return items.where((c) => c.name.toLowerCase().contains(q)).toList();
+  List<CatalogCategory> _filteredCategories(List<CatalogCategory> items) {
+    final q = _search.trim().toLowerCase();
+
+    return items.where((category) {
+      final matchesCategory =
+          _selectedCategory == null || category.id == _selectedCategory!.id;
+      if (!matchesCategory) {
+        return false;
+      }
+
+      final matchesProducts = q.isEmpty
+          ? category.products.isNotEmpty
+          : category.products.any(
+              (product) => product.name.toLowerCase().contains(q),
+            );
+
+      return matchesProducts;
+    }).toList();
+  }
+
+  int _countVisibleProducts(List<CatalogCategory> categories) {
+    final q = _search.trim().toLowerCase();
+    return categories.fold<int>(0, (total, category) {
+      final visibleProducts = q.isEmpty
+          ? category.products.length
+          : category.products.where(
+              (product) => product.name.toLowerCase().contains(q),
+            ).length;
+      return total + visibleProducts;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    final isWide = MediaQuery.of(context).size.width > 700;
+    final width = MediaQuery.of(context).size.width;
+    final isWide = width > 900;
+    final isTablet = width > 700;
+
+    final currentSectionCategories = _sections.isEmpty
+        ? <CatalogCategory>[]
+        : (_tabController != null && _tabController!.index < _sections.length
+            ? _sections[_tabController!.index].categories
+            : _sections.first.categories);
 
     return Scaffold(
-      backgroundColor: AppColors.lightGray,
+      backgroundColor: const Color(0xFFF7F7F8),
       appBar: AppBar(
         backgroundColor: AppColors.primaryLogo,
         foregroundColor: Colors.white,
+        titleSpacing: 16,
         title: Row(
           children: [
-            const Icon(Icons.storefront_outlined, size: 26),
-            const SizedBox(width: 10),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: const [
-                Text(
-                  'Bazar & Tienda Nicole',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                ),
-                Text(
-                  'Catálogo de productos',
-                  style: TextStyle(fontSize: 11, color: Colors.white70),
-                ),
-              ],
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: const Icon(Icons.storefront_outlined, size: 24),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: const [
+                  Text(
+                    'Bazar & Tienda Nicole',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                  Text(
+                    'Catálogo de productos',
+                    style: TextStyle(fontSize: 11, color: Colors.white70),
+                  ),
+                ],
+              ),
             ),
           ],
         ),
         actions: [
-          // Indicador de estado de Drive
           if (_driveLoading)
             const Padding(
               padding: EdgeInsets.only(right: 14),
@@ -162,99 +414,139 @@ class _WebCatalogViewState extends State<WebCatalogView>
         ],
         bottom: _sections.isEmpty
             ? null
-            : TabBar(
-                controller: _tabController,
-                indicatorColor: Colors.white,
-                labelColor: Colors.white,
-                unselectedLabelColor: Colors.white60,
-                tabs: _sections
-                    .map(
-                      (s) => Tab(
-                        icon: Icon(
-                          s.storeId == 1
-                              ? Icons.shopping_bag_outlined
-                              : Icons.menu_book_outlined,
+            : PreferredSize(
+                preferredSize: const Size.fromHeight(48),
+                child: TabBar(
+                  controller: _tabController,
+                  indicatorColor: Colors.white,
+                  labelColor: Colors.white,
+                  unselectedLabelColor: Colors.white60,
+                  tabs: _sections
+                      .map(
+                        (s) => Tab(
+                          icon: Icon(
+                            s.storeId == 1
+                                ? Icons.shopping_bag_outlined
+                                : Icons.menu_book_outlined,
+                          ),
+                          text: s.storeName,
                         ),
-                        text: s.storeName,
-                      ),
-                    )
-                    .toList(),
+                      )
+                      .toList(),
+                ),
               ),
       ),
       body: Column(
         children: [
-          // Banner de error de Drive (si aplica)
           if (_driveError != null)
             _DriveBanner(message: _driveError!, onRetry: _loadDriveData),
-
-          // Barra de búsqueda
-          Container(
-            color: AppColors.lightGray,
-            padding: EdgeInsets.symmetric(
-              horizontal: isWide ? 40 : 16,
-              vertical: 12,
-            ),
-            child: TextField(
-              decoration: InputDecoration(
-                hintText: 'Buscar artículo…',
-                prefixIcon: const Icon(Icons.search),
-                filled: true,
-                fillColor: Colors.white,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(25),
-                  borderSide: BorderSide.none,
-                ),
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 15,
-                ),
-              ),
-              onChanged: (v) => setState(() => _search = v),
-            ),
-          ),
-
-          // Contenido de tabs
           Expanded(
-            child: _driveLoading && _sections.isEmpty
-                ? const Center(child: CircularProgressIndicator())
-                : _sections.isEmpty
-                    ? Center(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.cloud_off_outlined,
-                              size: 48,
-                              color: AppColors.greyOverlay,
-                            ),
-                            const SizedBox(height: 12),
-                            const Text(
-                              'No se pudo cargar el catálogo',
-                              textAlign: TextAlign.center,
-                            ),
-                            const SizedBox(height: 12),
-                            ElevatedButton.icon(
-                              onPressed: _loadDriveData,
-                              icon: const Icon(Icons.refresh),
-                              label: const Text('Reintentar'),
-                            ),
-                          ],
-                        ),
-                      )
-                    : TabBarView(
-                        controller: _tabController,
-                        children: _sections
-                            .map(
-                              (section) => _CatalogGrid(
-                                categories: _filtered(section.categories),
-                                isWide: isWide,
+            child: CustomScrollView(
+              slivers: [
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: EdgeInsets.fromLTRB(
+                      isTablet ? 28 : 16,
+                      20,
+                      isTablet ? 28 : 16,
+                      8,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Explora el catálogo',
+                          style: Theme.of(context).textTheme.headlineSmall
+                              ?.copyWith(
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.primaryLogo,
                               ),
-                            )
-                            .toList(),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          'Encuentra tus productos favoritos de forma rápida y cómoda.',
+                          style: Theme.of(context).textTheme.bodyMedium
+                              ?.copyWith(color: AppColors.mediumGray),
+                        ),
+                        const SizedBox(height: 16),
+                        if (_sections.isNotEmpty)
+                          CatalogFilters(
+                            searchController: _searchController,
+                            onSearchChanged: (value) => setState(() {
+                              _search = value;
+                            }),
+                            categories: currentSectionCategories,
+                            selectedCategory: _selectedCategory,
+                            onCategoryChanged: (category) => setState(() {
+                              _selectedCategory = category;
+                            }),
+                            resultCount: _sections.fold<int>(0, (
+                              count,
+                              section,
+                            ) {
+                              return count +
+                                  _countVisibleProducts(
+                                    _filteredCategories(section.categories),
+                                  );
+                            }),
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+                if (_driveLoading && _sections.isEmpty)
+                  const SliverFillRemaining(
+                    hasScrollBody: false,
+                    child: Center(child: CircularProgressIndicator()),
+                  )
+                else if (_sections.isEmpty)
+                  SliverFillRemaining(
+                    hasScrollBody: false,
+                    child: Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.cloud_off_outlined,
+                            size: 48,
+                            color: AppColors.greyOverlay,
+                          ),
+                          const SizedBox(height: 12),
+                          const Text(
+                            'No se pudo cargar el catálogo',
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 12),
+                          ElevatedButton.icon(
+                            onPressed: _loadDriveData,
+                            icon: const Icon(Icons.refresh),
+                            label: const Text('Reintentar'),
+                          ),
+                        ],
                       ),
+                    ),
+                  )
+                else
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: EdgeInsets.fromLTRB(
+                        isTablet ? 28 : 16,
+                        8,
+                        isTablet ? 28 : 16,
+                        24,
+                      ),
+                      child: _CatalogGrid(
+                        sections: _sections,
+                        search: _search,
+                        selectedCategory: _selectedCategory,
+                        isWide: isWide,
+                        isTablet: isTablet,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
           ),
-
-          // Pie de página
           Container(
             color: AppColors.primaryLogo,
             padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
@@ -373,14 +665,46 @@ class _DriveBanner extends StatelessWidget {
 // ── Grid de categorías ───────────────────────────────────────────────────────
 
 class _CatalogGrid extends StatelessWidget {
-  final List<CatalogCategory> categories;
+  final List<CatalogSection> sections;
+  final String search;
+  final CatalogCategory? selectedCategory;
   final bool isWide;
+  final bool isTablet;
 
-  const _CatalogGrid({required this.categories, required this.isWide});
+  const _CatalogGrid({
+    required this.sections,
+    required this.search,
+    required this.selectedCategory,
+    required this.isWide,
+    required this.isTablet,
+  });
 
   @override
   Widget build(BuildContext context) {
-    if (categories.isEmpty) {
+    final filteredSections = sections
+        .map((section) {
+          final categories = section.categories.where((category) {
+            final q = search.trim().toLowerCase();
+            final matchesCategory =
+                selectedCategory == null || category.id == selectedCategory!.id;
+            final matchesProducts = q.isEmpty
+                ? category.products.isNotEmpty
+                : category.products.any(
+                    (product) => product.name.toLowerCase().contains(q),
+                  );
+            return matchesCategory && matchesProducts;
+          }).toList();
+
+          return CatalogSection(
+            storeId: section.storeId,
+            storeName: section.storeName,
+            categories: categories,
+          );
+        })
+        .where((section) => section.categories.isNotEmpty)
+        .toList();
+
+    if (filteredSections.isEmpty) {
       return Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -393,26 +717,54 @@ class _CatalogGrid extends StatelessWidget {
       );
     }
 
-    final crossCount = isWide ? 4 : 2;
-    final childAspectRatio = isWide ? 0.72 : 0.65;
+    final crossCount = isWide
+        ? 4
+        : isTablet
+        ? 3
+        : 1;
+    final childAspectRatio = isWide
+        ? 0.78
+        : isTablet
+        ? 0.84
+        : 0.86;
 
-    return GridView.builder(
-      padding: EdgeInsets.all(isWide ? 32 : 16),
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: crossCount,
-        mainAxisSpacing: 16,
-        crossAxisSpacing: 16,
-        childAspectRatio: childAspectRatio,
-      ),
-      itemCount: categories.length,
-      itemBuilder: (context, i) {
-        final category = categories[i];
-      return CatalogCategoryCard(
-        name: category.name,
-        storeName: category.storeName,
-        info: category,
-      );
-      },
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        for (final section in filteredSections) ...[
+          Padding(
+            padding: const EdgeInsets.only(bottom: 14, top: 4),
+            child: Text(
+              section.storeName,
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w700,
+                color: AppColors.primaryLogo,
+              ),
+            ),
+          ),
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            padding: EdgeInsets.zero,
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: crossCount,
+              mainAxisSpacing: 16,
+              crossAxisSpacing: 16,
+              childAspectRatio: childAspectRatio,
+            ),
+            itemCount: section.categories.length,
+            itemBuilder: (context, index) {
+              final category = section.categories[index];
+              return CatalogCategoryCard(
+                name: category.name,
+                storeName: category.storeName,
+                info: category,
+              );
+            },
+          ),
+          const SizedBox(height: 18),
+        ],
+      ],
     );
   }
 }

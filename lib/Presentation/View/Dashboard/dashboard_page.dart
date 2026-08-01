@@ -285,13 +285,6 @@ class _DashboardPageState extends State<DashboardPage> {
           Center(child: Text('Perfil: ${_currentUser?['name'] ?? ''}')),
         ],
       ),
-      floatingActionButton: role == 'admin'
-          ? FloatingActionButton.extended(
-              onPressed: () => Navigator.pushNamed(context, AppRoutes.register),
-              icon: const Icon(Icons.person_add),
-              label: const Text('Registrar'),
-            )
-          : null,
     );
   }
 

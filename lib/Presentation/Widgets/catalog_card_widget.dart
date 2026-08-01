@@ -27,6 +27,7 @@ class _CatalogCategoryCardState extends State<CatalogCategoryCard>
   late final AnimationController _ctrl;
   late final Animation<double> _fade;
   late final Animation<Offset> _slide;
+  bool _isHovered = false;
 
   bool get _isBazar => widget.storeName.toLowerCase() == 'bazar';
 
@@ -42,7 +43,7 @@ class _CatalogCategoryCardState extends State<CatalogCategoryCard>
     );
     _fade = CurvedAnimation(parent: _ctrl, curve: Curves.easeOut);
     _slide = Tween<Offset>(
-      begin: const Offset(0, 0.18),
+      begin: const Offset(0, 0.12),
       end: Offset.zero,
     ).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeOutCubic));
     _ctrl.forward();
@@ -56,99 +57,99 @@ class _CatalogCategoryCardState extends State<CatalogCategoryCard>
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return FadeTransition(
       opacity: _fade,
       child: SlideTransition(
         position: _slide,
-        child: Card(
-          color: AppColors.whiteOverlay,
-          elevation: 4,
-          shadowColor: _accentColor.withValues(alpha: 0.25),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(18),
-          ),
-          clipBehavior: Clip.antiAlias,
-          child: InkWell(
-            onTap: () => _openDetail(context),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // ── Imagen de portada ──────────────────────────────────
-                _CardImage(
-                  heroImages: widget.info.heroImages,
-                  accentColor: _accentColor,
-                ),
-
-                // ── Contenido ─────────────────────────────────────────
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+        child: MouseRegion(
+          cursor: SystemMouseCursors.click,
+          onEnter: (_) => setState(() => _isHovered = true),
+          onExit: (_) => setState(() => _isHovered = false),
+          child: AnimatedScale(
+            scale: _isHovered ? 1.02 : 1.0,
+            duration: const Duration(milliseconds: 180),
+            curve: Curves.easeOut,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 180),
+              decoration: BoxDecoration(
+                color: AppColors.whiteOverlay,
+                borderRadius: BorderRadius.circular(24),
+                boxShadow: [
+                  BoxShadow(
+                    color: _accentColor.withValues(alpha: _isHovered ? 0.16 : 0.08),
+                    blurRadius: _isHovered ? 24 : 14,
+                    offset: const Offset(0, 10),
+                  ),
+                ],
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(24),
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: () => _openDetail(context),
                     child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        // Nombre de categoría
-                        Text(
-                          widget.name,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.darkGray,
-                            height: 1.2,
-                          ),
-                        ),
-                        const SizedBox(height: 5),
-                        // Descripción corta
-                        Expanded(
-                          child: Text(
-                            widget.info.description,
-                            maxLines: 3,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: AppColors.mediumGray,
-                              height: 1.4,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        // Tags
-                        if (widget.info.tags.isNotEmpty)
-                          Wrap(
-                            spacing: 4,
-                            runSpacing: 2,
-                            children: widget.info.tags
-                                .take(3)
-                                .map(
-                                  (t) =>
-                                      _TagChip(label: t, color: _accentColor),
-                                )
-                                .toList(),
-                          ),
-                        const SizedBox(height: 8),
-                        // Botón "Ver más"
                         SizedBox(
-                          width: double.infinity,
-                          height: 32,
-                          child: ElevatedButton.icon(
-                            onPressed: () => _openDetail(context),
-                            icon: const Icon(
-                              Icons.arrow_forward_ios_rounded,
-                              size: 12,
-                            ),
-                            label: const Text(
-                              'Ver detalle',
-                              style: TextStyle(fontSize: 11),
-                            ),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: _accentColor,
-                              foregroundColor: Colors.white,
-                              elevation: 0,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              padding: EdgeInsets.zero,
+                          height: 150,
+                          child: _CardImage(
+                            heroImages: widget.info.heroImages,
+                            accentColor: _accentColor,
+                          ),
+                        ),
+                        Expanded(
+                          child: Padding(
+                            padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  widget.name,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: theme.textTheme.titleMedium?.copyWith(
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.darkGray,
+                                  ),
+                                ),
+                                const SizedBox(height: 6),
+                                Text(
+                                  '${widget.info.products.length} productos',
+                                  style: theme.textTheme.bodyMedium?.copyWith(
+                                    color: AppColors.mediumGray,
+                                  ),
+                                ),
+                                const SizedBox(height: 10),
+                                if (widget.info.tags.isNotEmpty)
+                                  Wrap(
+                                    spacing: 6,
+                                    runSpacing: 6,
+                                    children: widget.info.tags
+                                        .take(2)
+                                        .map((tag) => _TagChip(label: tag, color: _accentColor))
+                                        .toList(),
+                                  ),
+                                const Spacer(),
+                                SizedBox(
+                                  width: double.infinity,
+                                  height: 42,
+                                  child: FilledButton.icon(
+                                    onPressed: () => _openDetail(context),
+                                    icon: const Icon(Icons.visibility_outlined, size: 18),
+                                    label: const Text('Ver detalle'),
+                                    style: FilledButton.styleFrom(
+                                      backgroundColor: _accentColor,
+                                      foregroundColor: Colors.white,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(14),
+                                      ),
+                                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ),
@@ -156,7 +157,7 @@ class _CatalogCategoryCardState extends State<CatalogCategoryCard>
                     ),
                   ),
                 ),
-              ],
+              ),
             ),
           ),
         ),
@@ -188,7 +189,7 @@ class _CardImage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 120,
+      height: 150,
       child: Stack(
         fit: StackFit.expand,
         children: [
@@ -213,9 +214,7 @@ class _CardImage extends StatelessWidget {
                         initialIndex: index,
                       ),
                       child: Hero(
-                        tag: ProductGalleryViewer.heroTagFor(
-                          image.thumbnailLink,
-                        ),
+                        tag: ProductGalleryViewer.heroTagFor(image.thumbnailLink),
                         child: DriveImage(
                           key: ValueKey(image.id),
                           url: image.thumbnailLink,
@@ -228,12 +227,11 @@ class _CardImage extends StatelessWidget {
                 );
               },
             ),
-          // Gradiente para mejorar legibilidad del texto sobre imagen
           Positioned(
             bottom: 0,
             left: 0,
             right: 0,
-            height: 50,
+            height: 56,
             child: Container(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
@@ -249,8 +247,8 @@ class _CardImage extends StatelessWidget {
           ),
           if (heroImages.length > 1)
             Positioned(
-              right: 8,
-              bottom: 8,
+              right: 10,
+              bottom: 10,
               child: _ImageCount(count: heroImages.length),
             ),
         ],
@@ -261,15 +259,14 @@ class _CardImage extends StatelessWidget {
   Widget _imageFallback() => Container(
     decoration: BoxDecoration(
       gradient: LinearGradient(
-        colors: [accentColor, accentColor.withValues(alpha: 0.6)],
+        colors: [accentColor, accentColor.withValues(alpha: 0.76)],
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
       ),
+      color: accentColor.withValues(alpha: 0.95),
     ),
-    child: const Icon(
-      Icons.image_not_supported_outlined,
-      color: Colors.white54,
-      size: 36,
+    child: const Center(
+      child: Icon(Icons.image_not_supported_outlined, color: Colors.white70, size: 40),
     ),
   );
 }
