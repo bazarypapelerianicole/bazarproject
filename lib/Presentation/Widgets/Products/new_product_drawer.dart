@@ -30,6 +30,7 @@ class NewProductDrawer extends StatelessWidget {
     required this.onPickImages,
     required this.onSaveProduct,
     required this.scaffoldKey,
+    this.onClose,
     super.key,
   });
 
@@ -58,6 +59,7 @@ class NewProductDrawer extends StatelessWidget {
   final VoidCallback onPickImages;
   final VoidCallback onSaveProduct;
   final GlobalKey<ScaffoldState> scaffoldKey;
+  final VoidCallback? onClose;
 
   @override
   Widget build(BuildContext context) {
@@ -105,7 +107,13 @@ class NewProductDrawer extends StatelessWidget {
                   ),
                 ),
                 IconButton(
-                  onPressed: () => scaffoldKey.currentState?.closeEndDrawer(),
+                  onPressed: () {
+                    if (onClose != null) {
+                      onClose!();
+                    } else {
+                      scaffoldKey.currentState?.closeEndDrawer();
+                    }
+                  },
                   icon: const Icon(Icons.close, color: AppColors.whiteOverlay),
                 ),
               ],

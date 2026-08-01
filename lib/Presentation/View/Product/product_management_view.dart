@@ -209,41 +209,6 @@ class _ProductManagementViewState extends State<ProductManagementView> {
   }
 
   // ════════════════════════════════════════════════════════════════════════
-  // DRAWER — Nuevo Producto
-  // ════════════════════════════════════════════════════════════════════════
-
-  Widget _buildNewProductDrawer(ProductManagementController controller) {
-    return NewProductDrawer(
-      controller: controller,
-      formKey: _formKey,
-      nameController: _nameController,
-      categoryController: _categoryController,
-      skuController: _skuController,
-      auxCodeController: _auxCodeController,
-      descriptionController: _descriptionController,
-      tagsController: _tagsController,
-      priceController: _priceController,
-      costPriceController: _costPriceController,
-      ivaRateController: _ivaRateController,
-      profitIvaController: _profitIvaController,
-      bazarController: _bazarController,
-      tiendaController: _tiendaController,
-      selectedCategoryName: _selectedCategoryName,
-      selectedStoreId: _selectedStoreId,
-      imagePaths: _imagePaths,
-      isUploadingImages: _isUploadingImages,
-      isSavingProduct: _isSavingProduct,
-      onCategoryChanged: (v) => setState(() => _selectedCategoryName = v),
-      onStoreChanged: (v) => setState(() => _selectedStoreId = v),
-      onRemoveImage: (i) =>
-          setState(() => _imagePaths = List.from(_imagePaths)..removeAt(i)),
-      onPickImages: _pickImages,
-      onSaveProduct: _saveProduct,
-      scaffoldKey: _scaffoldKey,
-    );
-  }
-
-  // ════════════════════════════════════════════════════════════════════════
   // WIDGETS UI
   // ════════════════════════════════════════════════════════════════════════
 
@@ -257,12 +222,59 @@ class _ProductManagementViewState extends State<ProductManagementView> {
 
   // ProductCard moved to widgets/product_card.dart
 
-  Widget _buildAddProductButton() => AddProductButton(
-    onPressed: () => _scaffoldKey.currentState?.openEndDrawer(),
-  );
+  Widget _buildAddProductButton() =>
+      AddProductButton(onPressed: () => _showNewProductDrawer());
 
   Widget _buildEmptyState() =>
-      EmptyState(onCreate: () => _scaffoldKey.currentState?.openEndDrawer());
+      EmptyState(onCreate: () => _showNewProductDrawer());
+
+  Future<void> _showNewProductDrawer() async {
+    final controller = context.read<ProductManagementController>();
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) {
+        return SizedBox(
+          height: MediaQuery.of(sheetContext).size.height * 0.92,
+          child: ClipRRect(
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+            child: NewProductDrawer(
+              controller: controller,
+              formKey: _formKey,
+              nameController: _nameController,
+              categoryController: _categoryController,
+              skuController: _skuController,
+              auxCodeController: _auxCodeController,
+              descriptionController: _descriptionController,
+              tagsController: _tagsController,
+              priceController: _priceController,
+              costPriceController: _costPriceController,
+              ivaRateController: _ivaRateController,
+              profitIvaController: _profitIvaController,
+              bazarController: _bazarController,
+              tiendaController: _tiendaController,
+              selectedCategoryName: _selectedCategoryName,
+              selectedStoreId: _selectedStoreId,
+              imagePaths: _imagePaths,
+              isUploadingImages: _isUploadingImages,
+              isSavingProduct: _isSavingProduct,
+              onCategoryChanged: (v) =>
+                  setState(() => _selectedCategoryName = v),
+              onStoreChanged: (v) => setState(() => _selectedStoreId = v),
+              onRemoveImage: (i) => setState(
+                () => _imagePaths = List.from(_imagePaths)..removeAt(i),
+              ),
+              onPickImages: _pickImages,
+              onSaveProduct: _saveProduct,
+              scaffoldKey: _scaffoldKey,
+              onClose: () => Navigator.of(sheetContext).pop(),
+            ),
+          ),
+        );
+      },
+    );
+  }
 
   int _crossAxisCount(BuildContext context) {
     final width = MediaQuery.of(context).size.width;
@@ -298,22 +310,33 @@ class _ProductManagementViewState extends State<ProductManagementView> {
         return Scaffold(
           key: _scaffoldKey,
           backgroundColor: const Color(0xFFF6F7F9),
-          endDrawer: _buildNewProductDrawer(controller),
+          appBar: isMobile
+              ? AppBar(
+                  backgroundColor: AppColors.blackOverlay,
+                  toolbarHeight: 64,
+                  automaticallyImplyLeading: false,
+                  leading: const SizedBox.shrink(),
+                  leadingWidth: 0,
+                  titleSpacing: 0,
+                  elevation: 4,
+                  shadowColor: AppColors.blackOverlay.withOpacity(0.50),
+                  title: _mobileHeader(),
+                  shape: const RoundedRectangleBorder(
+                    borderRadius: BorderRadius.only(
+                      bottomLeft: Radius.circular(20),
+                      bottomRight: Radius.circular(20),
+                    ),
+                    side: BorderSide(color: Color(0xFF1a1a1a), width: 0.5),
+                  ),
+                )
+              : null,
+
           body: SafeArea(
+            top: !isMobile,
             child: CustomScrollView(
               slivers: [
                 // Header
-                if (isMobile)
-                  SliverAppBar(
-                    backgroundColor: AppColors.blackOverlay,
-                    automaticallyImplyLeading: false,
-                    leading: const SizedBox.shrink(),
-                    leadingWidth: 0,
-                    titleSpacing: 0,
-                    toolbarHeight: 64,
-                    title: _mobileHeader(),
-                  )
-                else
+                if (!isMobile)
                   SliverToBoxAdapter(
                     child: Container(
                       color: AppColors.blackOverlay,
@@ -595,6 +618,8 @@ class _ProductManagementViewState extends State<ProductManagementView> {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           IconButton(
             onPressed: () => Navigator.pop(context),
@@ -611,10 +636,12 @@ class _ProductManagementViewState extends State<ProductManagementView> {
                 color: AppColors.whiteOverlay,
                 letterSpacing: -0.3,
               ),
+              textAlign: TextAlign.center,
             ),
           ),
           const SizedBox(width: 8),
-          _buildAddProductButton(),
+          AddProductButton(onPressed: () => _showNewProductDrawer()),
+          const SizedBox(width: 8),
         ],
       ),
     );

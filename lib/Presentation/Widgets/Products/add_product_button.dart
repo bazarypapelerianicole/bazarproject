@@ -8,19 +8,19 @@ class AddProductButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: 48,
-      height: 48,
+      width: 42,
+      height: 42,
       child: FilledButton(
         style: FilledButton.styleFrom(
-          backgroundColor: AppColors.whiteOverlay,
+          backgroundColor: Colors.transparent,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(10),
           ),
           padding: EdgeInsets.zero,
-          minimumSize: const Size(48, 48),
+          minimumSize: const Size(42, 42),
         ),
         onPressed: onPressed,
-        child: const Icon(Icons.add, size: 20, color: AppColors.primaryLogo),
+        child: const Icon(Icons.add, size: 30, color: AppColors.whiteOverlay),
       ),
     );
   }
