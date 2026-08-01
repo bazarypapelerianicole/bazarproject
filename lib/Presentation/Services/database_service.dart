@@ -405,9 +405,34 @@ class DatabaseService {
       CREATE TABLE IF NOT EXISTS categories (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT NOT NULL UNIQUE,
+        slug TEXT NOT NULL,
         store_id INTEGER
       )
     ''');
+
+    await _ensureColumn(
+      db,
+      table: 'categories',
+      column: 'slug',
+      definition: 'TEXT NOT NULL DEFAULT ""',
+    );
+
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_categories_slug ON categories(slug)',
+    );
+
+    final existingCategories = await db.rawQuery(
+      'SELECT id, name FROM categories',
+    );
+    for (final row in existingCategories) {
+      final id = (row['id'] as num).toInt();
+      final name = row['name'] as String? ?? '';
+      final slug = _buildCategorySlug(name);
+      await db.rawUpdate('UPDATE categories SET slug = ? WHERE id = ?', [
+        slug,
+        id,
+      ]);
+    }
 
     await db.execute('''
       CREATE TABLE IF NOT EXISTS products (
@@ -1261,8 +1286,8 @@ class DatabaseService {
         await db.rawUpdate(
           '''UPDATE categories
              SET store_id = ?
-             WHERE lower(name) = ? AND store_id IS NULL''',
-          [storeId, categoryName.toLowerCase()],
+             WHERE slug = ? AND store_id IS NULL''',
+          [storeId, _buildCategorySlug(categoryName)],
         );
       }
     }
@@ -1319,8 +1344,8 @@ class DatabaseService {
 
       // Para la comparacion de categoria buscamos por nombre
       final catRows = await db.rawQuery(
-        'SELECT id FROM categories WHERE lower(name) = ? LIMIT 1',
-        [entry.categoryName.toLowerCase()],
+        'SELECT id FROM categories WHERE slug = ? LIMIT 1',
+        [_buildCategorySlug(entry.categoryName)],
       );
       final expectedCategoryId = catRows.isNotEmpty
           ? (catRows.first['id'] as num).toInt()
@@ -1390,21 +1415,22 @@ class DatabaseService {
     final name = _cleanName(
       categoryName?.isNotEmpty == true ? categoryName! : 'Sin categoria',
     );
+    final slug = _buildCategorySlug(name);
 
     if (storeId != null) {
       // Buscar categoria especifica de esta tienda primero
       final existingForStore = await db.rawQuery(
-        'SELECT id FROM categories WHERE name = ? AND store_id = ? LIMIT 1',
-        [name, storeId],
+        'SELECT id FROM categories WHERE slug = ? AND store_id = ? LIMIT 1',
+        [slug, storeId],
       );
       if (existingForStore.isNotEmpty) {
         return (existingForStore.first['id'] as num).toInt();
       }
 
-      // Buscar si ya existe con ese nombre (sin store_id o de otra tienda)
+      // Buscar si ya existe con ese slug (sin store_id o de otra tienda)
       final existingGlobal = await db.rawQuery(
-        'SELECT id, store_id FROM categories WHERE name = ? LIMIT 1',
-        [name],
+        'SELECT id, store_id FROM categories WHERE slug = ? LIMIT 1',
+        [slug],
       );
 
       if (existingGlobal.isNotEmpty) {
@@ -1422,13 +1448,14 @@ class DatabaseService {
         // tiendas comparten exactamente el mismo nombre de categoria.
         else if (existingStoreId != storeId) {
           final altName = '$name [$storeId]';
+          final altSlug = _buildCategorySlug(altName);
           await db.rawInsert(
-            'INSERT OR IGNORE INTO categories (name, store_id) VALUES (?, ?)',
-            [altName, storeId],
+            'INSERT OR IGNORE INTO categories (name, slug, store_id) VALUES (?, ?, ?)',
+            [altName, altSlug, storeId],
           );
           final altRows = await db.rawQuery(
-            'SELECT id FROM categories WHERE name = ? AND store_id = ? LIMIT 1',
-            [altName, storeId],
+            'SELECT id FROM categories WHERE slug = ? AND store_id = ? LIMIT 1',
+            [altSlug, storeId],
           );
           return (altRows.first['id'] as num).toInt();
         }
@@ -1437,20 +1464,21 @@ class DatabaseService {
 
       // No existe: crear con store_id
       final newId = await db.rawInsert(
-        'INSERT INTO categories (name, store_id) VALUES (?, ?)',
-        [name, storeId],
+        'INSERT INTO categories (name, slug, store_id) VALUES (?, ?, ?)',
+        [name, slug, storeId],
       );
       return newId;
     }
 
     // Modo legado sin contexto de tienda
-    await db.rawInsert('INSERT OR IGNORE INTO categories (name) VALUES (?)', [
-      name,
-    ]);
+    await db.rawInsert(
+      'INSERT OR IGNORE INTO categories (name, slug) VALUES (?, ?)',
+      [name, slug],
+    );
 
     final rows = await db.rawQuery(
-      'SELECT id FROM categories WHERE name = ? LIMIT 1',
-      [name],
+      'SELECT id FROM categories WHERE slug = ? LIMIT 1',
+      [slug],
     );
 
     return (rows.first['id'] as num).toInt();
@@ -1518,6 +1546,11 @@ class DatabaseService {
 
   static String _cleanName(String value) {
     return value.trim().replaceAll(RegExp(r'\s+'), ' ');
+  }
+
+  static String _buildCategorySlug(String value) {
+    final normalized = value.trim().replaceAll(RegExp(r'\s+'), '');
+    return normalized.toLowerCase();
   }
 
   static void _performAutomaticBackupIfNeeded() {

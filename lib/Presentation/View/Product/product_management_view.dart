@@ -116,6 +116,7 @@ class _ProductManagementViewState extends State<ProductManagementView> {
   final _bazarController = TextEditingController(text: '0');
   final _tiendaController = TextEditingController(text: '0');
   final _searchController = TextEditingController();
+  String? _selectedCategoryName;
   int? _selectedStoreId;
   List<String> _imagePaths = [];
   bool _isUploadingImages = false;
@@ -190,7 +191,7 @@ class _ProductManagementViewState extends State<ProductManagementView> {
     try {
       await controller.createProduct(
         name: _nameController.text,
-        category: _categoryController.text,
+        category: _selectedCategoryName ?? '',
         price: double.tryParse(_priceController.text.replaceAll(',', '.')) ?? 0,
         costPrice:
             double.tryParse(_costPriceController.text.replaceAll(',', '.')) ??
@@ -210,6 +211,7 @@ class _ProductManagementViewState extends State<ProductManagementView> {
       );
 
       _nameController.clear();
+      _selectedCategoryName = null;
       _categoryController.clear();
       _skuController.clear();
       _auxCodeController.clear();
@@ -266,9 +268,7 @@ class _ProductManagementViewState extends State<ProductManagementView> {
     final nameController = TextEditingController(
       text: item['name']?.toString() ?? '',
     );
-    final categoryController = TextEditingController(
-      text: item['category']?.toString() ?? '',
-    );
+    String? editCategory = item['category']?.toString();
     final skuController = TextEditingController(
       text: item['sku']?.toString() ?? '',
     );
@@ -397,11 +397,27 @@ class _ProductManagementViewState extends State<ProductManagementView> {
                                     ),
                                   ),
                                   const SizedBox(height: 12),
-                                  TextField(
-                                    controller: categoryController,
+                                  DropdownButtonFormField<String?>(
+                                    value: editCategory,
                                     decoration: _modernInput(
                                       label: 'Categoría',
                                     ),
+                                    items: [
+                                      const DropdownMenuItem<String?>(
+                                        value: null,
+                                        child: Text('Selecciona una categoría'),
+                                      ),
+                                      ...controller.categories.map((category) {
+                                        final categoryName =
+                                            category['name'] as String;
+                                        return DropdownMenuItem<String?>(
+                                          value: categoryName,
+                                          child: Text(categoryName),
+                                        );
+                                      }),
+                                    ],
+                                    onChanged: (value) =>
+                                        setDialogState(() => editCategory = value),
                                   ),
                                   const SizedBox(height: 12),
                                   Row(
@@ -917,7 +933,7 @@ class _ProductManagementViewState extends State<ProductManagementView> {
                                       await controller.updateProductWithStock(
                                         productId: productId,
                                         name: nameController.text,
-                                        category: categoryController.text,
+                                        category: editCategory ?? '',
                                         sku: skuController.text,
                                         auxCode: auxCodeController.text,
                                         description: descriptionController.text,
@@ -1085,12 +1101,34 @@ class _ProductManagementViewState extends State<ProductManagementView> {
                             },
                           ),
                           const SizedBox(height: 12),
-                          TextFormField(
-                            controller: _categoryController,
+                          DropdownButtonFormField<String?>(
+                            value: _selectedCategoryName,
                             decoration: _modernInput(
                               label: 'Categoría',
-                              hint: 'Escolar, Hogar, Belleza...',
+                              hint: 'Selecciona una categoría',
                             ),
+                            items: [
+                              const DropdownMenuItem<String?>(
+                                value: null,
+                                child: Text('Selecciona una categoría'),
+                              ),
+                              ...controller.categories.map((category) {
+                                final categoryName = category['name'] as String;
+                                return DropdownMenuItem<String?>(
+                                  value: categoryName,
+                                  child: Text(categoryName),
+                                );
+                              }),
+                            ],
+                            onChanged: (value) {
+                              setState(() => _selectedCategoryName = value);
+                            },
+                            validator: (value) {
+                              if (value == null || value.trim().isEmpty) {
+                                return 'Selecciona una categoría';
+                              }
+                              return null;
+                            },
                           ),
                           const SizedBox(height: 12),
                           Row(
