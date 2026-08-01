@@ -20,6 +20,13 @@ String generateFirebaseId() {
 
 /// Servicio principal para manejar la conexion con SQLite.
 /// Mantiene un unico sistema con multiples locales compartiendo la misma base.
+class ProductQueryFilters {
+  const ProductQueryFilters({required this.whereClause, required this.params});
+
+  final String whereClause;
+  final List<Object?> params;
+}
+
 class DatabaseService {
   static Database? _database;
   static Completer<Database>? _dbCompleter;
@@ -1571,11 +1578,51 @@ class DatabaseService {
     return db.rawQuery('SELECT id, name FROM categories ORDER BY name');
   }
 
+  static ProductQueryFilters buildProductQueryFilters({
+    String search = '',
+    int? storeId,
+    String? category,
+  }) {
+    final params = <Object?>[];
+    final clauses = <String>[];
+
+    final normalizedSearch = search.trim();
+    if (normalizedSearch.isNotEmpty) {
+      final filter = '%$normalizedSearch%';
+      clauses.add(
+        '(p.name LIKE ? OR p.sku LIKE ? OR COALESCE(c.name, \"\") LIKE ? OR COALESCE(p.aux_code, \"\") LIKE ?)',
+      );
+      params.addAll([filter, filter, filter, filter]);
+    }
+
+    if (storeId != null) {
+      clauses.add('p.store_id = ?');
+      params.add(storeId);
+    }
+
+    if (category != null && category.trim().isNotEmpty) {
+      final normalizedCategory = '%${category.trim()}%';
+      clauses.add("COALESCE(c.name, '') LIKE ?");
+      params.add(normalizedCategory);
+    }
+
+    return ProductQueryFilters(
+      whereClause: clauses.isEmpty ? '' : ' WHERE ${clauses.join(' AND ')}',
+      params: params,
+    );
+  }
+
   static Future<List<Map<String, dynamic>>> getProducts({
     String search = '',
+    int? storeId,
+    String? category,
   }) async {
     final db = await database;
-    final filter = '%${search.trim()}%';
+    final filters = buildProductQueryFilters(
+      search: search,
+      storeId: storeId,
+      category: category,
+    );
 
     return db.rawQuery(
       '''
@@ -1603,12 +1650,11 @@ class DatabaseService {
       LEFT JOIN stores st ON st.id = p.store_id
       LEFT JOIN inventory i ON i.product_id = p.id
       LEFT JOIN stores s ON s.id = i.store_id
-      WHERE p.name LIKE ? OR p.sku LIKE ? OR COALESCE(c.name, '') LIKE ?
-        OR COALESCE(p.aux_code, '') LIKE ?
+      ${filters.whereClause}
       GROUP BY p.id, p.name, p.sku, p.price, c.name
       ORDER BY p.name COLLATE NOCASE
       ''',
-      [filter, filter, filter, filter],
+      filters.params,
     );
   }
 

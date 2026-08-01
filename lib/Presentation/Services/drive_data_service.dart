@@ -227,6 +227,17 @@ class DriveDataService {
     ).replace(queryParameters: {...params, 'key': _apiKey});
   }
 
+  static Uri buildPublicDownloadUri(String fileId, {bool useFallback = false}) {
+    if (useFallback) {
+      return Uri.parse(
+        'https://drive.google.com/uc?export=download&id=$fileId',
+      );
+    }
+    return Uri.parse(
+      '$_driveBase/files/$fileId',
+    ).replace(queryParameters: {'alt': 'media', 'key': _apiKey});
+  }
+
   static Future<Map<String, dynamic>> _publicGet(Uri uri) async {
     final resp = await http.get(uri);
 
@@ -285,20 +296,32 @@ class DriveDataService {
 
     // 2. Descargar contenido
     final fileId = files.first['id'] as String;
-    final downloadUri = Uri.parse(
-      '$_driveBase/files/$fileId',
-    ).replace(queryParameters: {'alt': 'media', 'key': _apiKey});
-    final resp = await http.get(downloadUri);
-    if (resp.statusCode != 200) {
-      debugPrint(
-        '[DriveDataService] Error descargando $fileName: ${resp.statusCode}',
-      );
+    final downloadUri = buildPublicDownloadUri(fileId);
+
+    try {
+      final resp = await http.get(downloadUri);
+      if (resp.statusCode != 200) {
+        throw Exception('status ${resp.statusCode}');
+      }
+
+      final decoded = jsonDecode(utf8.decode(resp.bodyBytes));
+      if (decoded is List) return decoded.cast<Map<String, dynamic>>();
+      return [];
+    } catch (e) {
+      debugPrint('[DriveDataService] Fallback de descarga para $fileName: $e');
+      final fallbackUri = buildPublicDownloadUri(fileId, useFallback: true);
+      final fallbackResp = await http.get(fallbackUri);
+      if (fallbackResp.statusCode != 200) {
+        debugPrint(
+          '[DriveDataService] Error descargando $fileName: ${fallbackResp.statusCode}',
+        );
+        return [];
+      }
+
+      final decoded = jsonDecode(utf8.decode(fallbackResp.bodyBytes));
+      if (decoded is List) return decoded.cast<Map<String, dynamic>>();
       return [];
     }
-
-    final decoded = jsonDecode(utf8.decode(resp.bodyBytes));
-    if (decoded is List) return decoded.cast<Map<String, dynamic>>();
-    return [];
   }
 
   /// Lista thumbnails de imágenes en un folder usando API Key.
@@ -324,15 +347,21 @@ class DriveDataService {
       for (final f in files) {
         final id = f['id'] as String?;
         final name = f['name'] as String?;
-        final thumbnailLink = f['thumbnailLink'] as String?;
-        if (id == null ||
-            name == null ||
-            thumbnailLink == null ||
-            thumbnailLink.isEmpty) {
+        final thumbnailLink = (f['thumbnailLink'] as String?)?.trim();
+        if (id == null || name == null) {
           continue;
         }
+
+        final effectiveThumbnailLink = thumbnailLink?.isNotEmpty == true
+            ? thumbnailLink!
+            : 'https://drive.google.com/thumbnail?id=$id&sz=w400';
+
         result.add(
-          CatalogImageFile(id: id, name: name, thumbnailLink: thumbnailLink),
+          CatalogImageFile(
+            id: id,
+            name: name,
+            thumbnailLink: effectiveThumbnailLink,
+          ),
         );
       }
 

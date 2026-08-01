@@ -19,7 +19,11 @@ class ProductManagementController extends ChangeNotifier {
     await loadCatalog();
   }
 
-  Future<void> loadCatalog({String search = ''}) async {
+  Future<void> loadCatalog({
+    String search = '',
+    int? storeId,
+    String? category,
+  }) async {
     isLoading = true;
     errorMessage = null;
     notifyListeners();
@@ -27,7 +31,11 @@ class ProductManagementController extends ChangeNotifier {
     try {
       stores = await DatabaseService.getStores();
       categories = await DatabaseService.getCategories();
-      products = await DatabaseService.getProducts(search: search);
+      products = await DatabaseService.getProducts(
+        search: search,
+        storeId: storeId,
+        category: category,
+      );
     } catch (e) {
       errorMessage = 'No se pudo cargar el catálogo: $e';
     } finally {
