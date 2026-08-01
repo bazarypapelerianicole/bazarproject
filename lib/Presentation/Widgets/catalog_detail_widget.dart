@@ -9,26 +9,25 @@ import 'package:qr_flutter/qr_flutter.dart';
 /// Muestra imagen grande, descripción completa, tags y productos disponibles.
 class CatalogDetailWidget extends StatelessWidget {
   final String name;
-  final CatalogStore store;
+  final String storeName;
   final CategoryInfo info;
 
   const CatalogDetailWidget({
     super.key,
     required this.name,
-    required this.store,
+    required this.storeName,
     required this.info,
   });
 
-  Color get _accent => store == CatalogStore.bazar
-      ? AppColors.blackOverlay
-      : const Color(0xFF2E7D32);
+  bool get _isBazar => storeName.toLowerCase() == 'bazar';
 
-  String get _storeLabel =>
-      store == CatalogStore.bazar ? 'Bazar Nicole' : 'Papelería Nicole';
+  Color get _accent =>
+      _isBazar ? AppColors.blackOverlay : const Color(0xFF2E7D32);
 
-  IconData get _storeIcon => store == CatalogStore.bazar
-      ? Icons.shopping_bag_outlined
-      : Icons.menu_book_outlined;
+  String get _storeLabel => _isBazar ? 'Bazar Nicole' : storeName;
+
+  IconData get _storeIcon =>
+      _isBazar ? Icons.shopping_bag_outlined : Icons.menu_book_outlined;
 
   @override
   Widget build(BuildContext context) {
@@ -37,8 +36,8 @@ class CatalogDetailWidget extends StatelessWidget {
     final galleryImages = info.heroImages.isNotEmpty
         ? info.heroImages
         : info.imageFile == null
-            ? const <CatalogImageFile>[]
-            : [info.imageFile!];
+        ? const <CatalogImageFile>[]
+        : [info.imageFile!];
 
     return DraggableScrollableSheet(
       initialChildSize: 0.88,
@@ -259,8 +258,9 @@ class _HeroImage extends StatelessWidget {
                 child: GestureDetector(
                   onTap: () => ProductGalleryViewer.show(
                     context,
-                    images:
-                        imageFiles.map((image) => image.thumbnailLink).toList(),
+                    images: imageFiles
+                        .map((image) => image.thumbnailLink)
+                        .toList(),
                   ),
                   child: Hero(
                     tag: ProductGalleryViewer.heroTagFor(file.thumbnailLink),
@@ -272,7 +272,7 @@ class _HeroImage extends StatelessWidget {
                           gradient: LinearGradient(
                             colors: [
                               accentColor,
-                              accentColor.withValues(alpha: 0.5)
+                              accentColor.withValues(alpha: 0.5),
                             ],
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
@@ -507,8 +507,9 @@ class _ProductRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final imageFile =
-        product.imageFiles.isEmpty ? null : product.imageFiles.first;
+    final imageFile = product.imageFiles.isEmpty
+        ? null
+        : product.imageFiles.first;
     if (imageFile != null) {
       // ignore: avoid_print
       print('[PARENT] URL enviada a DriveImage: ${imageFile.thumbnailLink}');
@@ -547,7 +548,8 @@ class _ProductRow extends StatelessWidget {
                       ),
                       child: Hero(
                         tag: ProductGalleryViewer.heroTagFor(
-                            imageFile.thumbnailLink),
+                          imageFile.thumbnailLink,
+                        ),
                         child: DriveImage(
                           url: imageFile.thumbnailLink,
                           width: 34,
@@ -626,9 +628,9 @@ class _ProductRow extends StatelessWidget {
   }
 
   Widget _productIcon() => Container(
-        color: color.withValues(alpha: 0.1),
-        child: Icon(Icons.inventory_2_outlined, color: color, size: 18),
-      );
+    color: color.withValues(alpha: 0.1),
+    child: Icon(Icons.inventory_2_outlined, color: color, size: 18),
+  );
 
   void _showQrDialog(BuildContext context) {
     showDialog(

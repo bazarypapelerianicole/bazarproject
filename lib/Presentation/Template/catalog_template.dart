@@ -240,7 +240,7 @@ class CatalogBuilder {
       list.sort((a, b) => a.name.compareTo(b.name));
     }
 
-    return _toSections(sectionMap);
+    return _toSections(sectionMap, storeNames);
   }
 
   /// El respaldo histórico guarda IDs separados por coma, mientras que otros
@@ -260,6 +260,7 @@ class CatalogBuilder {
 
   static List<CatalogSection> _toSections(
     Map<int, List<CatalogCategory>> sectionMap,
+    Map<int, String> storeNames,
   ) {
     // storeId 0 (General) al final; el resto en orden ascendente
     final storeIds = sectionMap.keys.toList()
@@ -272,7 +273,7 @@ class CatalogBuilder {
       for (final id in storeIds)
         CatalogSection(
           storeId: id,
-          storeName: getStoreName(id),
+          storeName: storeNames[id] ?? sectionMap[id]!.first.storeName,
           categories: sectionMap[id]!,
         ),
     ];

@@ -407,13 +407,11 @@ class _CatalogGrid extends StatelessWidget {
       itemCount: categories.length,
       itemBuilder: (context, i) {
         final category = categories[i];
-        final store =
-            CatalogStore.fromId(category.storeId) ?? CatalogStore.bazar;
-        return CatalogCategoryCard(
-          name: category.name,
-          store: store,
-          info: category,
-        );
+      return CatalogCategoryCard(
+        name: category.name,
+        storeName: category.storeName,
+        info: category,
+      );
       },
     );
   }

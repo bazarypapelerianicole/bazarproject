@@ -8,13 +8,13 @@ import 'package:bazarnicole/Presentation/Widgets/product_gallery_viewer.dart';
 /// Card del catálogo con imagen de portada, nombre, descripción y chips de tags.
 class CatalogCategoryCard extends StatefulWidget {
   final String name;
-  final CatalogStore store;
+  final String storeName;
   final CategoryInfo info;
 
   const CatalogCategoryCard({
     super.key,
     required this.name,
-    required this.store,
+    required this.storeName,
     required this.info,
   });
 
@@ -28,9 +28,10 @@ class _CatalogCategoryCardState extends State<CatalogCategoryCard>
   late final Animation<double> _fade;
   late final Animation<Offset> _slide;
 
-  Color get _accentColor => widget.store == CatalogStore.bazar
-      ? AppColors.blackOverlay
-      : const Color(0xFF2E7D32);
+  bool get _isBazar => widget.storeName.toLowerCase() == 'bazar';
+
+  Color get _accentColor =>
+      _isBazar ? AppColors.blackOverlay : const Color(0xFF2E7D32);
 
   @override
   void initState() {
@@ -170,7 +171,7 @@ class _CatalogCategoryCardState extends State<CatalogCategoryCard>
       backgroundColor: Colors.transparent,
       builder: (_) => CatalogDetailWidget(
         name: widget.name,
-        store: widget.store,
+        storeName: widget.storeName,
         info: widget.info,
       ),
     );
@@ -197,8 +198,9 @@ class _CardImage extends StatelessWidget {
               itemCount: heroImages.length,
               itemBuilder: (context, index) {
                 final image = heroImages[index];
-                final imageUrls =
-                    heroImages.map((file) => file.thumbnailLink).toList();
+                final imageUrls = heroImages
+                    .map((file) => file.thumbnailLink)
+                    .toList();
                 return Semantics(
                   button: true,
                   label: 'Ampliar imagen ${index + 1} de ${heroImages.length}',
@@ -212,7 +214,8 @@ class _CardImage extends StatelessWidget {
                       ),
                       child: Hero(
                         tag: ProductGalleryViewer.heroTagFor(
-                            image.thumbnailLink),
+                          image.thumbnailLink,
+                        ),
                         child: DriveImage(
                           key: ValueKey(image.id),
                           url: image.thumbnailLink,
@@ -256,19 +259,19 @@ class _CardImage extends StatelessWidget {
   }
 
   Widget _imageFallback() => Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [accentColor, accentColor.withValues(alpha: 0.6)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-        ),
-        child: const Icon(
-          Icons.image_not_supported_outlined,
-          color: Colors.white54,
-          size: 36,
-        ),
-      );
+    decoration: BoxDecoration(
+      gradient: LinearGradient(
+        colors: [accentColor, accentColor.withValues(alpha: 0.6)],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      ),
+    ),
+    child: const Icon(
+      Icons.image_not_supported_outlined,
+      color: Colors.white54,
+      size: 36,
+    ),
+  );
 }
 
 class _ImageCount extends StatelessWidget {
