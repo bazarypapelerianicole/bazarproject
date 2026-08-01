@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:bazarnicole/Presentation/Template/catalog_template.dart';
 import 'package:bazarnicole/Presentation/Utils/Colors.dart';
 import 'package:bazarnicole/Presentation/Widgets/drive_image.dart';
+import 'package:bazarnicole/Presentation/Widgets/product_gallery_viewer.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
 /// Bottom sheet de detalle de una categoría del catálogo.
@@ -33,6 +34,11 @@ class CatalogDetailWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
     final isWide = MediaQuery.of(context).size.width > 700;
+    final galleryImages = info.heroImages.isNotEmpty
+        ? info.heroImages
+        : info.imageFile == null
+            ? const <CatalogImageFile>[]
+            : [info.imageFile!];
 
     return DraggableScrollableSheet(
       initialChildSize: 0.88,
@@ -66,7 +72,7 @@ class CatalogDetailWidget extends StatelessWidget {
                   children: [
                     // ── Imagen hero ────────────────────────────────
                     _HeroImage(
-                      imageFile: info.imageFile,
+                      imageFiles: galleryImages,
                       accentColor: _accent,
                       height: isWide ? screenHeight * 0.3 : screenHeight * 0.26,
                     ),
@@ -226,44 +232,60 @@ class CatalogDetailWidget extends StatelessWidget {
 
 /// Imagen hero en la parte superior del detalle.
 class _HeroImage extends StatelessWidget {
-  final CatalogImageFile? imageFile;
+  final List<CatalogImageFile> imageFiles;
   final Color accentColor;
   final double height;
 
   const _HeroImage({
-    required this.imageFile,
+    required this.imageFiles,
     required this.accentColor,
     required this.height,
   });
 
   @override
   Widget build(BuildContext context) {
-    final file = imageFile;
-    if (file != null) {
-      // ignore: avoid_print
-      print('[PARENT] URL enviada a DriveImage: ${file.thumbnailLink}');
-    }
+    final file = imageFiles.isEmpty ? null : imageFiles.first;
     return SizedBox(
       height: height,
       child: Stack(
         fit: StackFit.expand,
         children: [
           if (file != null)
-            DriveImage(
-              url: file.thumbnailLink,
-              fit: BoxFit.cover,
-              errorWidget: Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [accentColor, accentColor.withValues(alpha: 0.5)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
+            Semantics(
+              button: true,
+              label: 'Ampliar galería de imágenes',
+              child: MouseRegion(
+                cursor: SystemMouseCursors.click,
+                child: GestureDetector(
+                  onTap: () => ProductGalleryViewer.show(
+                    context,
+                    images:
+                        imageFiles.map((image) => image.thumbnailLink).toList(),
                   ),
-                ),
-                child: const Icon(
-                  Icons.photo_library_outlined,
-                  color: Colors.white38,
-                  size: 64,
+                  child: Hero(
+                    tag: ProductGalleryViewer.heroTagFor(file.thumbnailLink),
+                    child: DriveImage(
+                      url: file.thumbnailLink,
+                      fit: BoxFit.cover,
+                      errorWidget: Container(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              accentColor,
+                              accentColor.withValues(alpha: 0.5)
+                            ],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                        ),
+                        child: const Icon(
+                          Icons.photo_library_outlined,
+                          color: Colors.white38,
+                          size: 64,
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
               ),
             )
@@ -485,9 +507,8 @@ class _ProductRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final imageFile = product.imageFiles.isEmpty
-        ? null
-        : product.imageFiles.first;
+    final imageFile =
+        product.imageFiles.isEmpty ? null : product.imageFiles.first;
     if (imageFile != null) {
       // ignore: avoid_print
       print('[PARENT] URL enviada a DriveImage: ${imageFile.thumbnailLink}');
@@ -512,13 +533,32 @@ class _ProductRow extends StatelessWidget {
         children: [
           // La URL es el thumbnailLink original del archivo de Drive.
           imageFile != null
-              ? DriveImage(
-                  url: imageFile.thumbnailLink,
-                  width: 34,
-                  height: 34,
-                  fit: BoxFit.cover,
-                  borderRadius: BorderRadius.circular(8),
-                  errorWidget: _productIcon(),
+              ? Semantics(
+                  button: true,
+                  label: 'Ampliar imágenes de ${product.name}',
+                  child: MouseRegion(
+                    cursor: SystemMouseCursors.click,
+                    child: GestureDetector(
+                      onTap: () => ProductGalleryViewer.show(
+                        context,
+                        images: product.imageFiles
+                            .map((image) => image.thumbnailLink)
+                            .toList(),
+                      ),
+                      child: Hero(
+                        tag: ProductGalleryViewer.heroTagFor(
+                            imageFile.thumbnailLink),
+                        child: DriveImage(
+                          url: imageFile.thumbnailLink,
+                          width: 34,
+                          height: 34,
+                          fit: BoxFit.cover,
+                          borderRadius: BorderRadius.circular(8),
+                          errorWidget: _productIcon(),
+                        ),
+                      ),
+                    ),
+                  ),
                 )
               : SizedBox(width: 34, height: 34, child: _productIcon()),
 
@@ -586,9 +626,9 @@ class _ProductRow extends StatelessWidget {
   }
 
   Widget _productIcon() => Container(
-    color: color.withValues(alpha: 0.1),
-    child: Icon(Icons.inventory_2_outlined, color: color, size: 18),
-  );
+        color: color.withValues(alpha: 0.1),
+        child: Icon(Icons.inventory_2_outlined, color: color, size: 18),
+      );
 
   void _showQrDialog(BuildContext context) {
     showDialog(

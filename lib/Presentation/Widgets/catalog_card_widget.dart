@@ -3,6 +3,7 @@ import 'package:bazarnicole/Presentation/Template/catalog_template.dart';
 import 'package:bazarnicole/Presentation/Utils/Colors.dart';
 import 'package:bazarnicole/Presentation/Widgets/catalog_detail_widget.dart';
 import 'package:bazarnicole/Presentation/Widgets/drive_image.dart';
+import 'package:bazarnicole/Presentation/Widgets/product_gallery_viewer.dart';
 
 /// Card del catálogo con imagen de portada, nombre, descripción y chips de tags.
 class CatalogCategoryCard extends StatefulWidget {
@@ -194,12 +195,35 @@ class _CardImage extends StatelessWidget {
           if (heroImages.isNotEmpty)
             PageView.builder(
               itemCount: heroImages.length,
-              itemBuilder: (context, index) => DriveImage(
-                key: ValueKey(heroImages[index].id),
-                url: heroImages[index].thumbnailLink,
-                fit: BoxFit.cover,
-                errorWidget: _imageFallback(),
-              ),
+              itemBuilder: (context, index) {
+                final image = heroImages[index];
+                final imageUrls =
+                    heroImages.map((file) => file.thumbnailLink).toList();
+                return Semantics(
+                  button: true,
+                  label: 'Ampliar imagen ${index + 1} de ${heroImages.length}',
+                  child: MouseRegion(
+                    cursor: SystemMouseCursors.click,
+                    child: GestureDetector(
+                      onTap: () => ProductGalleryViewer.show(
+                        context,
+                        images: imageUrls,
+                        initialIndex: index,
+                      ),
+                      child: Hero(
+                        tag: ProductGalleryViewer.heroTagFor(
+                            image.thumbnailLink),
+                        child: DriveImage(
+                          key: ValueKey(image.id),
+                          url: image.thumbnailLink,
+                          fit: BoxFit.cover,
+                          errorWidget: _imageFallback(),
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              },
             ),
           // Gradiente para mejorar legibilidad del texto sobre imagen
           Positioned(
@@ -232,19 +256,19 @@ class _CardImage extends StatelessWidget {
   }
 
   Widget _imageFallback() => Container(
-    decoration: BoxDecoration(
-      gradient: LinearGradient(
-        colors: [accentColor, accentColor.withValues(alpha: 0.6)],
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-      ),
-    ),
-    child: const Icon(
-      Icons.image_not_supported_outlined,
-      color: Colors.white54,
-      size: 36,
-    ),
-  );
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [accentColor, accentColor.withValues(alpha: 0.6)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+        ),
+        child: const Icon(
+          Icons.image_not_supported_outlined,
+          color: Colors.white54,
+          size: 36,
+        ),
+      );
 }
 
 class _ImageCount extends StatelessWidget {

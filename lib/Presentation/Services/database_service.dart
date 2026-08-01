@@ -10,7 +10,7 @@ import 'backup_service.dart';
 import 'database_config.dart';
 import 'database_location_service.dart';
 
-/// Genera un ID de 20 caracteres aleatorios estilo Firebase (letras y números).
+/// Genera un ID de 20 caracteres aleatorios estilo Firebase (letras y numeros).
 String generateFirebaseId() {
   const chars =
       'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -18,8 +18,8 @@ String generateFirebaseId() {
   return List.generate(20, (_) => chars[rng.nextInt(chars.length)]).join();
 }
 
-/// Servicio principal para manejar la conexión con SQLite.
-/// Mantiene un único sistema con múltiples locales compartiendo la misma base.
+/// Servicio principal para manejar la conexion con SQLite.
+/// Mantiene un unico sistema con multiples locales compartiendo la misma base.
 class DatabaseService {
   static Database? _database;
   static Completer<Database>? _dbCompleter;
@@ -28,24 +28,24 @@ class DatabaseService {
 
   // =========================================================
   // CATÁLOGO ORGANIZADO — BazarNicole ERP/POS v2
-  // Estructura: Store → Categoría → Productos
+  // Estructura: Store → Categoria → Productos
   //
-  // Iconos sugeridos por categoría (Flutter Icons):
-  //   Juguetería            → Icons.toys
+  // Iconos sugeridos por categoria (Flutter Icons):
+  //   Jugueteria            → Icons.toys
   //   Moda y Accesorios     → Icons.checkroom
   //   Belleza               → Icons.face_retouching_natural
-  //   Hogar y Decoración    → Icons.home
+  //   Hogar y Decoracion    → Icons.home
   //   Fiestas y Regalos     → Icons.celebration
-  //   Tecnología            → Icons.headphones
+  //   Tecnologia            → Icons.headphones
   //   Temporada             → Icons.ac_unit
-  //   Papelería y Oficina   → Icons.edit_note
+  //   Papeleria y Oficina   → Icons.edit_note
   //   Manualidades y Arte   → Icons.palette
-  //   Belleza y Cosméticos  → Icons.spa
+  //   Belleza y Cosmeticos  → Icons.spa
   //   Higiene Personal      → Icons.soap
   //   Limpieza y Hogar      → Icons.cleaning_services
-  //   Bebés                 → Icons.child_care
-  //   Zapatería             → Icons.shopping_bag
-  //   Ferretería            → Icons.hardware
+  //   Bebes                 → Icons.child_care
+  //   Zapateria             → Icons.shopping_bag
+  //   Ferreteria            → Icons.hardware
   //   Alimentos y Abarrotes → Icons.shopping_cart
   //   Desechables y Eventos → Icons.dinner_dining
   //
@@ -53,22 +53,22 @@ class DatabaseService {
   //   Bazar   → Color(0xFF6C3EB8)  // Violeta profundo
   //   Tienda  → Color(0xFF1976D2)  // Azul corporativo
   //
-  // Subcategorías futuras sugeridas:
-  //   Bazar   → Decoración de interiores, Ropa deportiva, Electrónica menor
-  //   Tienda  → Farmacia básica, Snacks importados, Artículos escolares premium
+  // Subcategorias futuras sugeridas:
+  //   Bazar   → Decoracion de interiores, Ropa deportiva, Electronica menor
+  //   Tienda  → Farmacia básica, Snacks importados, Articulos escolares premium
   //
   // Big Data / Reportes:
-  //   - Usar categoría + tienda como dimensiones en dashboards
-  //   - KPIs por categoría: margen, rotación, stock mínimo, ventas mensuales
-  //   - Recomendaciones futuras con IA: productos de alta demanda por categoría
+  //   - Usar categoria + tienda como dimensiones en dashboards
+  //   - KPIs por categoria: margen, rotacion, stock minimo, ventas mensuales
+  //   - Recomendaciones futuras con IA: productos de alta demanda por categoria
   // =========================================================
 
   /// Catálogo maestro estructurado en tres niveles:
-  /// [Store] → [Categoría] → [Productos]
+  /// [Store] → [Categoria] → [Productos]
   ///
   /// Optimizado para:
   ///   • GridView / ExpansionTile / NavigationRail / Sidebar
-  ///   • Filtrado rápido por categoría y tienda
+  ///   • Filtrado rápido por categoria y tienda
   ///   • Reportes y análisis Big Data
   ///   • Escalabilidad y mantenimiento profesional
   static const Map<String, Map<String, List<String>>> _catalogByStore = {
@@ -77,10 +77,10 @@ class DatabaseService {
     // =========================================================
     'Bazar': {
       // Icono: Icons.toys | Color: 0xFFE91E63
-      'Juguetería': [
+      'Jugueteria': [
         'Peluches',
         'Juguetes',
-        'Pelotas de fútbol',
+        'Pelotas de futbol',
         'Pelotas de indor',
       ],
 
@@ -93,15 +93,15 @@ class DatabaseService {
         'Loncheras',
         'Lazos',
         'Vinchas',
-        'Joyería',
+        'Joyeria',
         'Billeteras',
       ],
 
       // Icono: Icons.face_retouching_natural | Color: 0xFFE91E63
-      'Belleza y Perfumería': ['Perfumes', 'Esmaltes', 'Labiales'],
+      'Belleza y Perfumeria': ['Perfumes', 'Esmaltes', 'Labiales'],
 
       // Icono: Icons.home | Color: 0xFF795548
-      'Hogar y Decoración': [
+      'Hogar y Decoracion': [
         'Portarretratos',
         'Accesorios de cocina',
         'Lámparas de dormitorio',
@@ -118,7 +118,7 @@ class DatabaseService {
       ],
 
       // Icono: Icons.headphones | Color: 0xFF00BCD4
-      'Tecnología y Electrónicos': ['Audífonos', 'Auriculares Bluetooth'],
+      'Tecnologia y Electronicos': ['Audifonos', 'Auriculares Bluetooth'],
 
       // Icono: Icons.ac_unit | Color: 0xFF2196F3
       'Temporada y Navidad': ['Accesorios navideños'],
@@ -129,7 +129,7 @@ class DatabaseService {
     // =========================================================
     'Tienda': {
       // Icono: Icons.edit_note | Color: 0xFF1565C0
-      'Papelería y Oficina': [
+      'Papeleria y Oficina': [
         'Cuadernos',
         'Hojas A4',
         'Hojas papel bond',
@@ -159,17 +159,17 @@ class DatabaseService {
 
       // Icono: Icons.palette | Color: 0xFF7B1FA2
       'Manualidades y Arte': [
-        'Papel crepé',
+        'Papel crepe',
         'Fomix',
-        'Cartón prensado',
+        'Carton prensado',
         'Espuma flex',
         'Pinturas',
-        'Pintura acrílica Artesco',
+        'Pintura acrilica Artesco',
         'Acuarelas',
         'Lápices de colores',
         'Paletas de colores',
         'Lana',
-        'Hilo ratón',
+        'Hilo raton',
         'Cintas decorativas',
         'Adornos tipo lentejuelas',
         'Adornos en fomix recortados',
@@ -179,7 +179,7 @@ class DatabaseService {
       ],
 
       // Icono: Icons.spa | Color: 0xFFAD1457
-      'Belleza y Cosméticos': [
+      'Belleza y Cosmeticos': [
         'Uñas postizas',
         'Pegamento de uñas',
         'Pegamento de cejas',
@@ -190,8 +190,8 @@ class DatabaseService {
         'Crema oxigenada',
         'Gel para cabello',
         'Cremas de peinar',
-        'Silicón en spray para cabello',
-        'Fijación e hidratación para pelo',
+        'Silicon en spray para cabello',
+        'Fijacion e hidratacion para pelo',
         'Rizador',
         'Limas',
         'Corta uñas',
@@ -218,12 +218,12 @@ class DatabaseService {
         'Protector solar',
         'Crema hidratante corporal',
         'Jaboncillo',
-        'Jabón de baño',
-        'Pañitos húmedos',
+        'Jabon de baño',
+        'Pañitos humedos',
         'Shampoo',
         'Repelente',
         'Aceite Johnson',
-        'Tiras de sostén',
+        'Tiras de sosten',
       ],
 
       // Icono: Icons.cleaning_services | Color: 0xFF2E7D32
@@ -236,8 +236,8 @@ class DatabaseService {
         'Cloro',
         'Guantes de limpieza',
         'Papel aluminio',
-        'Papel higiénico',
-        'Toallas higiénicas',
+        'Papel higienico',
+        'Toallas higienicas',
         'Esponjas',
         'Suavizante para ropa',
         'Insecticidas',
@@ -245,28 +245,28 @@ class DatabaseService {
       ],
 
       // Icono: Icons.child_care | Color: 0xFFF06292
-      'Bebés y Maternidad': ['Teta para recién nacido', 'Pañales'],
+      'Bebes y Maternidad': ['Teta para recien nacido', 'Pañales'],
 
       // Icono: Icons.shopping_bag | Color: 0xFF5D4037
-      'Zapatería y Calzado': [
+      'Zapateria y Calzado': [
         'Cherry saca brillo para zapatos',
         'Banderola saca brillo para zapatos',
         'Esponja saca brillo para zapatos',
       ],
 
       // Icono: Icons.hardware | Color: 0xFF616161
-      'Ferretería y Utilitarios': [
+      'Ferreteria y Utilitarios': [
         'Pilas',
         'Estilete',
         'Fosforeras',
-        'Fósforos',
+        'Fosforos',
         'Velas',
         'Cirio vela',
         'Difusor de esencia',
         'Esencias para carro',
         'Descorchador de vinos',
         'Llaveros',
-        'Alcancías',
+        'Alcancias',
         'Casino',
       ],
 
@@ -275,9 +275,9 @@ class DatabaseService {
         'Leche',
         'Leche condensada',
         'Leches saborizadas',
-        'Café',
-        'Café en polvo',
-        'Azúcar',
+        'Cafe',
+        'Cafe en polvo',
+        'Azucar',
         'Sal',
         'Harina',
         'Avena',
@@ -295,15 +295,15 @@ class DatabaseService {
         'Enlatados',
         'Enlatados de verduras',
         'Sardina',
-        'Atún real',
+        'Atun real',
         'Productos lácteos',
-        'Jugos y néctares',
+        'Jugos y nectares',
         'Frutas',
         'Frutos secos',
         'Bombones',
         'Gelatina',
         'Horchata en sobre',
-        'Tés en sobre',
+        'Tes en sobre',
         'Frescosolo',
         'Polvo de hornear',
         'Mezcla chantilly en polvo',
@@ -454,7 +454,7 @@ class DatabaseService {
       )
     ''');
 
-    // ── Migración: columnas cedula, identification_type, address ──
+    // ── Migracion: columnas cedula, identification_type, address ──
     for (final colDef in [
       'cedula TEXT',
       'identification_type TEXT DEFAULT "cedula"',
@@ -535,7 +535,7 @@ class DatabaseService {
       )
     ''');
 
-    // --- Módulo de Caja ---
+    // --- Modulo de Caja ---
 
     await db.execute('''
       CREATE TABLE IF NOT EXISTS payment_methods (
@@ -605,7 +605,7 @@ class DatabaseService {
       )
     ''');
 
-    // --- Módulo de Caja legacy (cajas / egresos_caja / ingresos_caja) ---
+    // --- Modulo de Caja legacy (cajas / egresos_caja / ingresos_caja) ---
     await db.execute('''
       CREATE TABLE IF NOT EXISTS cajas (
         id                    INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -654,7 +654,7 @@ class DatabaseService {
       )
     ''');
 
-    // --- Módulo de Usuarios y Roles ---
+    // --- Modulo de Usuarios y Roles ---
     // Si la tabla users existe pero es la del dump de Firebase (tiene columna _key),
     // la renombramos a firebase_users para no entrar en conflicto.
     try {
@@ -769,7 +769,7 @@ class DatabaseService {
       definition: 'TEXT',
     );
 
-    // Migración: agregar store_id a categories para aislar categorías por tienda
+    // Migracion: agregar store_id a categories para aislar categorias por tienda
     await _ensureColumn(
       db,
       table: 'categories',
@@ -777,7 +777,7 @@ class DatabaseService {
       definition: 'INTEGER',
     );
 
-    // Migración de la tabla users (por si existía antes con menos columnas)
+    // Migracion de la tabla users (por si existia antes con menos columnas)
     await _ensureColumn(
       db,
       table: 'users',
@@ -827,7 +827,7 @@ class DatabaseService {
       definition: "TEXT NOT NULL DEFAULT ''",
     );
 
-    // Migración: quién abre la caja
+    // Migracion: quien abre la caja
     await _ensureColumn(
       db,
       table: 'cash_sessions',
@@ -841,7 +841,7 @@ class DatabaseService {
       definition: "TEXT NOT NULL DEFAULT ''",
     );
 
-    // Migración: tabla de desglose de denominaciones al abrir/cerrar caja
+    // Migracion: tabla de desglose de denominaciones al abrir/cerrar caja
     await db.execute('''
       CREATE TABLE IF NOT EXISTS cash_denominations (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -857,12 +857,12 @@ class DatabaseService {
       )
     ''');
 
-    // Migración: asignar uid a cualquier producto que aún no lo tenga
+    // Migracion: asignar uid a cualquier producto que aun no lo tenga
     await db.rawUpdate(
       "UPDATE products SET uid = (lower(hex(randomblob(10)))) WHERE uid IS NULL OR uid = ''",
     );
 
-    // ── CAPA OLAP: Tablas analíticas enterprise ──────────────
+    // ── CAPA OLAP: Tablas analiticas enterprise ──────────────
     await _ensureOlapSchema(db);
 
     await _seedStores(db);
@@ -870,14 +870,14 @@ class DatabaseService {
     await _runCatalogIntegrityMigration(db);
   }
 
-  /// Crea las tablas y índices de la capa OLAP Big Data.
+  /// Crea las tablas y indices de la capa OLAP Big Data.
   /// Idempotente: usa IF NOT EXISTS en todo.
   static Future<void> _ensureOlapSchema(DatabaseExecutor db) async {
-    // Resúmenes temporales
+    // Resumenes temporales
     for (final ddl in _olapTablesDdl) {
       await db.execute(ddl);
     }
-    // Índices OLTP críticos
+    // indices OLTP criticos
     for (final idx in _olapIndexesDdl) {
       await db.execute(idx);
     }
@@ -1008,7 +1008,7 @@ class DatabaseService {
   ];
 
   static const List<String> _olapIndexesDdl = [
-    // OLTP críticos que podrían no existir aún
+    // OLTP criticos que podrian no existir aun
     'CREATE INDEX IF NOT EXISTS idx_sales_store_date ON sales(store_id, date DESC)',
     'CREATE INDEX IF NOT EXISTS idx_sales_client ON sales(client_id, date DESC)',
     'CREATE INDEX IF NOT EXISTS idx_sale_items_product ON sale_items(product_id, sale_id)',
@@ -1072,10 +1072,10 @@ class DatabaseService {
     const methods = [
       {'name': 'Efectivo', 'is_cash': 1},
       {'name': 'Transferencia', 'is_cash': 0},
-      {'name': 'Depósito', 'is_cash': 0},
+      {'name': 'Deposito', 'is_cash': 0},
       {'name': 'PayPal', 'is_cash': 0},
-      {'name': 'Tarjeta débito', 'is_cash': 0},
-      {'name': 'Crédito', 'is_cash': 0},
+      {'name': 'Tarjeta debito', 'is_cash': 0},
+      {'name': 'Credito', 'is_cash': 0},
     ];
     for (final m in methods) {
       await db.rawInsert(
@@ -1094,7 +1094,7 @@ class DatabaseService {
   }
 
   static Future<void> _seedCatalog(DatabaseExecutor db) async {
-    await _ensureCategory(db, 'Sin categoría');
+    await _ensureCategory(db, 'Sin categoria');
 
     final stores = await db.rawQuery('SELECT id, name FROM stores ORDER BY id');
     final storeIds = <String, int>{
@@ -1104,7 +1104,7 @@ class DatabaseService {
 
     if (storeIds.isEmpty) return;
 
-    // Iterar estructura: Store → Categoría → Productos
+    // Iterar estructura: Store → Categoria → Productos
     for (final storeEntry in _catalogByStore.entries) {
       final storeName = storeEntry.key;
       final storeId = storeIds[storeName];
@@ -1128,7 +1128,7 @@ class DatabaseService {
           int productId;
           if (existing.isNotEmpty) {
             productId = (existing.first['id'] as num).toInt();
-            // Asignar uid si el producto semilla aún no lo tiene
+            // Asignar uid si el producto semilla aun no lo tiene
             final uidCheck = await db.rawQuery(
               'SELECT uid FROM products WHERE id = ? LIMIT 1',
               [productId],
@@ -1165,10 +1165,10 @@ class DatabaseService {
   }
 
   // ════════════════════════════════════════════════════════════════════════
-  // AUDITORÍA E INTEGRIDAD DEL CATÁLOGO
+  // AUDITORiA E INTEGRIDAD DEL CATÁLOGO
   // ════════════════════════════════════════════════════════════════════════
 
-  /// Construye mapas de validación desde el catálogo maestro.
+  /// Construye mapas de validacion desde el catálogo maestro.
   /// Retorna: { productKey → (storeName, categoryName) }
   static Map<String, _CatalogEntry> _buildCatalogLookup() {
     final lookup = <String, _CatalogEntry>{};
@@ -1185,7 +1185,7 @@ class DatabaseService {
     return lookup;
   }
 
-  /// Corrección segura: solo ejecuta UPDATEs, nunca elimina registros.
+  /// Correccion segura: solo ejecuta UPDATEs, nunca elimina registros.
   /// Se llama automáticamente desde [_ensureBusinessSchema].
   static Future<void> _runCatalogIntegrityMigration(DatabaseExecutor db) async {
     final lookup = _buildCatalogLookup();
@@ -1196,7 +1196,7 @@ class DatabaseService {
       for (final r in stores) r['name'] as String: (r['id'] as num).toInt(),
     };
 
-    // Obtener todos los productos con su tienda y categoría actual
+    // Obtener todos los productos con su tienda y categoria actual
     final products = await db.rawQuery('''
       SELECT
         p.id,
@@ -1222,7 +1222,7 @@ class DatabaseService {
       final currentCategoryId = p['category_id'] as int?;
       final productId = (p['id'] as num).toInt();
 
-      // Obtener (o crear) la categoría correcta para la tienda correcta
+      // Obtener (o crear) la categoria correcta para la tienda correcta
       final correctCategoryId = await _ensureCategory(
         db,
         entry.categoryName,
@@ -1253,7 +1253,7 @@ class DatabaseService {
       );
     }
 
-    // Reparar categorías del catálogo que no tengan store_id asignado
+    // Reparar categorias del catálogo que no tengan store_id asignado
     for (final storeEntry in _catalogByStore.entries) {
       final storeId = storeNameToId[storeEntry.key];
       if (storeId == null) continue;
@@ -1268,12 +1268,12 @@ class DatabaseService {
     }
   }
 
-  /// Auditoría pública: devuelve un reporte de integridad del catálogo.
+  /// Auditoria publica: devuelve un reporte de integridad del catálogo.
   /// No modifica datos; solo lee y clasifica.
   ///
   /// Campos retornados:
-  /// - `correct`            : productos cuya tienda y categoría son correctas
-  /// - `corrected_products` : productos que serían corregidos (simulación)
+  /// - `correct`            : productos cuya tienda y categoria son correctas
+  /// - `corrected_products` : productos que serian corregidos (simulacion)
   /// - `out_of_catalog`     : productos que no aparecen en el catálogo maestro
   /// - `duplicates_found`   : grupos de productos con el mismo nombre (lower)
   /// - `duplicates`         : lista de nombres duplicados
@@ -1317,17 +1317,19 @@ class DatabaseService {
       final expectedStoreId = storeNameToId[entry.storeName];
       final currentStoreId = p['store_id'] as int?;
 
-      // Para la comparación de categoría buscamos por nombre
+      // Para la comparacion de categoria buscamos por nombre
       final catRows = await db.rawQuery(
         'SELECT id FROM categories WHERE lower(name) = ? LIMIT 1',
         [entry.categoryName.toLowerCase()],
       );
-      final expectedCategoryId =
-          catRows.isNotEmpty ? (catRows.first['id'] as num).toInt() : null;
+      final expectedCategoryId = catRows.isNotEmpty
+          ? (catRows.first['id'] as num).toInt()
+          : null;
 
       final storeWrong =
           expectedStoreId != null && currentStoreId != expectedStoreId;
-      final categoryWrong = expectedCategoryId != null &&
+      final categoryWrong =
+          expectedCategoryId != null &&
           (p['category_id'] as int?) != expectedCategoryId;
 
       if (storeWrong || categoryWrong) {
@@ -1338,7 +1340,7 @@ class DatabaseService {
         }
         if (categoryWrong) {
           msg.write(
-            'categoría "${p['category_name']}" → "${entry.categoryName}"',
+            'categoria "${p['category_name']}" → "${entry.categoryName}"',
           );
         }
         risks.add(msg.toString().trim());
@@ -1386,11 +1388,11 @@ class DatabaseService {
     int? storeId,
   }) async {
     final name = _cleanName(
-      categoryName?.isNotEmpty == true ? categoryName! : 'Sin categoría',
+      categoryName?.isNotEmpty == true ? categoryName! : 'Sin categoria',
     );
 
     if (storeId != null) {
-      // Buscar categoría específica de esta tienda primero
+      // Buscar categoria especifica de esta tienda primero
       final existingForStore = await db.rawQuery(
         'SELECT id FROM categories WHERE name = ? AND store_id = ? LIMIT 1',
         [name, storeId],
@@ -1408,7 +1410,7 @@ class DatabaseService {
       if (existingGlobal.isNotEmpty) {
         final catId = (existingGlobal.first['id'] as num).toInt();
         final existingStoreId = existingGlobal.first['store_id'];
-        // Si no tiene store_id asignado aún, asignarlo
+        // Si no tiene store_id asignado aun, asignarlo
         if (existingStoreId == null) {
           await db.rawUpdate(
             'UPDATE categories SET store_id = ? WHERE id = ?',
@@ -1416,8 +1418,8 @@ class DatabaseService {
           );
         }
         // Si ya pertenece a otra tienda, crear nueva entrada con nombre compuesto
-        // para no romper la restricción UNIQUE(name). Esto solo ocurre si dos
-        // tiendas comparten exactamente el mismo nombre de categoría.
+        // para no romper la restriccion UNIQUE(name). Esto solo ocurre si dos
+        // tiendas comparten exactamente el mismo nombre de categoria.
         else if (existingStoreId != storeId) {
           final altName = '$name [$storeId]';
           await db.rawInsert(
@@ -1558,7 +1560,7 @@ class DatabaseService {
         p.profit_iva,
         p.images,
         p.store_id,
-        COALESCE(c.name, 'Sin categoría') AS category,
+        COALESCE(c.name, 'Sin categoria') AS category,
         COALESCE(st.name, '') AS store_name,
         COALESCE(SUM(i.stock), 0) AS total_stock,
         COALESCE(MAX(CASE WHEN s.name = 'Bazar' THEN i.stock END), 0) AS stock_bazar,
@@ -1591,7 +1593,7 @@ class DatabaseService {
         p.name,
         p.sku,
         p.price,
-        COALESCE(c.name, 'Sin categoría') AS category,
+        COALESCE(c.name, 'Sin categoria') AS category,
         COALESCE(i.stock, 0) AS stock
       FROM products p
       LEFT JOIN categories c ON c.id = p.category_id
@@ -1724,8 +1726,9 @@ class DatabaseService {
         [productId, fromStoreId],
       );
 
-      final available =
-          sourceRows.isEmpty ? 0 : (sourceRows.first['stock'] as num).toInt();
+      final available = sourceRows.isEmpty
+          ? 0
+          : (sourceRows.first['stock'] as num).toInt();
 
       if (available < quantity) {
         throw Exception('No hay stock suficiente en el local origen');
@@ -1780,8 +1783,9 @@ class DatabaseService {
           [productId, storeId],
         );
 
-        final available =
-            stockRows.isEmpty ? 0 : (stockRows.first['stock'] as num).toInt();
+        final available = stockRows.isEmpty
+            ? 0
+            : (stockRows.first['stock'] as num).toInt();
 
         if (available < quantity) {
           throw Exception('Stock insuficiente para completar la venta');
@@ -1846,8 +1850,9 @@ class DatabaseService {
       }
 
       final categoryId = await _ensureCategory(txn, categoryName);
-      final imagesJson =
-          images == null ? null : (images.isEmpty ? null : images.join(','));
+      final imagesJson = images == null
+          ? null
+          : (images.isEmpty ? null : images.join(','));
       await txn.rawUpdate(
         'UPDATE products SET name = ?, sku = ?, aux_code = ?, description = ?, tags = ?, category_id = ?, store_id = ?, price = ?, cost_price = ?, iva_rate = ?, profit_iva = ?, images = ? WHERE id = ?',
         [
@@ -1882,8 +1887,10 @@ class DatabaseService {
     return raw
         .split(',')
         .map((value) => value.trim())
-        .where((value) =>
-            value.isNotEmpty && !value.contains('/') && !value.contains('\\'))
+        .where(
+          (value) =>
+              value.isNotEmpty && !value.contains('/') && !value.contains('\\'),
+        )
         .toList();
   }
 
@@ -2100,8 +2107,9 @@ class DatabaseService {
       args.add(day.toString().padLeft(2, '0'));
     }
 
-    final whereClause =
-        conditions.isEmpty ? '' : 'WHERE ${conditions.join(' AND ')}';
+    final whereClause = conditions.isEmpty
+        ? ''
+        : 'WHERE ${conditions.join(' AND ')}';
 
     return db.rawQuery('''
       SELECT sa.id, sa.date, sa.total,
@@ -2152,8 +2160,9 @@ class DatabaseService {
       args.add(day.toString().padLeft(2, '0'));
     }
 
-    final whereClause =
-        conditions.isEmpty ? '' : 'WHERE ${conditions.join(' AND ')}';
+    final whereClause = conditions.isEmpty
+        ? ''
+        : 'WHERE ${conditions.join(' AND ')}';
     final result = await db.rawQuery('''
       SELECT COUNT(*) as cnt FROM sales sa
       INNER JOIN stores st ON st.id = sa.store_id
@@ -2199,8 +2208,9 @@ class DatabaseService {
       args.add('${date.toIso8601String().split('T').first}%');
     }
 
-    final whereClause =
-        conditions.isEmpty ? '' : 'WHERE ${conditions.join(' AND ')}';
+    final whereClause = conditions.isEmpty
+        ? ''
+        : 'WHERE ${conditions.join(' AND ')}';
 
     return db.rawQuery('''
       SELECT pu.id, pu.date, pu.total,
@@ -2309,8 +2319,9 @@ class DatabaseService {
     try {
       final path = await DatabaseLocationService.getDatabasePath();
       final exists = await DatabaseLocationService.databaseExists(path);
-      final size =
-          exists ? await DatabaseLocationService.getDatabaseSize(path) : 0.0;
+      final size = exists
+          ? await DatabaseLocationService.getDatabaseSize(path)
+          : 0.0;
 
       return {
         'path': path,
@@ -2350,7 +2361,7 @@ class DatabaseService {
   }
 
   // ─────────────────────────────────────────────
-  // MÉTODOS DE PAGO
+  // MeTODOS DE PAGO
   // ─────────────────────────────────────────────
 
   static Future<List<Map<String, dynamic>>> getPaymentMethods() async {
@@ -2364,7 +2375,7 @@ class DatabaseService {
   // SESIONES DE CAJA (APERTURA / CIERRE)
   // ─────────────────────────────────────────────
 
-  /// Retorna la sesión activa para el local, o null si está cerrada.
+  /// Retorna la sesion activa para el local, o null si está cerrada.
   static Future<Map<String, dynamic>?> getActiveCashSession(int storeId) async {
     final db = await database;
     final rows = await db.rawQuery(
@@ -2383,7 +2394,7 @@ class DatabaseService {
     return rows.isEmpty ? null : rows.first;
   }
 
-  /// Abre una nueva sesión de caja.
+  /// Abre una nueva sesion de caja.
   static Future<int> openCashSession({
     required int storeId,
     required double openingAmount,
@@ -2422,7 +2433,7 @@ class DatabaseService {
     });
   }
 
-  /// Cierra la sesión de caja activa.
+  /// Cierra la sesion de caja activa.
   static Future<void> closeCashSession({
     required int sessionId,
     required double closingAmount,
@@ -2436,7 +2447,7 @@ class DatabaseService {
       [closingAmount, now, sessionId],
     );
     if (updated == 0) {
-      throw Exception('No se encontró una sesión abierta con ese ID');
+      throw Exception('No se encontro una sesion abierta con ese ID');
     }
   }
 
@@ -2483,7 +2494,7 @@ class DatabaseService {
     );
   }
 
-  /// Resumen financiero de la sesión: ingresos, egresos, saldo esperado.
+  /// Resumen financiero de la sesion: ingresos, egresos, saldo esperado.
   static Future<Map<String, dynamic>> getCashSessionSummary(
     int sessionId,
   ) async {
@@ -2500,7 +2511,7 @@ class DatabaseService {
     final totalIncome = (row['total_income'] as num).toDouble();
     final totalExpense = (row['total_expense'] as num).toDouble();
 
-    // Desglose por método
+    // Desglose por metodo
     final byMethod = await db.rawQuery(
       '''SELECT method,
            COALESCE(SUM(CASE WHEN type = 'income' THEN amount ELSE 0 END), 0) AS income,
@@ -2550,12 +2561,12 @@ class DatabaseService {
   // DENOMINACIONES DE CAJA (billetes / monedas)
   // ─────────────────────────────────────────────
 
-  /// Guarda el desglose de denominaciones para una sesión.
+  /// Guarda el desglose de denominaciones para una sesion.
   /// [moment]: 'open' al abrir, 'close' al cerrar.
   static Future<void> saveCashDenominations({
     required int sessionId,
     required List<Map<String, dynamic>>
-        entries, // toMap() de cada DenominationEntry
+    entries, // toMap() de cada DenominationEntry
     required String moment,
   }) async {
     final db = await database;
@@ -2583,7 +2594,7 @@ class DatabaseService {
     await batch.commit(noResult: true);
   }
 
-  /// Recupera el desglose de denominaciones de una sesión y momento.
+  /// Recupera el desglose de denominaciones de una sesion y momento.
   static Future<List<Map<String, dynamic>>> getCashDenominations({
     required int sessionId,
     required String moment,
@@ -2679,11 +2690,11 @@ class DatabaseService {
   }
 
   // ─────────────────────────────────────────────
-  // VENTA CON MÚLTIPLES MÉTODOS DE PAGO
+  // VENTA CON MuLTIPLES MeTODOS DE PAGO
   // ─────────────────────────────────────────────
 
   /// Registra una venta y sus pagos. Si se proporciona [sessionId],
-  /// también genera movimientos en caja por cada método de pago.
+  /// tambien genera movimientos en caja por cada metodo de pago.
   static Future<int> registerSaleWithPayments({
     required int storeId,
     required List<Map<String, dynamic>> items,
@@ -2697,7 +2708,7 @@ class DatabaseService {
       throw Exception('La venta debe contener al menos un producto');
     }
     if (payments.isEmpty) {
-      throw Exception('Debes indicar al menos un método de pago');
+      throw Exception('Debes indicar al menos un metodo de pago');
     }
 
     return transaction((txn) async {
@@ -2716,8 +2727,9 @@ class DatabaseService {
           'SELECT stock FROM inventory WHERE product_id = ? AND store_id = ? LIMIT 1',
           [productId, storeId],
         );
-        final available =
-            stockRows.isEmpty ? 0 : (stockRows.first['stock'] as num).toInt();
+        final available = stockRows.isEmpty
+            ? 0
+            : (stockRows.first['stock'] as num).toInt();
         if (available < quantity) {
           throw Exception('Stock insuficiente para completar la venta');
         }
@@ -2730,7 +2742,7 @@ class DatabaseService {
         [storeId, clientId, DateTime.now().toIso8601String(), total],
       );
 
-      // Guardar ítems y reducir stock
+      // Guardar items y reducir stock
       for (final item in items) {
         final productId = item['product_id'] as int;
         final quantity = (item['quantity'] as num).toInt();
@@ -2746,7 +2758,7 @@ class DatabaseService {
         );
       }
 
-      // Guardar métodos de pago
+      // Guardar metodos de pago
       for (final p in payments) {
         final methodId = (p['method_id'] as num).toInt();
         final amount = (p['amount'] as num).toDouble();
@@ -2755,7 +2767,7 @@ class DatabaseService {
           [saleId, methodId, amount],
         );
 
-        // Registrar ingreso en caja si hay sesión activa
+        // Registrar ingreso en caja si hay sesion activa
         if (sessionId != null) {
           await txn.rawInsert(
             '''INSERT INTO cash_movements (session_id, type, amount, method, description, created_at)
@@ -2771,7 +2783,7 @@ class DatabaseService {
         }
       }
 
-      // Venta a crédito
+      // Venta a credito
       if (isCredit) {
         final paidNow = payments.fold<double>(
           0,
@@ -2789,7 +2801,7 @@ class DatabaseService {
   }
 
   // ─────────────────────────────────────────────
-  // VENTAS A CRÉDITO / ABONOS
+  // VENTAS A CReDITO / ABONOS
   // ─────────────────────────────────────────────
 
   static Future<List<Map<String, dynamic>>> getCreditSalesPending() async {
@@ -2821,7 +2833,7 @@ class DatabaseService {
         'SELECT total, paid FROM credit_sales WHERE id = ? LIMIT 1',
         [creditSaleId],
       );
-      if (rows.isEmpty) throw Exception('Crédito no encontrado');
+      if (rows.isEmpty) throw Exception('Credito no encontrado');
 
       final paid = (rows.first['paid'] as num).toDouble();
       final newPaid = paid + amount;
@@ -2842,7 +2854,7 @@ class DatabaseService {
       if (sessionId != null) {
         await txn.rawInsert(
           '''INSERT INTO cash_movements (session_id, type, amount, method, description, created_at)
-             VALUES (?, 'income', ?, ?, 'Abono crédito', ?)''',
+             VALUES (?, 'income', ?, ?, 'Abono credito', ?)''',
           [
             sessionId,
             amount,
@@ -2858,7 +2870,7 @@ class DatabaseService {
   // ANÁLISIS DE INVENTARIO (FASE 5)
   // ─────────────────────────────────────────────
 
-  /// Obtiene unidades vendidas por producto en un período
+  /// Obtiene unidades vendidas por producto en un periodo
   static Future<Map<int, int>> getUnitsSoldByProduct({
     required int storeId,
     DateTime? dateFrom,
@@ -3001,7 +3013,7 @@ class DatabaseService {
     }
   }
 
-  /// Obtiene información de inversión de bodega
+  /// Obtiene informacion de inversion de bodega
   static Future<Map<String, dynamic>> getInventoryInvestmentSummary({
     required int storeId,
   }) async {
@@ -3045,8 +3057,9 @@ class DatabaseService {
       final totalInvested = (row['totalInvested'] as num?)?.toDouble() ?? 0.0;
       final totalSellValue = (row['totalSellValue'] as num?)?.toDouble() ?? 0.0;
       final potentialGain = totalSellValue - totalInvested;
-      final potentialROI =
-          totalInvested > 0 ? (potentialGain / totalInvested) * 100 : 0.0;
+      final potentialROI = totalInvested > 0
+          ? (potentialGain / totalInvested) * 100
+          : 0.0;
 
       return {
         'totalProducts': (row['totalProducts'] as num?)?.toInt() ?? 0,
@@ -3064,7 +3077,7 @@ class DatabaseService {
     }
   }
 
-  /// Obtiene tendencia de ventas (últimos 7 días)
+  /// Obtiene tendencia de ventas (ultimos 7 dias)
   static Future<Map<String, double>> getSalesTrendLast7Days({
     required int storeId,
   }) async {
@@ -3072,7 +3085,7 @@ class DatabaseService {
       final db = await database;
       final Map<String, double> trend = {};
 
-      // Inicializar con los últimos 7 días
+      // Inicializar con los ultimos 7 dias
       for (int i = 6; i >= 0; i--) {
         final date = DateTime.now().subtract(Duration(days: i));
         final dateStr =
@@ -3109,7 +3122,7 @@ class DatabaseService {
     }
   }
 
-  /// Obtiene rotación promedio de inventario (unidades/día)
+  /// Obtiene rotacion promedio de inventario (unidades/dia)
   static Future<double> getAverageInventoryRotation({
     required int storeId,
     int daysToAnalyze = 30,
@@ -3141,7 +3154,7 @@ class DatabaseService {
     }
   }
 
-  /// Obtiene productos con inversión crítica (bajo stock, alto valor)
+  /// Obtiene productos con inversion critica (bajo stock, alto valor)
   static Future<List<Map<String, dynamic>>> getCriticalInvestmentProducts({
     required int storeId,
     double minInvestmentValue = 500.0,
@@ -3223,7 +3236,7 @@ class DatabaseService {
 
       final critical = await getCriticalInvestmentProducts(storeId: storeId);
 
-      // Calcular métricas adicionales
+      // Calcular metricas adicionales
       final totalSales = topSellers.fold<double>(
         0,
         (sum, item) => sum + ((item['totalSold'] as num?)?.toDouble() ?? 0),
