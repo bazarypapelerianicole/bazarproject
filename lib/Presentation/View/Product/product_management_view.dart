@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 // flutter_animate se usa en widgets extraídos si corresponde
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
+import '../../Widgets/Products/shared_inputs.dart';
 // Shared helpers are in widgets/shared_inputs.dart; widget-specific imports kept below
 import '../../Widgets/Products/new_product_drawer.dart';
 import '../../Widgets/Products/edit_product_dialog.dart';
@@ -88,6 +89,8 @@ class _ProductManagementViewState extends State<ProductManagementView> {
       final picker = ImagePicker();
       final picked = await picker.pickMultiImage(imageQuality: 80);
       if (picked.isEmpty) return;
+      // show persistent progress notification while uploading
+      showProgressNotification(context, 'Subiendo imágenes...');
       setState(() => _isUploadingImages = true);
       final uploaded = await controller.uploadImages(
         picked.map((image) => image.path).toList(),
@@ -100,7 +103,11 @@ class _ProductManagementViewState extends State<ProductManagementView> {
         SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
       );
     } finally {
-      if (mounted) setState(() => _isUploadingImages = false);
+      // hide progress notification and reset uploading state
+      if (mounted) {
+        hideProgressNotification(context);
+        setState(() => _isUploadingImages = false);
+      }
     }
   }
 
@@ -147,6 +154,8 @@ class _ProductManagementViewState extends State<ProductManagementView> {
     }
 
     setState(() => _isSavingProduct = true);
+    // show progress notification while saving
+    showProgressNotification(context, 'Guardando producto...');
     try {
       await controller.createProduct(
         name: _nameController.text,
@@ -205,6 +214,8 @@ class _ProductManagementViewState extends State<ProductManagementView> {
           ),
         ),
       );
+      // hide progress notification on success
+      hideProgressNotification(context);
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -217,6 +228,7 @@ class _ProductManagementViewState extends State<ProductManagementView> {
           ),
         ),
       );
+      hideProgressNotification(context);
     } finally {
       if (mounted) setState(() => _isSavingProduct = false);
     }

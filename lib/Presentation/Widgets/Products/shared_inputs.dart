@@ -1,8 +1,6 @@
-import 'dart:io';
-
-import 'package:bazarnicole/Presentation/Services/google_drive_backup_service.dart';
 import 'package:bazarnicole/Presentation/Utils/Colors.dart';
 import 'package:flutter/material.dart';
+export 'image_preview.dart';
 
 InputDecoration modernInput({
   required String label,
@@ -56,31 +54,6 @@ Widget formSection({required String title, required List<Widget> children}) {
   );
 }
 
-bool isLocalImagePath(String value) =>
-    value.contains('/') || value.contains('\\') || value.startsWith('file:');
-
-Widget imagePreview(
-  String value, {
-  required double width,
-  required double height,
-  BoxFit fit = BoxFit.cover,
-  Widget Function(BuildContext, Object, StackTrace?)? errorBuilder,
-}) => isLocalImagePath(value)
-    ? Image.file(
-        File(value),
-        width: width,
-        height: height,
-        fit: fit,
-        errorBuilder: errorBuilder,
-      )
-    : Image.network(
-        GoogleDriveBackupService.publicImageUrl(value),
-        width: width,
-        height: height,
-        fit: fit,
-        errorBuilder: errorBuilder,
-      );
-
 Widget imagePlaceholder() {
   return Container(
     color: AppColors.lightWhite,
@@ -92,4 +65,39 @@ Widget imagePlaceholder() {
       ),
     ),
   );
+}
+
+// Shows a persistent progress-style SnackBar. Call `hideProgressNotification`
+// to dismiss it when the operation completes.
+ScaffoldFeatureController<SnackBar, SnackBarClosedReason>
+showProgressNotification(BuildContext context, String message) {
+  final messenger = ScaffoldMessenger.of(context);
+  messenger.hideCurrentSnackBar();
+  return messenger.showSnackBar(
+    SnackBar(
+      behavior: SnackBarBehavior.floating,
+      duration: const Duration(days: 365),
+      backgroundColor: Colors.black87,
+      content: Row(
+        children: [
+          SizedBox(
+            width: 18,
+            height: 18,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(message, style: const TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+void hideProgressNotification(BuildContext context) {
+  ScaffoldMessenger.of(context).hideCurrentSnackBar();
 }

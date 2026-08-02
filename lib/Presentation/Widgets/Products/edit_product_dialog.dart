@@ -600,6 +600,10 @@ Future<void> showEditProductDialog(
                                       );
                                       if (confirm != true) return;
                                       try {
+                                        showProgressNotification(
+                                          context,
+                                          'Eliminando producto...',
+                                        );
                                         await controller.deleteProduct(
                                           (item['id'] as num).toInt(),
                                         );
@@ -619,6 +623,7 @@ Future<void> showEditProductDialog(
                                             ),
                                           ),
                                         );
+                                        hideProgressNotification(context);
                                       } catch (e) {
                                         if (!context.mounted) return;
                                         messenger.showSnackBar(
@@ -631,6 +636,7 @@ Future<void> showEditProductDialog(
                                             ),
                                           ),
                                         );
+                                        hideProgressNotification(context);
                                       }
                                     },
                               icon: const Icon(Icons.delete_outline, size: 18),
@@ -664,6 +670,8 @@ Future<void> showEditProductDialog(
                                   final messenger = ScaffoldMessenger.of(
                                     context,
                                   );
+                                  // show progress notification while saving
+                                  showProgressNotification(context, 'Guardando cambios...');
                                   setDialogState(() => isSavingEdit = true);
                                   try {
                                     final productId = (item['id'] as num)
@@ -728,6 +736,7 @@ Future<void> showEditProductDialog(
                                     );
                                     if (!context.mounted) return;
                                     navigator.pop();
+                                    hideProgressNotification(context);
                                   } catch (e) {
                                     if (!context.mounted) return;
                                     messenger.showSnackBar(
@@ -740,6 +749,7 @@ Future<void> showEditProductDialog(
                                         ),
                                       ),
                                     );
+                                    hideProgressNotification(context);
                                   } finally {
                                     if (ctx.mounted) {
                                       setDialogState(
