@@ -1953,6 +1953,25 @@ class DatabaseService {
     });
   }
 
+  static Future<void> updateProductImages({
+    required int productId,
+    required List<String> imageIds,
+  }) async {
+    final db = await database;
+    final cleanIds = imageIds
+        .map((value) => value.trim())
+        .where((value) => value.isNotEmpty)
+        .toList();
+    final imagesJson = cleanIds.isEmpty ? null : cleanIds.join(',');
+
+    await db.update(
+      'products',
+      {'images': imagesJson},
+      where: 'id = ?',
+      whereArgs: [productId],
+    );
+  }
+
   /// IDs de Drive asociados al producto. Las rutas locales antiguas se ignoran
   /// para no intentar borrar archivos fuera de Google Drive.
   static Future<List<String>> getProductImageIds(int productId) async {

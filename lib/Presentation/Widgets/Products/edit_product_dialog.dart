@@ -373,11 +373,36 @@ Future<void> showEditProductDialog(
                                                   isUploadingEditImages ||
                                                       isSavingEdit
                                                   ? null
-                                                  : () => setDialogState(() {
-                                                      editImages = List.from(
-                                                        editImages,
-                                                      )..removeAt(entry.key);
-                                                    }),
+                                                  : () async {
+                                                      final imageRef =
+                                                          editImages[entry.key];
+                                                      setDialogState(() {
+                                                        editImages = List.from(
+                                                          editImages,
+                                                        )..removeAt(entry.key);
+                                                      });
+                                                      try {
+                                                        await controller
+                                                            .removeImageReference(
+                                                              productId: (item['id'] as num)
+                                                                  .toInt(),
+                                                              imageRef: imageRef,
+                                                            );
+                                                      } catch (e) {
+                                                        if (!context.mounted) {
+                                                          return;
+                                                        }
+                                                        ScaffoldMessenger.of(
+                                                          context,
+                                                        ).showSnackBar(
+                                                          SnackBar(
+                                                            content: Text(
+                                                              'No se pudo eliminar la imagen: ${e.toString().replaceFirst('Exception: ', '')}',
+                                                            ),
+                                                          ),
+                                                        );
+                                                      }
+                                                    },
                                               child: Container(
                                                 width: 20,
                                                 height: 20,

@@ -168,6 +168,33 @@ class ProductManagementController extends ChangeNotifier {
     CatalogSyncService.instance.markDirty(); // ← Producto + stock actualizado
   }
 
+  Future<void> removeImageReference({
+    int? productId,
+    required String imageRef,
+  }) async {
+    final trimmed = imageRef.trim();
+    if (trimmed.isEmpty) return;
+
+    final isDriveReference = !trimmed.contains('/') && !trimmed.contains('\\');
+
+    if (productId != null) {
+      final currentIds = await DatabaseService.getProductImageIds(productId);
+      if (currentIds.contains(trimmed)) {
+        final remainingIds = currentIds.where((id) => id != trimmed).toList();
+        await DatabaseService.updateProductImages(
+          productId: productId,
+          imageIds: remainingIds,
+        );
+        CatalogSyncService.instance.markDirty();
+        await loadCatalog();
+      }
+    }
+
+    if (isDriveReference) {
+      await GoogleDriveBackupService.deleteProductImage(trimmed);
+    }
+  }
+
   Future<void> deleteProduct(int productId) async {
     final imageIds = await DatabaseService.getProductImageIds(productId);
     await DatabaseService.deleteProduct(productId);

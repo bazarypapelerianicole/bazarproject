@@ -315,9 +315,9 @@ class _WebCatalogViewState extends State<WebCatalogView>
     return categories.fold<int>(0, (total, category) {
       final visibleProducts = q.isEmpty
           ? category.products.length
-          : category.products.where(
-              (product) => product.name.toLowerCase().contains(q),
-            ).length;
+          : category.products
+                .where((product) => product.name.toLowerCase().contains(q))
+                .length;
       return total + visibleProducts;
     });
   }
@@ -331,8 +331,8 @@ class _WebCatalogViewState extends State<WebCatalogView>
     final currentSectionCategories = _sections.isEmpty
         ? <CatalogCategory>[]
         : (_tabController != null && _tabController!.index < _sections.length
-            ? _sections[_tabController!.index].categories
-            : _sections.first.categories);
+              ? _sections[_tabController!.index].categories
+              : _sections.first.categories);
 
     return Scaffold(
       backgroundColor: const Color(0xFFF7F7F8),
@@ -454,21 +454,7 @@ class _WebCatalogViewState extends State<WebCatalogView>
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          'Explora el catálogo',
-                          style: Theme.of(context).textTheme.headlineSmall
-                              ?.copyWith(
-                                fontWeight: FontWeight.w700,
-                                color: AppColors.primaryLogo,
-                              ),
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          'Encuentra tus productos favoritos de forma rápida y cómoda.',
-                          style: Theme.of(context).textTheme.bodyMedium
-                              ?.copyWith(color: AppColors.mediumGray),
-                        ),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: 8),
                         if (_sections.isNotEmpty)
                           CatalogFilters(
                             searchController: _searchController,

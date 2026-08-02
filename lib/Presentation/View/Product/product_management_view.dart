@@ -1,5 +1,7 @@
 // ignore_for_file: file_names
 
+import 'dart:async';
+
 import 'package:bazarnicole/Presentation/Controller/product_management_controller.dart';
 import 'package:bazarnicole/Presentation/Utils/Colors.dart';
 import 'package:flutter/material.dart';
@@ -99,6 +101,33 @@ class _ProductManagementViewState extends State<ProductManagementView> {
       );
     } finally {
       if (mounted) setState(() => _isUploadingImages = false);
+    }
+  }
+
+  void _removeImageAt(int index) {
+    final imageRef = _imagePaths[index].trim();
+    if (imageRef.isEmpty) return;
+
+    setState(() {
+      _imagePaths = List.from(_imagePaths)..removeAt(index);
+    });
+
+    unawaited(_removeImageReference(imageRef));
+  }
+
+  Future<void> _removeImageReference(String imageRef) async {
+    final controller = context.read<ProductManagementController>();
+    try {
+      await controller.removeImageReference(imageRef: imageRef);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'No se pudo eliminar la imagen: ${e.toString().replaceFirst('Exception: ', '')}',
+          ),
+        ),
+      );
     }
   }
 
@@ -262,9 +291,7 @@ class _ProductManagementViewState extends State<ProductManagementView> {
               onCategoryChanged: (v) =>
                   setState(() => _selectedCategoryName = v),
               onStoreChanged: (v) => setState(() => _selectedStoreId = v),
-              onRemoveImage: (i) => setState(
-                () => _imagePaths = List.from(_imagePaths)..removeAt(i),
-              ),
+              onRemoveImage: (i) => _removeImageAt(i),
               onPickImages: _pickImages,
               onSaveProduct: _saveProduct,
               scaffoldKey: _scaffoldKey,

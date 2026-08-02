@@ -90,67 +90,67 @@ class _CatalogCategoryCardState extends State<CatalogCategoryCard>
                   child: InkWell(
                     onTap: () => _openDetail(context),
                     child: Column(
+                      mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        SizedBox(
-                          height: 150,
+                        AspectRatio(
+                          aspectRatio: 16 / 9,
                           child: _CardImage(
                             heroImages: widget.info.heroImages,
                             accentColor: _accentColor,
                           ),
                         ),
-                        Expanded(
-                          child: Padding(
-                            padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  widget.name,
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: theme.textTheme.titleMedium?.copyWith(
-                                    fontWeight: FontWeight.w700,
-                                    color: AppColors.darkGray,
-                                  ),
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                widget.name,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: theme.textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.darkGray,
                                 ),
-                                const SizedBox(height: 6),
-                                Text(
-                                  '${widget.info.products.length} productos',
-                                  style: theme.textTheme.bodyMedium?.copyWith(
-                                    color: AppColors.mediumGray,
-                                  ),
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                '${widget.info.products.length} productos',
+                                style: theme.textTheme.bodyMedium?.copyWith(
+                                  color: AppColors.mediumGray,
                                 ),
-                                const SizedBox(height: 10),
-                                if (widget.info.tags.isNotEmpty)
-                                  Wrap(
-                                    spacing: 6,
-                                    runSpacing: 6,
-                                    children: widget.info.tags
-                                        .take(2)
-                                        .map((tag) => _TagChip(label: tag, color: _accentColor))
-                                        .toList(),
-                                  ),
-                                const Spacer(),
-                                SizedBox(
-                                  width: double.infinity,
-                                  height: 42,
-                                  child: FilledButton.icon(
-                                    onPressed: () => _openDetail(context),
-                                    icon: const Icon(Icons.visibility_outlined, size: 18),
-                                    label: const Text('Ver detalle'),
-                                    style: FilledButton.styleFrom(
-                                      backgroundColor: _accentColor,
-                                      foregroundColor: Colors.white,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(14),
-                                      ),
-                                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                              ),
+                              const SizedBox(height: 10),
+                              if (widget.info.tags.isNotEmpty)
+                                Wrap(
+                                  spacing: 6,
+                                  runSpacing: 6,
+                                  children: widget.info.tags
+                                      .take(2)
+                                      .map((tag) => _TagChip(label: tag, color: _accentColor))
+                                      .toList(),
+                                ),
+                              const SizedBox(height: 10),
+                              SizedBox(
+                                width: double.infinity,
+                                height: 42,
+                                child: FilledButton.icon(
+                                  onPressed: () => _openDetail(context),
+                                  icon: const Icon(Icons.visibility_outlined, size: 18),
+                                  label: const Text('Ver detalle'),
+                                  style: FilledButton.styleFrom(
+                                    backgroundColor: _accentColor,
+                                    foregroundColor: Colors.white,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(14),
                                     ),
+                                    padding: const EdgeInsets.symmetric(horizontal: 12),
                                   ),
                                 ),
-                              ],
-                            ),
+                              ),
+                            ],
                           ),
                         ),
                       ],
