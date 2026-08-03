@@ -9,10 +9,26 @@ class SuppliersController extends ChangeNotifier {
   String? _error;
   String _search = '';
 
+  SuppliersController() {
+    DatabaseService.addDatabaseListener(_handleDatabaseChanged);
+  }
+
   List<SupplierModel> get suppliers => _filtered;
   bool get loading => _loading;
   String? get error => _error;
   String get search => _search;
+
+  void _handleDatabaseChanged() {
+    if (!_loading) {
+      loadSuppliers();
+    }
+  }
+
+  @override
+  void dispose() {
+    DatabaseService.removeDatabaseListener(_handleDatabaseChanged);
+    super.dispose();
+  }
 
   Future<void> loadSuppliers() async {
     _loading = true;
@@ -21,7 +37,7 @@ class SuppliersController extends ChangeNotifier {
 
     try {
       final rows = await DatabaseService.rawQuery(
-        'SELECT id, name, COALESCE(phone,"") as phone, COALESCE(email,"") as email, COALESCE(notes,"") as notes FROM suppliers ORDER BY name COLLATE NOCASE',
+        "SELECT id, name, COALESCE(phone, '') as phone, COALESCE(email, '') as email, COALESCE(notes, '') as notes FROM suppliers ORDER BY name COLLATE NOCASE",
         [],
       );
       _suppliers = rows.map(SupplierModel.fromMap).toList();
@@ -46,10 +62,12 @@ class SuppliersController extends ChangeNotifier {
     } else {
       final q = _search.toLowerCase();
       _filtered = _suppliers
-          .where((s) =>
-              s.name.toLowerCase().contains(q) ||
-              (s.phone?.toLowerCase().contains(q) ?? false) ||
-              (s.email?.toLowerCase().contains(q) ?? false))
+          .where(
+            (s) =>
+                s.name.toLowerCase().contains(q) ||
+                (s.phone?.toLowerCase().contains(q) ?? false) ||
+                (s.email?.toLowerCase().contains(q) ?? false),
+          )
           .toList();
     }
   }
@@ -113,10 +131,9 @@ class SuppliersController extends ChangeNotifier {
         return 'No se puede eliminar: tiene $count compra(s) registrada(s).';
       }
 
-      await DatabaseService.rawUpdate(
-        'DELETE FROM suppliers WHERE id = ?',
-        [supplier.id],
-      );
+      await DatabaseService.rawUpdate('DELETE FROM suppliers WHERE id = ?', [
+        supplier.id,
+      ]);
       await loadSuppliers();
       return null;
     } catch (e) {
