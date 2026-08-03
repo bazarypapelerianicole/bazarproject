@@ -3,6 +3,10 @@ import 'package:bazarnicole/Presentation/Services/database_service.dart';
 import 'package:flutter/foundation.dart';
 
 class CashController extends ChangeNotifier {
+  CashController() {
+    DatabaseService.addDatabaseListener(_handleDatabaseChanged);
+  }
+
   bool isLoading = false;
   String? errorMessage;
 
@@ -50,6 +54,18 @@ class CashController extends ChangeNotifier {
   int? get sessionId => activeSession != null
       ? (activeSession!['id'] as num).toInt()
       : null;
+
+  void _handleDatabaseChanged() {
+    if (!isLoading) {
+      refresh();
+    }
+  }
+
+  @override
+  void dispose() {
+    DatabaseService.removeDatabaseListener(_handleDatabaseChanged);
+    super.dispose();
+  }
 
   Future<void> initialize() async {
     if (isLoading) return;

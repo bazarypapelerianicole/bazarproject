@@ -8,8 +8,9 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:googleapis/drive/v3.dart' as drive;
 import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import 'package:sqflite/sqflite.dart';
 import 'database_location_service.dart';
+import 'database_service.dart';
 
 /// Resultado de una operación de backup.
 class BackupResult {
@@ -323,12 +324,7 @@ class GoogleDriveBackupService {
         final rows = await db.query(table);
         final jsonContent = jsonEncode(rows);
         final fileName = table == 'products' ? 'productos.json' : '$table.json';
-        await _uploadTextFile(
-          driveApi,
-          fileName,
-          jsonContent,
-          jsonFolderId,
-        );
+        await _uploadTextFile(driveApi, fileName, jsonContent, jsonFolderId);
         uploadedFiles.add(fileName);
       }
 
@@ -380,16 +376,7 @@ class GoogleDriveBackupService {
   static Future<Database> _openDb(String path) async {
     debugPrint('Opening database:');
     debugPrint(path);
-
-    if (Platform.isAndroid || Platform.isIOS) {
-      return openDatabase(path, readOnly: true);
-    }
-    sqfliteFfiInit();
-    databaseFactory = databaseFactoryFfi;
-    return databaseFactory.openDatabase(
-      path,
-      options: OpenDatabaseOptions(readOnly: true),
-    );
+    return DatabaseService.openReadOnlyDatabase(path);
   }
 
   static Future<String> _createDriveFolder(
@@ -423,14 +410,18 @@ class GoogleDriveBackupService {
     String parentId,
   ) async {
     final found = await api.files.list(
-      q: "'$parentId' in parents and name = '$name' and "
+      q:
+          "'$parentId' in parents and name = '$name' and "
           "mimeType = 'application/vnd.google-apps.folder' and trashed = false",
       pageSize: 1,
       $fields: 'files(id)',
     );
     final files = found.files ?? const <drive.File>[];
     final id = files.isEmpty ? null : files.first.id;
-    return id ?? _createDriveFolder(api, name, parentId);
+    if (id != null && id.isNotEmpty) {
+      return id;
+    }
+    return _createDriveFolder(api, name, parentId);
   }
 
   static Future<void> _uploadTextFile(
@@ -447,13 +438,20 @@ class GoogleDriveBackupService {
       pageSize: 1,
       $fields: 'files(id)',
     );
-    final existing =
-        matches.files?.isNotEmpty == true ? matches.files!.first.id : null;
-    final media =
-        drive.Media(stream, bytes.length, contentType: 'application/json');
+    final existing = matches.files?.isNotEmpty == true
+        ? matches.files!.first.id
+        : null;
+    final media = drive.Media(
+      stream,
+      bytes.length,
+      contentType: 'application/json',
+    );
     if (existing != null) {
-      await driveApi.files
-          .update(drive.File()..name = fileName, existing, uploadMedia: media);
+      await driveApi.files.update(
+        drive.File()..name = fileName,
+        existing,
+        uploadMedia: media,
+      );
     } else {
       await driveApi.files.create(
         drive.File()

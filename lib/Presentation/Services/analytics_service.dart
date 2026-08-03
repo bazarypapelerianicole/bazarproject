@@ -520,15 +520,7 @@ class AnalyticsService {
     debugPrint('Opening database:');
     debugPrint(dbPath);
 
-    final db = await openDatabase(
-      dbPath,
-      readOnly: true,
-      onOpen: (db) async {
-        await db.execute('PRAGMA journal_mode = WAL');
-        await db.execute('PRAGMA cache_size = -32768'); // 32 MB
-        await db.execute('PRAGMA temp_store = MEMORY');
-      },
-    );
+    final db = await DatabaseService.openReadOnlyDatabase(dbPath);
 
     try {
       // Resumen de ventas del período
@@ -596,8 +588,8 @@ class AnalyticsService {
         'daily_evolution': dailyEvolution,
         'generated_at': DateTime.now().toUtc().toIso8601String(),
       };
-    } finally {
-      await db.close();
+    } catch (e) {
+      rethrow;
     }
   }
 }

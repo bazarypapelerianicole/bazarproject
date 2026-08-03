@@ -5,6 +5,10 @@ import 'package:bazarnicole/Presentation/Services/image_optimizer_service.dart';
 import 'package:flutter/foundation.dart';
 
 class ProductManagementController extends ChangeNotifier {
+  ProductManagementController() {
+    DatabaseService.addDatabaseListener(_handleDatabaseChanged);
+  }
+
   bool isLoading = false;
   String? errorMessage;
   List<Map<String, dynamic>> products = [];
@@ -47,6 +51,18 @@ class ProductManagementController extends ChangeNotifier {
         }
       }),
     );
+  }
+
+  void _handleDatabaseChanged() {
+    if (!isLoading) {
+      loadCatalog();
+    }
+  }
+
+  @override
+  void dispose() {
+    DatabaseService.removeDatabaseListener(_handleDatabaseChanged);
+    super.dispose();
   }
 
   Future<void> initialize() async {

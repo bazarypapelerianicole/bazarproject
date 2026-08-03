@@ -2,6 +2,10 @@ import 'package:bazarnicole/Presentation/Services/database_service.dart';
 import 'package:flutter/foundation.dart';
 
 class CustomersController extends ChangeNotifier {
+  CustomersController() {
+    DatabaseService.addDatabaseListener(_handleDatabaseChanged);
+  }
+
   bool isLoading = false;
   String? errorMessage;
   String search = '';
@@ -9,6 +13,18 @@ class CustomersController extends ChangeNotifier {
   List<Map<String, dynamic>> customers = [];
   List<Map<String, dynamic>> history = [];
   Map<String, dynamic>? selectedCustomer;
+
+  void _handleDatabaseChanged() {
+    if (!isLoading) {
+      loadCustomers();
+    }
+  }
+
+  @override
+  void dispose() {
+    DatabaseService.removeDatabaseListener(_handleDatabaseChanged);
+    super.dispose();
+  }
 
   Future<void> initialize() async {
     if (isLoading || customers.isNotEmpty) return;

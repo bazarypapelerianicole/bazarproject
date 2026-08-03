@@ -7,12 +7,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import 'package:sqflite/sqflite.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../Services/database_config.dart';
 import '../Services/database_location_service.dart';
+import '../Services/database_service.dart';
 import '../Services/google_drive_backup_service.dart';
 
 /// Metadatos de esquema usados únicamente por el asistente SQL de administración.
@@ -69,7 +70,6 @@ class _AdminDBPageState extends State<AdminDBPage>
   String _driveProgressStep = '';
   double _driveProgressPercent = 0;
 
-  late Database db;
   String? _actualDbPath; // Ruta real obtenida del DatabaseLocationService
 
   // ✅ MÉTODO MEJORADO: Obtener la ruta real usando DatabaseLocationService
@@ -85,6 +85,7 @@ class _AdminDBPageState extends State<AdminDBPage>
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
+    DatabaseService.addDatabaseListener(_handleDatabaseChanged);
     _initDriveSession();
     _loadQueryHistory();
     _openDB();
@@ -93,20 +94,12 @@ class _AdminDBPageState extends State<AdminDBPage>
   Future<void> _openDB() async {
     setState(() => _isLoading = true);
     try {
-      final path = await dbPath; // ✅ Await para obtener la ruta
+      final path = await dbPath;
 
-      debugPrint('Opening database:');
+      debugPrint('Opening database via DatabaseService:');
       debugPrint(path);
 
-      if (Platform.isAndroid || Platform.isIOS) {
-        // Para Android e iOS usar SQLite nativo
-        db = await openDatabase(path);
-      } else {
-        // Para Desktop (macOS, Windows, Linux) usar sqflite_ffi
-        sqfliteFfiInit();
-        databaseFactory = databaseFactoryFfi;
-        db = await databaseFactory.openDatabase(path);
-      }
+      await DatabaseService.database;
       await _loadDatabaseSchema();
       setState(() {
         _message =
@@ -121,6 +114,19 @@ class _AdminDBPageState extends State<AdminDBPage>
     } finally {
       setState(() => _isLoading = false);
     }
+  }
+
+  void _handleDatabaseChanged() {
+    if (!mounted) return;
+    setState(() {
+      _queryResult = [];
+      _schemaTables = const [];
+      _selectedTableName = null;
+      _selectedColumnNames = <String>{};
+      _message = '🔄 Base de datos actualizada. Recargando esquema...';
+      _messageColor = AppColors.primaryBlue;
+    });
+    _loadDatabaseSchema();
   }
 
   Future<void> _runQuery() async {
@@ -146,8 +152,9 @@ class _AdminDBPageState extends State<AdminDBPage>
     setState(() => _isLoading = true);
 
     try {
+      final dbInstance = await DatabaseService.database;
       if (_isReadOnlySql(normalizedSql)) {
-        final result = await db.rawQuery(normalizedSql);
+        final result = await dbInstance.rawQuery(normalizedSql);
         setState(() {
           _queryResult = result;
           _message = '✅ Consulta exitosa (${result.length} filas)';
@@ -157,13 +164,13 @@ class _AdminDBPageState extends State<AdminDBPage>
         int changes = 0;
         final command = _sqlCommand(normalizedSql);
         if (command == 'update') {
-          changes = await db.rawUpdate(normalizedSql);
+          changes = await dbInstance.rawUpdate(normalizedSql);
         } else if (command == 'delete') {
-          changes = await db.rawDelete(normalizedSql);
+          changes = await dbInstance.rawDelete(normalizedSql);
         } else if (command == 'insert') {
-          changes = await db.rawInsert(normalizedSql);
+          changes = await dbInstance.rawInsert(normalizedSql);
         } else {
-          await db.execute(normalizedSql);
+          await dbInstance.execute(normalizedSql);
         }
         setState(() {
           _queryResult = [];
@@ -345,14 +352,15 @@ class _AdminDBPageState extends State<AdminDBPage>
     if (!mounted) return;
     setState(() => _isLoadingSchema = true);
     try {
-      final rows = await db.rawQuery(
+      final dbInstance = await DatabaseService.database;
+      final rows = await dbInstance.rawQuery(
         "SELECT name FROM sqlite_master WHERE type = 'table' "
         "AND name NOT LIKE 'sqlite_%' AND name NOT LIKE 'android_%' ORDER BY name",
       );
       final tables = <_SqlTableInfo>[];
       for (final row in rows) {
         final name = row['name'] as String;
-        final columns = await db.rawQuery(
+        final columns = await dbInstance.rawQuery(
           'PRAGMA table_info(${_quoteIdentifier(name)})',
         );
         tables.add(
@@ -598,37 +606,7 @@ class _AdminDBPageState extends State<AdminDBPage>
       if (result != null && result.files.single.path != null) {
         final File selectedFile = File(result.files.single.path!);
 
-        // Cerrar la conexión actual
-        await db.close();
-
-        final path = await dbPath; // ✅ Await para obtener la ruta real
-
-        if (Platform.isAndroid || Platform.isIOS) {
-          // Para móviles, obtener la ruta real de la base de datos
-          final String realDbPath = await getDatabasesPath();
-          final String fullDbPath = join(realDbPath, DatabaseConfig.dbName);
-
-          // Hacer backup de la DB actual
-          final String backupPath = join(
-            realDbPath,
-            '${DatabaseConfig.dbName}.backup.${DateTime.now().millisecondsSinceEpoch}',
-          );
-
-          if (await File(fullDbPath).exists()) {
-            await File(fullDbPath).copy(backupPath);
-          }
-
-          // Reemplazar con el nuevo archivo
-          await selectedFile.copy(fullDbPath);
-        } else {
-          // Para desktop, usar la ruta obtenida del LocationService
-          final String backupPath =
-              '$path.backup.${DateTime.now().millisecondsSinceEpoch}';
-          await File(path).copy(backupPath);
-          await selectedFile.copy(path);
-        }
-
-        // Reabrir la conexión
+        await DatabaseService.replaceDatabase(selectedFile);
         await _openDB();
 
         setState(() {
@@ -666,30 +644,7 @@ class _AdminDBPageState extends State<AdminDBPage>
     setState(() => _isLoading = true);
 
     try {
-      // Cerrar la conexión actual
-      await db.close();
-
-      final path = await dbPath; // ✅ Await para obtener la ruta real
-
-      final String realDbPath = path;
-
-      // Hacer backup de la DB actual
-      final String backupPath =
-          '$realDbPath.backup.${DateTime.now().millisecondsSinceEpoch}';
-
-      // Verificar si existe la DB actual para hacer backup
-      if (await File(realDbPath).exists()) {
-        await File(realDbPath).copy(backupPath);
-      }
-
-      // Cargar el archivo desde assets
-      final ByteData data = await rootBundle.load(DatabaseConfig.assetDbPath);
-
-      // Escribir los bytes al archivo de destino
-      final List<int> bytes = data.buffer.asUint8List();
-      await File(realDbPath).writeAsBytes(bytes);
-
-      // Reabrir la conexión
+      await DatabaseService.restoreFromAssets();
       await _openDB();
 
       setState(() {
@@ -1127,8 +1082,10 @@ class _AdminDBPageState extends State<AdminDBPage>
       final exportDir = Directory('${docsDir.path}/$folderName');
       await exportDir.create(recursive: true);
 
+      final dbInstance = await DatabaseService.database;
+
       // Obtener nombres de tablas
-      final List<Map<String, dynamic>> tableRows = await db.rawQuery(
+      final List<Map<String, dynamic>> tableRows = await dbInstance.rawQuery(
         "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' AND name NOT LIKE 'android_%'",
       );
       final tables = tableRows.map((r) => r['name'] as String).toList();
@@ -1136,7 +1093,7 @@ class _AdminDBPageState extends State<AdminDBPage>
       final List<String> exportedFiles = [];
 
       for (final table in tables) {
-        final rows = await db.query(table);
+        final rows = await dbInstance.query(table);
         final jsonContent = JsonEncoder.withIndent('  ').convert(rows);
         final file = File('${exportDir.path}/$table.json');
         await file.writeAsString(jsonContent, flush: true);
@@ -1277,7 +1234,6 @@ class _AdminDBPageState extends State<AdminDBPage>
             ],
           ),
         ),
-      
       ),
     );
   }
@@ -2307,11 +2263,7 @@ class _AdminDBPageState extends State<AdminDBPage>
 
   @override
   void dispose() {
-    try {
-      db.close();
-    } catch (e) {
-      // Ignorar errores al cerrar la DB
-    }
+    DatabaseService.removeDatabaseListener(_handleDatabaseChanged);
     _queryController.dispose();
     _verticalScroll.dispose();
     _tabController.dispose();

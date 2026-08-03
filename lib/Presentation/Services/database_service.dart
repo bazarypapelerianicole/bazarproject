@@ -5,6 +5,7 @@ import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:sqflite/sqflite.dart';
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 import 'backup_service.dart';
 import 'database_config.dart';
@@ -30,6 +31,8 @@ class ProductQueryFilters {
 class DatabaseService {
   static Database? _database;
   static Completer<Database>? _dbCompleter;
+  static bool _platformInitialized = false;
+  static final ValueNotifier<int> databaseChanged = ValueNotifier<int>(0);
 
   static const List<String> _storeNames = ['Bazar', 'Tienda'];
 
@@ -326,15 +329,58 @@ class DatabaseService {
     },
   };
 
+  static Future<void> initializePlatform() async {
+    if (_platformInitialized || kIsWeb) return;
+    if (!Platform.isWindows && !Platform.isLinux && !Platform.isMacOS) {
+      _platformInitialized = true;
+      return;
+    }
+
+    try {
+      sqfliteFfiInit();
+      databaseFactory = databaseFactoryFfi;
+      _platformInitialized = true;
+    } catch (_) {
+      _platformInitialized = true;
+    }
+  }
+
+  static void addDatabaseListener(VoidCallback listener) {
+    databaseChanged.addListener(listener);
+  }
+
+  static void removeDatabaseListener(VoidCallback listener) {
+    databaseChanged.removeListener(listener);
+  }
+
+  static void notifyDatabaseChanged() {
+    databaseChanged.value += 1;
+  }
+
   static Future<Database> get database async {
-    if (_database != null) return _database!;
-    if (_dbCompleter != null) return _dbCompleter!.future;
+    await initializePlatform();
+
+    if (_database != null && _database!.isOpen) return _database!;
+    if (_database != null) {
+      _database = null;
+    }
+
+    if (_dbCompleter != null) {
+      try {
+        return await _dbCompleter!.future;
+      } catch (_) {
+        _dbCompleter = null;
+      }
+    }
+
     _dbCompleter = Completer<Database>();
     try {
       _database = await _initDatabase();
       _dbCompleter!.complete(_database!);
     } catch (e) {
-      _dbCompleter!.completeError(e);
+      if (_dbCompleter != null && !_dbCompleter!.isCompleted) {
+        _dbCompleter!.completeError(e);
+      }
       _dbCompleter = null;
       rethrow;
     }
@@ -367,35 +413,117 @@ class DatabaseService {
     debugPrint('Opening database:');
     debugPrint(path);
 
-    final db = await openDatabase(
+    final db = await databaseFactory.openDatabase(
       path,
-      version: 2,
-      onCreate: (db, version) async => _ensureBusinessSchema(db),
-      onUpgrade: (db, oldVersion, newVersion) async =>
-          _ensureBusinessSchema(db),
-      onOpen: (db) async {
-        // PRAGMAs que DEVUELVEN un resultado
-        await db.rawQuery('PRAGMA journal_mode=WAL');
-        // ── PRAGMAs de rendimiento enterprise (ejecutar en cada apertura) ──
+      options: OpenDatabaseOptions(
+        version: 2,
+        onCreate: (db, version) async => _ensureBusinessSchema(db),
+        onUpgrade: (db, oldVersion, newVersion) async =>
+            _ensureBusinessSchema(db),
+        onOpen: (db) async {
+          // PRAGMAs que DEVUELVEN un resultado
+          await db.rawQuery('PRAGMA journal_mode=WAL');
+          // ── PRAGMAs de rendimiento enterprise (ejecutar en cada apertura) ──
 
-        await db.rawQuery('PRAGMA synchronous=NORMAL');
-        await db.rawQuery('PRAGMA cache_size=-65536');
-        await db.rawQuery('PRAGMA temp_store=MEMORY');
-        await db.rawQuery('PRAGMA mmap_size=536870912');
-        await db.rawQuery('PRAGMA busy_timeout=10000');
-        await db.rawQuery('PRAGMA wal_autocheckpoint=1000');
-        await db.execute('PRAGMA foreign_keys = ON');
-        await _ensureBusinessSchema(db);
-      },
+          await db.rawQuery('PRAGMA synchronous=NORMAL');
+          await db.rawQuery('PRAGMA cache_size=-65536');
+          await db.rawQuery('PRAGMA temp_store=MEMORY');
+          await db.rawQuery('PRAGMA mmap_size=536870912');
+          await db.rawQuery('PRAGMA busy_timeout=10000');
+          await db.rawQuery('PRAGMA wal_autocheckpoint=1000');
+          await db.execute('PRAGMA foreign_keys = ON');
+          await _ensureBusinessSchema(db);
+        },
+      ),
     );
 
     _performAutomaticBackupIfNeeded();
     return db;
   }
 
+  static Future<Database> openReadOnlyDatabase(String path) async {
+    await initializePlatform();
+    return databaseFactory.openDatabase(
+      path,
+      options: OpenDatabaseOptions(
+        readOnly: true,
+        onOpen: (db) async {
+          await db.execute('PRAGMA journal_mode = WAL');
+          await db.execute('PRAGMA cache_size = -32768');
+          await db.execute('PRAGMA temp_store = MEMORY');
+        },
+      ),
+    );
+  }
+
   /// Expone la ruta de la BD para uso en Isolates (AnalyticsService).
   static Future<String> getDatabasePath() async {
     return DatabaseLocationService.getDatabasePath();
+  }
+
+  static Future<void> restoreFromAssets() async {
+    final path = await DatabaseLocationService.getDatabasePath();
+    await DatabaseLocationService.ensureDatabaseDirectoryExists(path);
+
+    final data = await rootBundle.load(DatabaseConfig.assetDbPath);
+    final bytes = data.buffer.asUint8List(
+      data.offsetInBytes,
+      data.lengthInBytes,
+    );
+
+    await File(path).writeAsBytes(bytes, flush: true);
+    await reopen();
+  }
+
+  static Future<void> close() async {
+    final db = _database;
+    _database = null;
+
+    final completer = _dbCompleter;
+    _dbCompleter = null;
+    if (completer != null && !completer.isCompleted) {
+      completer.completeError(Exception('Database closed'));
+    }
+
+    if (db != null && db.isOpen) {
+      try {
+        await db.close();
+      } catch (_) {}
+    }
+  }
+
+  static Future<void> reopen() async {
+    await close();
+    await Future<void>.delayed(const Duration(milliseconds: 250));
+    await database;
+    notifyDatabaseChanged();
+  }
+
+  static Future<void> replaceDatabase(File file) async {
+    if (!await file.exists()) {
+      throw Exception('El archivo seleccionado no existe: ${file.path}');
+    }
+
+    final path = await DatabaseLocationService.getDatabasePath();
+    await DatabaseLocationService.ensureDatabaseDirectoryExists(path);
+
+    await close();
+    await Future<void>.delayed(const Duration(milliseconds: 250));
+
+    final backupPath = '$path.backup.${DateTime.now().millisecondsSinceEpoch}';
+    if (await File(path).exists()) {
+      await File(path).copy(backupPath);
+      await File(path).delete();
+    }
+
+    if (file.path == path) {
+      await file.copy(path);
+    } else {
+      await file.copy(path);
+    }
+
+    await Future<void>.delayed(const Duration(milliseconds: 250));
+    await reopen();
   }
 
   static Future<void> _ensureBusinessSchema(DatabaseExecutor db) async {
@@ -2376,12 +2504,7 @@ class DatabaseService {
 
   static bool get isOpen => _database != null && _database!.isOpen;
 
-  static Future<void> closeDatabase() async {
-    if (_database != null) {
-      await _database!.close();
-      _database = null;
-    }
-  }
+  static Future<void> closeDatabase() async => close();
 
   static Future<List<Map<String, dynamic>>> rawQuery(
     String sql, [
@@ -2450,7 +2573,7 @@ class DatabaseService {
       await closeDatabase();
       final result = await BackupService.restoreFromBackup(backupName);
       if (result) {
-        _database = await _initDatabase();
+        await reopen();
       }
       return result;
     } catch (_) {

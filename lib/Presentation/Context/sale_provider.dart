@@ -3,6 +3,10 @@ import 'package:bazarnicole/Presentation/Model/sale_model.dart';
 import 'package:bazarnicole/Presentation/Services/database_service.dart';
 
 class SaleProvider extends ChangeNotifier {
+  SaleProvider() {
+    DatabaseService.addDatabaseListener(_handleDatabaseChanged);
+  }
+
   bool isLoading = false;
   String? errorMessage;
 
@@ -13,6 +17,18 @@ class SaleProvider extends ChangeNotifier {
   int? selectedStoreId;
   int? selectedCustomerId;
   DateTime? selectedDate;
+
+  void _handleDatabaseChanged() {
+    if (!isLoading) {
+      loadSales();
+    }
+  }
+
+  @override
+  void dispose() {
+    DatabaseService.removeDatabaseListener(_handleDatabaseChanged);
+    super.dispose();
+  }
 
   Future<void> initialize() async {
     if (isLoading || sales.isNotEmpty) return;

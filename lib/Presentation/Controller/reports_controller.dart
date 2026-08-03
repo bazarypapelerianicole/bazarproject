@@ -2,6 +2,10 @@ import 'package:bazarnicole/Presentation/Services/database_service.dart';
 import 'package:flutter/foundation.dart';
 
 class ReportsController extends ChangeNotifier {
+  ReportsController() {
+    DatabaseService.addDatabaseListener(_handleDatabaseChanged);
+  }
+
   bool isLoading = false;
   String? errorMessage;
 
@@ -11,6 +15,18 @@ class ReportsController extends ChangeNotifier {
 
   int get salesCountToday => ((salesToday['sales_count'] as num?)?.toInt()) ?? 0;
   double get totalToday => ((salesToday['total'] as num?)?.toDouble()) ?? 0;
+
+  void _handleDatabaseChanged() {
+    if (!isLoading) {
+      loadReports();
+    }
+  }
+
+  @override
+  void dispose() {
+    DatabaseService.removeDatabaseListener(_handleDatabaseChanged);
+    super.dispose();
+  }
 
   Future<void> initialize() async {
     if (isLoading || salesByStore.isNotEmpty || topProducts.isNotEmpty) return;

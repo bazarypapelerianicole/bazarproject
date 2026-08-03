@@ -3,6 +3,10 @@ import 'package:bazarnicole/Presentation/Model/product_model.dart';
 import 'package:bazarnicole/Presentation/Services/database_service.dart';
 
 class ProductProvider extends ChangeNotifier {
+  ProductProvider() {
+    DatabaseService.addDatabaseListener(_handleDatabaseChanged);
+  }
+
   bool isLoading = false;
   String? errorMessage;
   String search = '';
@@ -11,6 +15,18 @@ class ProductProvider extends ChangeNotifier {
   List<Product> products = [];
   List<Product> filteredProducts = [];
   Product? selectedProduct;
+
+  void _handleDatabaseChanged() {
+    if (!isLoading) {
+      loadProducts();
+    }
+  }
+
+  @override
+  void dispose() {
+    DatabaseService.removeDatabaseListener(_handleDatabaseChanged);
+    super.dispose();
+  }
 
   Future<void> initialize() async {
     if (isLoading || products.isNotEmpty) return;

@@ -3,6 +3,10 @@ import 'package:bazarnicole/Presentation/Model/inventory_model.dart';
 import 'package:bazarnicole/Presentation/Services/database_service.dart';
 
 class InventoryProvider extends ChangeNotifier {
+  InventoryProvider() {
+    DatabaseService.addDatabaseListener(_handleDatabaseChanged);
+  }
+
   bool isLoading = false;
   String? errorMessage;
   String search = '';
@@ -15,6 +19,18 @@ class InventoryProvider extends ChangeNotifier {
 
   // Datos de vendibilidad (simulado - conectar con getSalesHistory)
   final Map<int, int> _unitsSoldByProduct = {};
+
+  void _handleDatabaseChanged() {
+    if (!isLoading) {
+      loadInventory();
+    }
+  }
+
+  @override
+  void dispose() {
+    DatabaseService.removeDatabaseListener(_handleDatabaseChanged);
+    super.dispose();
+  }
 
   Future<void> initialize() async {
     if (isLoading || stores.isNotEmpty) return;

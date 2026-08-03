@@ -2,6 +2,10 @@ import 'package:bazarnicole/Presentation/Services/database_service.dart';
 import 'package:flutter/foundation.dart';
 
 class PosController extends ChangeNotifier {
+  PosController() {
+    DatabaseService.addDatabaseListener(_handleDatabaseChanged);
+  }
+
   bool isLoading = false;
   String? errorMessage;
   int? selectedStoreId;
@@ -29,6 +33,18 @@ class PosController extends ChangeNotifier {
 
   int get totalItems =>
       cart.fold<int>(0, (sum, item) => sum + (item['quantity'] as int));
+
+  void _handleDatabaseChanged() {
+    if (!isLoading) {
+      refresh();
+    }
+  }
+
+  @override
+  void dispose() {
+    DatabaseService.removeDatabaseListener(_handleDatabaseChanged);
+    super.dispose();
+  }
 
   Future<void> initialize() async {
     if (isLoading || stores.isNotEmpty) return;
