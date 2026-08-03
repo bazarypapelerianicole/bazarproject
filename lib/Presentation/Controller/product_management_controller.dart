@@ -1,6 +1,7 @@
 import 'package:bazarnicole/Presentation/Services/catalog_sync_service.dart';
 import 'package:bazarnicole/Presentation/Services/database_service.dart';
 import 'package:bazarnicole/Presentation/Services/google_drive_backup_service.dart';
+import 'package:bazarnicole/Presentation/Services/image_optimizer_service.dart';
 import 'package:flutter/foundation.dart';
 
 class ProductManagementController extends ChangeNotifier {
@@ -10,9 +11,43 @@ class ProductManagementController extends ChangeNotifier {
   List<Map<String, dynamic>> stores = [];
   List<Map<String, dynamic>> categories = [];
 
-  Future<List<String>> uploadImages(List<String> localPaths) => Future.wait(
-        localPaths.map(GoogleDriveBackupService.uploadProductImage),
-      );
+  Future<List<String>> uploadImages(List<String> localPaths) async {
+    return Future.wait(
+      localPaths.map((localPath) async {
+        OptimizedImage? optimized;
+        try {
+          debugPrint('Optimizando imagen...');
+          optimized = await ImageOptimizerService.optimize(
+            localPath,
+            onProgress: (step) => debugPrint(step),
+          );
+
+          debugPrint('Optimización completada: ${optimized.file.path}');
+          debugPrint('Subiendo imagen...');
+
+          final fileId = await GoogleDriveBackupService.uploadProductImage(
+            optimized.file.path,
+          );
+          debugPrint('Subida completada: $fileId');
+          return fileId;
+        } catch (e) {
+          debugPrint('Error al optimizar/subir $localPath: $e');
+          rethrow;
+        } finally {
+          if (optimized != null) {
+            try {
+              if (await optimized.file.exists()) {
+                await optimized.file.delete();
+                debugPrint('Temporal eliminado: ${optimized.file.path}');
+              }
+            } catch (e) {
+              debugPrint('No se pudo eliminar temporal: $e');
+            }
+          }
+        }
+      }),
+    );
+  }
 
   Future<void> initialize() async {
     if (isLoading || products.isNotEmpty) return;
