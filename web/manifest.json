@@ -1,11 +1,11 @@
 {
-    "name": "bazarnicole",
-    "short_name": "bazarnicole",
+    "name": "Bazar y Papelería Nicole",
+    "short_name": "Nicole",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#131a1f",
     "theme_color": "#131a1f",
-    "description": "A new Flutter project.",
+    "description": "Bazar y Papelería Nicole ofrece útiles escolares, artículos de oficina, papelería, bazar, impresiones, juguetes y mucho más al mejor precio.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
