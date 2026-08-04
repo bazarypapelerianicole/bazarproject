@@ -38,6 +38,8 @@ class _CatalogLoadingStateState extends State<CatalogLoadingState>
   Widget build(BuildContext context) {
     return Center(
       child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.center,
         mainAxisSize: MainAxisSize.min,
         children: [
           AnimatedBuilder(
@@ -188,63 +190,65 @@ class CategoryFilter extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Container(
-      height: 56,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.06),
-            blurRadius: 16,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: DropdownMenu<CatalogCategory?>(
-        initialSelection: selectedCategory,
-        onSelected: onChanged,
-        width: double.infinity,
-        textStyle: theme.textTheme.bodyMedium,
-        inputDecorationTheme: InputDecorationTheme(
-          filled: true,
-          fillColor: Colors.white,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(18),
-            borderSide: BorderSide.none,
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(18),
-            borderSide: BorderSide.none,
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(18),
-            borderSide: BorderSide(
-              color: theme.colorScheme.primary.withValues(alpha: 0.2),
+    return Center(
+      child: Container(
+        height: 56,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(18),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.06),
+              blurRadius: 16,
+              offset: const Offset(0, 8),
+            ),
+          ],
+        ),
+        child: DropdownMenu<CatalogCategory?>(
+          initialSelection: selectedCategory,
+          onSelected: onChanged,
+          width: double.infinity,
+          textStyle: theme.textTheme.bodyMedium,
+          inputDecorationTheme: InputDecorationTheme(
+            filled: true,
+            fillColor: Colors.white,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(18),
+              borderSide: BorderSide.none,
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(18),
+              borderSide: BorderSide.none,
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(18),
+              borderSide: BorderSide(
+                color: theme.colorScheme.primary.withValues(alpha: 0.2),
+              ),
+            ),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 14,
             ),
           ),
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 14,
-          ),
-        ),
-        menuStyle: MenuStyle(
-          shape: WidgetStatePropertyAll(
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          ),
-        ),
-        dropdownMenuEntries: [
-          const DropdownMenuEntry<CatalogCategory?>(
-            value: null,
-            label: 'Todas las categorías',
-          ),
-          ...categories.map(
-            (category) => DropdownMenuEntry<CatalogCategory?>(
-              value: category,
-              label: category.name,
+          menuStyle: MenuStyle(
+            shape: WidgetStatePropertyAll(
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             ),
           ),
-        ],
+          dropdownMenuEntries: [
+            const DropdownMenuEntry<CatalogCategory?>(
+              value: null,
+              label: 'Todas las categorías',
+            ),
+            ...categories.map(
+              (category) => DropdownMenuEntry<CatalogCategory?>(
+                value: category,
+                label: category.name,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -291,10 +295,12 @@ class CatalogFilters extends StatelessWidget {
                 if (!isCompact) const SizedBox(width: 12),
                 if (!isCompact)
                   Expanded(
-                    child: CategoryFilter(
-                      categories: categories,
-                      selectedCategory: selectedCategory,
-                      onChanged: onCategoryChanged,
+                    child: Center(
+                      child: CategoryFilter(
+                        categories: categories,
+                        selectedCategory: selectedCategory,
+                        onChanged: onCategoryChanged,
+                      ),
                     ),
                   ),
               ],
@@ -350,6 +356,7 @@ class _WebCatalogViewState extends State<WebCatalogView>
   CatalogCategory? _selectedCategory;
   String _search = '';
   bool _initialStateApplied = false;
+  bool _isApplyingInitialTab = false;
 
   List<CatalogSection> get _sections => widget.controller.sections;
   bool get _driveLoading => widget.controller.isLoading;
@@ -408,12 +415,15 @@ class _WebCatalogViewState extends State<WebCatalogView>
 
   void _applyInitialRouteState() {
     _initialStateApplied = true;
+    _tabController?.removeListener(_onTabChanged);
     _tabController?.dispose();
     _tabController = TabController(
       length: _sections.isEmpty ? 1 : _sections.length,
       vsync: this,
     );
+    _tabController!.addListener(_onTabChanged);
 
+    _isApplyingInitialTab = true;
     if (widget.initialStoreId != null) {
       final index = _sections.indexWhere(
         (section) => section.storeId.toString() == widget.initialStoreId,
@@ -422,12 +432,28 @@ class _WebCatalogViewState extends State<WebCatalogView>
         _tabController!.index = index;
       }
     }
+    _isApplyingInitialTab = false;
 
     if (widget.initialCategoryId != null) {
       _selectedCategory = widget.controller.categoryById(
         widget.initialCategoryId!,
       );
     }
+  }
+
+  void _onTabChanged() {
+    if (!mounted || _isApplyingInitialTab || _tabController == null) {
+      return;
+    }
+
+    if (_tabController!.indexIsChanging) {
+      return;
+    }
+
+    setState(() {
+      _selectedCategory = null;
+      widget.controller.selectedCategoryId = null;
+    });
   }
 
   void _onSearchSubmitted(String value) {
@@ -471,16 +497,23 @@ class _WebCatalogViewState extends State<WebCatalogView>
     });
   }
 
+  CatalogSection? get _currentSection {
+    if (_sections.isEmpty) return null;
+    if (_tabController != null && _tabController!.index < _sections.length) {
+      return _sections[_tabController!.index];
+    }
+    return _sections.first;
+  }
+
+  List<CatalogCategory> get _currentSectionCategories =>
+      _currentSection?.categories ?? <CatalogCategory>[];
+
   @override
   Widget build(BuildContext context) {
     final width = MediaQuery.of(context).size.width;
     final isTablet = width > 700;
 
-    final currentSectionCategories = _sections.isEmpty
-        ? <CatalogCategory>[]
-        : (_tabController != null && _tabController!.index < _sections.length
-              ? _sections[_tabController!.index].categories
-              : _sections.first.categories);
+    final currentSectionCategories = _currentSectionCategories;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF7F7F8),
@@ -587,6 +620,8 @@ class _WebCatalogViewState extends State<WebCatalogView>
               ),
       ),
       body: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
           if (_driveError != null)
             _DriveBanner(message: _driveError!, onRetry: _loadDriveData),
@@ -625,15 +660,9 @@ class _WebCatalogViewState extends State<WebCatalogView>
                                     .toString();
                               });
                             },
-                            resultCount: _sections.fold<int>(0, (
-                              count,
-                              section,
-                            ) {
-                              return count +
-                                  _countVisibleProducts(
-                                    _filteredCategories(section.categories),
-                                  );
-                            }),
+                            resultCount: _countVisibleProducts(
+                              _filteredCategories(currentSectionCategories),
+                            ),
                           ),
                       ],
                     ),
@@ -681,7 +710,9 @@ class _WebCatalogViewState extends State<WebCatalogView>
                         24,
                       ),
                       child: _CatalogGrid(
-                        sections: _sections,
+                        sections: _currentSection == null
+                            ? <CatalogSection>[]
+                            : <CatalogSection>[_currentSection!],
                         search: _search,
                         selectedCategory: _selectedCategory,
                       ),
