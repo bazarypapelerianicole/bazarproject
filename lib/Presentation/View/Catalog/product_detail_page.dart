@@ -5,16 +5,9 @@ import 'package:bazarnicole/Presentation/Widgets/product_gallery_viewer.dart';
 import 'package:flutter/material.dart';
 
 class ProductDetailPage extends StatelessWidget {
-  const ProductDetailPage({
-    super.key,
-    required this.product,
-    this.deepLinkSku,
-  });
+  const ProductDetailPage({super.key, required this.product, this.deepLinkSku});
 
-  factory ProductDetailPage.fromSku({
-    Key? key,
-    required String sku,
-  }) {
+  factory ProductDetailPage.fromSku({Key? key, required String sku}) {
     return ProductDetailPage(
       key: key,
       product: CatalogProductEntry(
@@ -44,6 +37,31 @@ class ProductDetailPage extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: const Color(0xFFF7F7F8),
+      extendBodyBehindAppBar: true,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        foregroundColor: Colors.white,
+        leading: Container(
+          margin: const EdgeInsets.only(left: 12, top: 8, bottom: 8),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(999),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.12),
+                blurRadius: 8,
+                offset: const Offset(0, 3),
+              ),
+            ],
+          ),
+          child: IconButton(
+            icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.black87),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+        ),
+      ),
       body: CustomScrollView(
         slivers: [
           SliverAppBar(
@@ -111,7 +129,8 @@ class ProductDetailPage extends StatelessWidget {
                     children: [
                       _InfoPill(
                         icon: Icons.qr_code_2_rounded,
-                        label: 'SKU ${product.sku.isEmpty ? product.id.toString() : product.sku}',
+                        label:
+                            'SKU ${product.sku.isEmpty ? product.id.toString() : product.sku}',
                         accentColor: accentColor,
                       ),
                       _InfoPill(
@@ -307,32 +326,26 @@ class _HeroSection extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
-                  color: accentColor.withValues(alpha: 0.95),
+                  color: AppColors.whiteOverlay,
                   borderRadius: BorderRadius.circular(999),
                 ),
                 child: Text(
-                  product.categoryName.isEmpty ? 'Catálogo' : product.categoryName,
-                  style: const TextStyle(
+                  product.categoryName.isEmpty
+                      ? 'Catálogo'
+                      : product.categoryName,
+                  style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
-                    color: Colors.white,
+                    color: AppColors.blackOverlay.withValues(alpha: 0.65),
                   ),
                 ),
               ),
-              const SizedBox(height: 8),
-              Text(
-                product.name,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.w800,
-                  color: Colors.white,
-                  height: 1.2,
-                ),
-              ),
+              const SizedBox(height: 4),
             ],
           ),
         ),
