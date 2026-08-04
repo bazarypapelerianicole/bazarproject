@@ -259,6 +259,12 @@ class GoogleDriveBackupService {
     }
   }
 
+  static String backupFileNameForTable(String table) {
+    if (table == 'products') return 'productos.json';
+    if (table == 'inventory') return 'stock.json';
+    return '$table.json';
+  }
+
   /// Realiza el backup completo: JSON de tablas + imágenes a Google Drive.
   /// [onProgress] se llama con cada paso.
   static Future<BackupResult> performBackup({
@@ -307,8 +313,8 @@ class GoogleDriveBackupService {
       final dbPath = await _getDbPath();
       final db = await _openDb(dbPath);
 
-      // Se exportan productos, categorías y tiendas al catálogo de Drive.
-      const tables = ['products', 'categories', 'stores'];
+      // Se exportan productos, categorías, tiendas e inventario al catálogo de Drive.
+      const tables = ['products', 'categories', 'stores', 'inventory'];
       final List<String> uploadedFiles = [];
 
       for (int i = 0; i < tables.length; i++) {
@@ -323,7 +329,7 @@ class GoogleDriveBackupService {
 
         final rows = await db.query(table);
         final jsonContent = jsonEncode(rows);
-        final fileName = table == 'products' ? 'productos.json' : '$table.json';
+        final fileName = backupFileNameForTable(table);
         await _uploadTextFile(driveApi, fileName, jsonContent, jsonFolderId);
         uploadedFiles.add(fileName);
       }

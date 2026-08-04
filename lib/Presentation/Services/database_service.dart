@@ -4,7 +4,6 @@ import 'dart:math';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
-import 'package:sqflite/sqflite.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 import 'backup_service.dart';
@@ -1752,8 +1751,7 @@ class DatabaseService {
       category: category,
     );
 
-    return db.rawQuery(
-      '''
+    return db.rawQuery('''
       SELECT
         p.id,
         p.uid,
@@ -1781,9 +1779,7 @@ class DatabaseService {
       ${filters.whereClause}
       GROUP BY p.id, p.name, p.sku, p.price, c.name
       ORDER BY p.name COLLATE NOCASE
-      ''',
-      filters.params,
-    );
+      ''', filters.params);
   }
 
   static Future<List<Map<String, dynamic>>> getInventoryByStore(
