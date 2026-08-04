@@ -1,7 +1,7 @@
 import 'package:bazarnicole/Presentation/Services/drive_data_service.dart';
 import 'package:bazarnicole/Presentation/Template/catalog_template.dart';
 import 'package:bazarnicole/Presentation/Utils/Colors.dart';
-import 'package:bazarnicole/Presentation/Widgets/catalog_card_widget.dart';
+import 'package:bazarnicole/Presentation/Widgets/Catalog/catalog_card_widget.dart';
 import 'package:bazarnicole/Presentation/Widgets/legal_page_widget.dart';
 import 'package:flutter/material.dart';
 

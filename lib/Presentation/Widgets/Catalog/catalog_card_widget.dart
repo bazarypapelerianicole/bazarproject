@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:bazarnicole/Presentation/Template/catalog_template.dart';
 import 'package:bazarnicole/Presentation/Utils/Colors.dart';
-import 'package:bazarnicole/Presentation/Widgets/catalog_detail_widget.dart';
+import 'package:bazarnicole/Presentation/Widgets/Catalog/catalog_detail_widget.dart';
 import 'package:bazarnicole/Presentation/Widgets/drive_image.dart';
 import 'package:bazarnicole/Presentation/Widgets/product_gallery_viewer.dart';
 
