@@ -93,12 +93,9 @@ class _CatalogCategoryCardState extends State<CatalogCategoryCard>
                       mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        AspectRatio(
-                          aspectRatio: 16 / 9,
-                          child: _CardImage(
-                            heroImages: widget.info.heroImages,
-                            accentColor: _accentColor,
-                          ),
+                        _CardImage(
+                          heroImages: widget.info.heroImages,
+                          accentColor: _accentColor,
                         ),
                         Padding(
                           padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
@@ -188,8 +185,8 @@ class _CardImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: 150,
+    return AspectRatio(
+      aspectRatio: 16 / 9,
       child: Stack(
         fit: StackFit.expand,
         children: [

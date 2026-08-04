@@ -325,7 +325,6 @@ class _WebCatalogViewState extends State<WebCatalogView>
   @override
   Widget build(BuildContext context) {
     final width = MediaQuery.of(context).size.width;
-    final isWide = width > 900;
     final isTablet = width > 700;
 
     final currentSectionCategories = _sections.isEmpty
@@ -525,8 +524,6 @@ class _WebCatalogViewState extends State<WebCatalogView>
                         sections: _sections,
                         search: _search,
                         selectedCategory: _selectedCategory,
-                        isWide: isWide,
-                        isTablet: isTablet,
                       ),
                     ),
                   ),
@@ -654,15 +651,11 @@ class _CatalogGrid extends StatelessWidget {
   final List<CatalogSection> sections;
   final String search;
   final CatalogCategory? selectedCategory;
-  final bool isWide;
-  final bool isTablet;
 
   const _CatalogGrid({
     required this.sections,
     required this.search,
     required this.selectedCategory,
-    required this.isWide,
-    required this.isTablet,
   });
 
   @override
@@ -703,54 +696,58 @@ class _CatalogGrid extends StatelessWidget {
       );
     }
 
-    final crossCount = isWide
-        ? 4
-        : isTablet
-        ? 3
-        : 1;
-    final childAspectRatio = isWide
-        ? 0.78
-        : isTablet
-        ? 0.84
-        : 0.86;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        const minCardWidth = 280.0;
+        const maxCardWidth = 340.0;
+        const spacing = 16.0;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        for (final section in filteredSections) ...[
-          Padding(
-            padding: const EdgeInsets.only(bottom: 14, top: 4),
-            child: Text(
-              section.storeName,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w700,
-                color: AppColors.primaryLogo,
+        final availableWidth = constraints.maxWidth.isFinite
+            ? constraints.maxWidth
+            : MediaQuery.sizeOf(context).width;
+        final columns = (availableWidth / minCardWidth).floor().clamp(1, 4);
+        final cardWidth = ((availableWidth - (columns - 1) * spacing) / columns)
+            .clamp(minCardWidth, maxCardWidth);
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            for (final section in filteredSections) ...[
+              Padding(
+                padding: const EdgeInsets.only(bottom: 14, top: 4),
+                child: Text(
+                  section.storeName,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.primaryLogo,
+                  ),
+                ),
               ),
-            ),
-          ),
-          GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            padding: EdgeInsets.zero,
-            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: crossCount,
-              mainAxisSpacing: 16,
-              crossAxisSpacing: 16,
-              childAspectRatio: childAspectRatio,
-            ),
-            itemCount: section.categories.length,
-            itemBuilder: (context, index) {
-              final category = section.categories[index];
-              return CatalogCategoryCard(
-                name: category.name,
-                storeName: category.storeName,
-                info: category,
-              );
-            },
-          ),
-          const SizedBox(height: 18),
-        ],
-      ],
+              AnimatedSize(
+                duration: const Duration(milliseconds: 220),
+                curve: Curves.easeOutCubic,
+                child: Wrap(
+                  spacing: spacing,
+                  runSpacing: spacing,
+                  children: section.categories
+                      .map(
+                        (category) => SizedBox(
+                          width: cardWidth,
+                          child: CatalogCategoryCard(
+                            name: category.name,
+                            storeName: category.storeName,
+                            info: category,
+                          ),
+                        ),
+                      )
+                      .toList(),
+                ),
+              ),
+              const SizedBox(height: 18),
+            ],
+          ],
+        );
+      },
     );
   }
 }

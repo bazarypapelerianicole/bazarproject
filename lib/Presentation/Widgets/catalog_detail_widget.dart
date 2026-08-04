@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:bazarnicole/Presentation/Template/catalog_template.dart';
 import 'package:bazarnicole/Presentation/Utils/Colors.dart';
+import 'package:bazarnicole/Presentation/View/Catalog/product_detail_page.dart';
 import 'package:bazarnicole/Presentation/Widgets/drive_image.dart';
 import 'package:bazarnicole/Presentation/Widgets/product_gallery_viewer.dart';
 import 'package:qr_flutter/qr_flutter.dart';
@@ -514,115 +515,126 @@ class _ProductRow extends StatelessWidget {
       // ignore: avoid_print
       print('[PARENT] URL enviada a DriveImage: ${imageFile.thumbnailLink}');
     }
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: color.withValues(alpha: 0.15)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 4,
-            offset: const Offset(0, 1),
-          ),
-        ],
+    return InkWell(
+      onTap: () => Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => ProductDetailPage(product: product),
+        ),
       ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          // La URL es el thumbnailLink original del archivo de Drive.
-          imageFile != null
-              ? Semantics(
-                  button: true,
-                  label: 'Ampliar imágenes de ${product.name}',
-                  child: MouseRegion(
-                    cursor: SystemMouseCursors.click,
-                    child: GestureDetector(
-                      onTap: () => ProductGalleryViewer.show(
-                        context,
-                        images: product.imageFiles
-                            .map((image) => image.thumbnailLink)
-                            .toList(),
-                      ),
-                      child: Hero(
-                        tag: ProductGalleryViewer.heroTagFor(
-                          imageFile.thumbnailLink,
-                        ),
-                        child: DriveImage(
-                          url: imageFile.thumbnailLink,
-                          width: 34,
-                          height: 34,
-                          fit: BoxFit.cover,
-                          borderRadius: BorderRadius.circular(8),
-                          errorWidget: _productIcon(),
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: color.withValues(alpha: 0.15)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.04),
+              blurRadius: 4,
+              offset: const Offset(0, 1),
+            ),
+          ],
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            // La URL es el thumbnailLink original del archivo de Drive.
+            imageFile != null
+                ? Semantics(
+                    button: true,
+                    label: 'Ampliar imágenes de ${product.name}',
+                    child: MouseRegion(
+                      cursor: SystemMouseCursors.click,
+                      child: GestureDetector(
+                        onTap: () {
+                          ProductGalleryViewer.show(
+                            context,
+                            images: product.imageFiles
+                                .map((image) => image.thumbnailLink)
+                                .toList(),
+                          );
+                        },
+                        child: Hero(
+                          tag: ProductGalleryViewer.heroTagFor(
+                            imageFile.thumbnailLink,
+                          ),
+                          child: DriveImage(
+                            url: imageFile.thumbnailLink,
+                            width: 34,
+                            height: 34,
+                            fit: BoxFit.cover,
+                            borderRadius: BorderRadius.circular(8),
+                            errorWidget: _productIcon(),
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                )
-              : SizedBox(width: 34, height: 34, child: _productIcon()),
+                  )
+                : SizedBox(width: 34, height: 34, child: _productIcon()),
 
-          const SizedBox(width: 10),
-          // Nombre y SKU
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            const SizedBox(width: 10),
+            // Nombre y SKU
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    product.name,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  if (product.sku.isNotEmpty)
+                    Text(
+                      'SKU: ${product.sku}',
+                      style: TextStyle(fontSize: 10, color: AppColors.mediumGray),
+                    ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            // Precio y stock
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Text(
-                  product.name,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
+                  '\$${product.price.toStringAsFixed(2)}',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: color,
                   ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
                 ),
-                if (product.sku.isNotEmpty)
+                if (product.stock > 0)
                   Text(
-                    'SKU: ${product.sku}',
+                    '${product.stock} en stock',
                     style: TextStyle(fontSize: 10, color: AppColors.mediumGray),
                   ),
               ],
             ),
-          ),
-          const SizedBox(width: 8),
-          // Precio y stock
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(
-                '\$${product.price.toStringAsFixed(2)}',
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
+            const SizedBox(width: 10),
+            // Código QR del producto — toca para ampliar
+            GestureDetector(
+              onTap: () => _showQrDialog(context),
+              child: QrImageView(
+                data: _qrUrl,
+                version: QrVersions.auto,
+                size: 52,
+                eyeStyle: QrEyeStyle(eyeShape: QrEyeShape.square, color: color),
+                dataModuleStyle: QrDataModuleStyle(
+                  dataModuleShape: QrDataModuleShape.square,
                   color: color,
                 ),
               ),
-              if (product.stock > 0)
-                Text(
-                  '${product.stock} en stock',
-                  style: TextStyle(fontSize: 10, color: AppColors.mediumGray),
-                ),
-            ],
-          ),
-          const SizedBox(width: 10),
-          // Código QR del producto — toca para ampliar
-          GestureDetector(
-            onTap: () => _showQrDialog(context),
-            child: QrImageView(
-              data: _qrUrl,
-              version: QrVersions.auto,
-              size: 52,
-              eyeStyle: QrEyeStyle(eyeShape: QrEyeShape.square, color: color),
-              dataModuleStyle: QrDataModuleStyle(
-                dataModuleShape: QrDataModuleShape.square,
-                color: color,
-              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
