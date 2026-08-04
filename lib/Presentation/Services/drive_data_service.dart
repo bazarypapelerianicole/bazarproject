@@ -307,10 +307,18 @@ class DriveDataService {
       final decoded = jsonDecode(utf8.decode(resp.bodyBytes));
       if (decoded is List) return decoded.cast<Map<String, dynamic>>();
       return [];
-    } catch (e) {
+    } catch (e, stack) {
       debugPrint('[DriveDataService] Fallback de descarga para $fileName: $e');
+      debugPrint('========================');
+      debugPrint('DOWNLOAD URI: $downloadUri');
+      debugPrint('ERROR: $e');
+      debugPrint(stack.toString());
+      debugPrint('========================');
+
       final fallbackUri = buildPublicDownloadUri(fileId, useFallback: true);
       final fallbackResp = await http.get(fallbackUri);
+      debugPrint('FALLBACK STATUS: ${fallbackResp.statusCode}');
+      debugPrint('FALLBACK BODY: ${fallbackResp.body}');
       if (fallbackResp.statusCode != 200) {
         debugPrint(
           '[DriveDataService] Error descargando $fileName: ${fallbackResp.statusCode}',
