@@ -7,6 +7,8 @@ import '../Services/database_location_service.dart';
 
 /// Inicialización de base de datos para entornos nativos (desktop, mobile).
 Future<void> initializeDatabasePlatform() async {
+  if (kIsWeb) return;
+
   await DatabaseService.initializePlatform();
 
   try {

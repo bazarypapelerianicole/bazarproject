@@ -40,7 +40,9 @@ Future<void> main() async {
   // 🖥️ CONFIGURAR TAMAÑO DE VENTANA PARA DESKTOP
   // Inicializadores por plataforma (nativa / web)
   await initializeWindowManager();
-  await initializeDatabasePlatform();
+  if (!kIsWeb) {
+    await initializeDatabasePlatform();
+  }
 
   // 🗄️ INICIALIZAR BASE DE DATOS DE FORMA SEGURA
   await _initDatabaseSafely();
