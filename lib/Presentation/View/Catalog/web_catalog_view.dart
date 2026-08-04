@@ -1,9 +1,12 @@
 import 'package:bazarnicole/Presentation/Services/drive_data_service.dart';
 import 'package:bazarnicole/Presentation/Template/catalog_template.dart';
 import 'package:bazarnicole/Presentation/Utils/Colors.dart';
+import 'package:bazarnicole/Presentation/View/Catalog/product_detail_page.dart';
 import 'package:bazarnicole/Presentation/Widgets/Catalog/catalog_card_widget.dart';
 import 'package:bazarnicole/Presentation/Widgets/legal_page_widget.dart';
 import 'package:flutter/material.dart';
+import 'web_history_helper.dart'
+    if (dart.library.html) 'web_history_helper_html.dart';
 
 class CatalogSearchBar extends StatelessWidget {
   final TextEditingController controller;
@@ -229,16 +232,23 @@ class _WebCatalogViewState extends State<WebCatalogView>
   CatalogCategory? _selectedCategory;
   String _search = '';
 
+  /// SKU pendiente extraído de la URL.
+  String? _pendingDeepLinkSku;
+  bool _pendingDeepLinkProcessed = false;
+
   /// Datos reales de Drive (null = aún cargando).
   CatalogDriveData? _driveData;
   bool _driveLoading = false;
   String? _driveError;
+
+  Map<String, CatalogProductEntry> _skuIndex = {};
 
   List<CatalogSection> get _sections => _driveData?.sections ?? [];
 
   @override
   void initState() {
     super.initState();
+    _pendingDeepLinkSku = _extractPendingDeepLinkSku();
     _loadDriveData();
   }
 
@@ -272,7 +282,10 @@ class _WebCatalogViewState extends State<WebCatalogView>
 
       setState(() {
         _driveData = data;
+        _skuIndex = _buildSkuIndex(data.sections);
       });
+
+      await _handlePendingDeepLink();
     } catch (e, stack) {
       debugPrint("=================================");
       debugPrint("ERROR EN fetchPublic()");
@@ -288,6 +301,112 @@ class _WebCatalogViewState extends State<WebCatalogView>
     } finally {
       if (mounted) setState(() => _driveLoading = false);
     }
+  }
+
+  Future<void> _handlePendingDeepLink() async {
+    final sku = _pendingDeepLinkSku?.trim();
+    if (sku == null || sku.isEmpty || _pendingDeepLinkProcessed) {
+      return;
+    }
+
+    if (_driveError != null || _driveData == null) {
+      debugPrint('[WebCatalogView] Deep link cancelado: catálogo no cargado.');
+      _pendingDeepLinkProcessed = true;
+      return;
+    }
+
+    _pendingDeepLinkProcessed = true;
+    final lookupKey = sku.toLowerCase();
+    final product = _skuIndex[lookupKey];
+
+    if (product == null) {
+      debugPrint('[WebCatalogView] SKU no encontrado en catálogo: $sku');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Producto no encontrado.'),
+            duration: Duration(seconds: 3),
+          ),
+        );
+      }
+      _clearSkuQueryParameter();
+      return;
+    }
+
+    debugPrint(
+      '[WebCatalogView] Deep link procesado. Navegando a producto SKU=$sku',
+    );
+    await Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => ProductDetailPage(product: product)),
+    );
+
+    _clearSkuQueryParameter();
+  }
+
+  Map<String, CatalogProductEntry> _buildSkuIndex(
+    List<CatalogSection> sections,
+  ) {
+    final Map<String, CatalogProductEntry> index = {};
+
+    for (final section in sections) {
+      for (final category in section.categories) {
+        for (final product in category.products) {
+          final sku = product.sku.trim();
+          if (sku.isNotEmpty) {
+            index[sku.toLowerCase()] = product;
+          }
+          index[product.id.toString()] = product;
+        }
+      }
+    }
+
+    return index;
+  }
+
+  String? _extractPendingDeepLinkSku() {
+    final uri = Uri.base;
+    if (uri.fragment.isNotEmpty) {
+      try {
+        final fragmentUri = Uri.parse(
+          uri.fragment.startsWith('/') ? uri.fragment : '/${uri.fragment}',
+        );
+        return fragmentUri.queryParameters['sku'];
+      } catch (e) {
+        debugPrint(
+          '[WebCatalogView] Error al parsear la URL del fragmento: $e',
+        );
+        return null;
+      }
+    }
+    return uri.queryParameters['sku'];
+  }
+
+  void _clearSkuQueryParameter() {
+    if (_pendingDeepLinkSku == null) return;
+    _pendingDeepLinkSku = null;
+
+    final uri = Uri.base;
+    Uri newUri;
+
+    if (uri.fragment.isNotEmpty) {
+      try {
+        final fragmentUri = Uri.parse(
+          uri.fragment.startsWith('/') ? uri.fragment : '/${uri.fragment}',
+        );
+        final updatedFragment = Uri(
+          path: fragmentUri.path,
+          queryParameters: Map.of(fragmentUri.queryParameters)..remove('sku'),
+        ).toString();
+        newUri = uri.replace(fragment: updatedFragment);
+      } catch (_) {
+        newUri = uri;
+      }
+    } else {
+      final updatedQuery = Map.of(uri.queryParameters)..remove('sku');
+      newUri = uri.replace(queryParameters: updatedQuery);
+    }
+
+    replaceWebUrl(newUri.toString());
   }
 
   List<CatalogCategory> _filteredCategories(List<CatalogCategory> items) {

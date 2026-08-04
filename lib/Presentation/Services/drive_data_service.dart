@@ -190,6 +190,12 @@ class DriveDataService {
       final categoriesJson = results[1];
       final storesJson = results[2];
 
+      _validateRequiredJson(
+        productsJson: productsJson,
+        categoriesJson: categoriesJson,
+        storesJson: storesJson,
+      );
+
       // 3. Listar imágenes
       final imageFiles = await _publicListImageThumbnails(imagesFolderId);
 
@@ -418,6 +424,12 @@ class DriveDataService {
       final categoriesJson = results[1];
       final storesJson = results[2];
 
+      _validateRequiredJson(
+        productsJson: productsJson,
+        categoriesJson: categoriesJson,
+        storesJson: storesJson,
+      );
+
       // 4. Parsear datos
       final productsByCategory = _buildProductsByCategory(
         productsJson: productsJson,
@@ -444,6 +456,22 @@ class DriveDataService {
       );
     } finally {
       client.close();
+    }
+  }
+
+  static void _validateRequiredJson({
+    required List<Map<String, dynamic>> productsJson,
+    required List<Map<String, dynamic>> categoriesJson,
+    required List<Map<String, dynamic>> storesJson,
+  }) {
+    if (productsJson.isEmpty) {
+      throw Exception('products.json está vacío o no válido.');
+    }
+    if (categoriesJson.isEmpty) {
+      throw Exception('categories.json está vacío o no válido.');
+    }
+    if (storesJson.isEmpty) {
+      throw Exception('stores.json está vacío o no válido.');
     }
   }
 
