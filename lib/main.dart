@@ -14,7 +14,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
-import 'package:bazarnicole/Presentation/View/Catalog/catalog_controller.dart';
+import 'package:bazarnicole/Presentation/Controller/Catalog/catalog_controller.dart';
 import 'package:bazarnicole/Presentation/View/Catalog/catalog_repository.dart';
 import 'package:bazarnicole/Presentation/View/Catalog/drive_catalog_repository.dart';
 import 'package:bazarnicole/Presentation/View/Catalog/catalog_router.dart';

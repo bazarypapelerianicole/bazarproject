@@ -1,10 +1,113 @@
+import 'dart:math';
+
 import 'package:bazarnicole/Presentation/Template/catalog_template.dart';
 import 'package:go_router/go_router.dart';
-import 'package:bazarnicole/Presentation/View/Catalog/catalog_controller.dart';
+import 'package:bazarnicole/Presentation/Controller/Catalog/catalog_controller.dart';
 import 'package:bazarnicole/Presentation/Utils/Colors.dart';
 import 'package:bazarnicole/Presentation/Widgets/Catalog/catalog_card_widget.dart';
 import 'package:bazarnicole/Presentation/Widgets/legal_page_widget.dart';
 import 'package:flutter/material.dart';
+
+class CatalogLoadingState extends StatefulWidget {
+  const CatalogLoadingState({super.key});
+
+  @override
+  State<CatalogLoadingState> createState() => _CatalogLoadingStateState();
+}
+
+class _CatalogLoadingStateState extends State<CatalogLoadingState>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 2),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          AnimatedBuilder(
+            animation: _controller,
+            builder: (context, child) {
+              return Transform.rotate(
+                angle: _controller.value * 2 * pi,
+                child: SizedBox(
+                  width: 82,
+                  height: 82,
+                  child: const Center(
+                    child: Icon(
+                      Icons.auto_awesome_rounded,
+                      color: AppColors.primaryLogo,
+                      size: 48,
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+          const SizedBox(height: 18),
+          Text(
+            'Cargando catálogo',
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+              color: AppColors.primaryLogo,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Conectando con Drive y preparando tus productos',
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: AppColors.mediumGray,
+              height: 1.4,
+            ),
+          ),
+          const SizedBox(height: 18),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: const [
+              _LoadingDot(color: AppColors.primaryLogo),
+              SizedBox(width: 8),
+              _LoadingDot(color: AppColors.primaryBlue),
+              SizedBox(width: 8),
+              _LoadingDot(color: AppColors.primaryRed),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _LoadingDot extends StatelessWidget {
+  final Color color;
+
+  const _LoadingDot({required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 500),
+      width: 10,
+      height: 10,
+      decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+    );
+  }
+}
 
 class CatalogSearchBar extends StatelessWidget {
   final TextEditingController controller;
@@ -539,7 +642,7 @@ class _WebCatalogViewState extends State<WebCatalogView>
                 if (widget.controller.isLoading && _sections.isEmpty)
                   const SliverFillRemaining(
                     hasScrollBody: false,
-                    child: Center(child: CircularProgressIndicator()),
+                    child: CatalogLoadingState(),
                   )
                 else if (_sections.isEmpty)
                   SliverFillRemaining(

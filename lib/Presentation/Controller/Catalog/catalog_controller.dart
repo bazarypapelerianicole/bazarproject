@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:bazarnicole/Presentation/Template/catalog_template.dart';
-import 'catalog_repository.dart';
+import '../../View/Catalog/catalog_repository.dart';
 
 /// Controlador del catálogo web. Mantiene el estado en memoria y evita
 /// descargas repetidas de JSON cuando el usuario navega entre rutas.

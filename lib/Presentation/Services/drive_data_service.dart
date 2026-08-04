@@ -1,5 +1,6 @@
 // ignore_for_file: file_names
 
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:bazarnicole/Presentation/Template/catalog_template.dart';
@@ -225,6 +226,29 @@ class DriveDataService {
       );
     } catch (e) {
       debugPrint('[DriveDataService.fetchPublic] error: $e');
+
+      if (kIsWeb) {
+        try {
+          if (_account == null) {
+            final signedIn = await signInSilently();
+            if (signedIn == null) {
+              await signIn();
+            }
+          }
+
+          if (_account != null) {
+            debugPrint(
+              '[DriveDataService.fetchPublic] Reintentando con sesión de Google...',
+            );
+            return fetchCatalogData();
+          }
+        } catch (fallbackError) {
+          debugPrint(
+            '[DriveDataService.fetchPublic] Fallback con sesión falló: $fallbackError',
+          );
+        }
+      }
+
       rethrow;
     }
   }
@@ -249,7 +273,12 @@ class DriveDataService {
   }
 
   static Future<Map<String, dynamic>> _publicGet(Uri uri) async {
-    final resp = await http.get(uri);
+    final resp = await http.get(uri).timeout(
+      const Duration(seconds: 15),
+      onTimeout: () {
+        throw TimeoutException('Tiempo de espera agotado al descargar $uri');
+      },
+    );
 
     debugPrint("URL:");
     debugPrint(uri.toString());

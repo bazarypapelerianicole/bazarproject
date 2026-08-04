@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'catalog_controller.dart';
+import '../../Controller/Catalog/catalog_controller.dart';
 import 'web_catalog_view.dart';
 import 'product_detail_page.dart';
 
