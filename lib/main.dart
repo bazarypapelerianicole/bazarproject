@@ -13,6 +13,11 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:go_router/go_router.dart';
+import 'package:bazarnicole/Presentation/View/Catalog/catalog_controller.dart';
+import 'package:bazarnicole/Presentation/View/Catalog/catalog_repository.dart';
+import 'package:bazarnicole/Presentation/View/Catalog/drive_catalog_repository.dart';
+import 'package:bazarnicole/Presentation/View/Catalog/catalog_router.dart';
 import 'package:bazarnicole/Presentation/Controller/auth_provider.dart';
 import 'package:bazarnicole/Presentation/Controller/product_management_controller.dart';
 import 'package:bazarnicole/Presentation/Controller/cash_controller.dart';
@@ -59,7 +64,13 @@ Future<void> main() async {
 
   // 🌐 Web: siempre muestra el catálogo público, sin autenticación
   if (kIsWeb) {
-    runApp(MyApp(initialRoute: AppRoutes.catalog));
+    final controller = CatalogController(
+      repository: CatalogRepository(
+        driveRepository: const DriveCatalogRepository(),
+      ),
+    );
+    final router = CatalogRouter.createRouter(controller: controller);
+    runApp(WebCatalogApp(router: router));
     return;
   }
 
@@ -165,6 +176,37 @@ class MyApp extends StatelessWidget {
         },
         debugShowCheckedModeBanner: false,
         navigatorKey: navigatorKey,
+      ),
+    );
+  }
+}
+
+class WebCatalogApp extends StatelessWidget {
+  final GoRouter router;
+
+  const WebCatalogApp({super.key, required this.router});
+
+  @override
+  Widget build(BuildContext context) {
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => AuthProvider()),
+        ChangeNotifierProvider(create: (_) => ProductManagementController()),
+        ChangeNotifierProvider(create: (_) => CashController()),
+        ChangeNotifierProvider(create: (_) => PosController()),
+        ChangeNotifierProvider(create: (_) => PurchasesController()),
+        ChangeNotifierProvider(create: (_) => CustomersController()),
+        ChangeNotifierProvider(create: (_) => ReportsController()),
+        ...AppProviders.getProviders(),
+      ],
+      child: MaterialApp.router(
+        title: 'Bazar & Tienda',
+        theme: ThemeData(
+          primaryColor: AppColors.primaryLogo,
+          useMaterial3: true,
+        ),
+        debugShowCheckedModeBanner: false,
+        routerConfig: router,
       ),
     );
   }

@@ -1,22 +1,22 @@
-import 'package:bazarnicole/Presentation/Services/drive_data_service.dart';
 import 'package:bazarnicole/Presentation/Template/catalog_template.dart';
+import 'package:go_router/go_router.dart';
+import 'package:bazarnicole/Presentation/View/Catalog/catalog_controller.dart';
 import 'package:bazarnicole/Presentation/Utils/Colors.dart';
-import 'package:bazarnicole/Presentation/View/Catalog/product_detail_page.dart';
 import 'package:bazarnicole/Presentation/Widgets/Catalog/catalog_card_widget.dart';
 import 'package:bazarnicole/Presentation/Widgets/legal_page_widget.dart';
 import 'package:flutter/material.dart';
-import 'web_history_helper.dart'
-    if (dart.library.html) 'web_history_helper_html.dart';
 
 class CatalogSearchBar extends StatelessWidget {
   final TextEditingController controller;
   final ValueChanged<String> onChanged;
+  final ValueChanged<String>? onSubmitted;
   final bool isCompact;
 
   const CatalogSearchBar({
     super.key,
     required this.controller,
     required this.onChanged,
+    this.onSubmitted,
     required this.isCompact,
   });
 
@@ -40,6 +40,7 @@ class CatalogSearchBar extends StatelessWidget {
         controller: controller,
         textInputAction: TextInputAction.search,
         onChanged: onChanged,
+        onSubmitted: onSubmitted,
         decoration: InputDecoration(
           hintText: 'Buscar producto',
           prefixIcon: const Icon(Icons.search_rounded, size: 20),
@@ -149,6 +150,7 @@ class CategoryFilter extends StatelessWidget {
 class CatalogFilters extends StatelessWidget {
   final TextEditingController searchController;
   final ValueChanged<String> onSearchChanged;
+  final ValueChanged<String>? onSearchSubmitted;
   final List<CatalogCategory> categories;
   final CatalogCategory? selectedCategory;
   final ValueChanged<CatalogCategory?> onCategoryChanged;
@@ -158,6 +160,7 @@ class CatalogFilters extends StatelessWidget {
     super.key,
     required this.searchController,
     required this.onSearchChanged,
+    this.onSearchSubmitted,
     required this.categories,
     required this.selectedCategory,
     required this.onCategoryChanged,
@@ -178,6 +181,7 @@ class CatalogFilters extends StatelessWidget {
                   child: CatalogSearchBar(
                     controller: searchController,
                     onChanged: onSearchChanged,
+                    onSubmitted: onSearchSubmitted,
                     isCompact: isCompact,
                   ),
                 ),
@@ -219,7 +223,18 @@ class CatalogFilters extends StatelessWidget {
 /// Muestra los artículos disponibles con selector de sección (Bazar / Papelería).
 /// Los datos reales (productos e imágenes) se cargan desde el backup en Google Drive.
 class WebCatalogView extends StatefulWidget {
-  const WebCatalogView({super.key});
+  final CatalogController controller;
+  final String? initialCategoryId;
+  final String? initialStoreId;
+  final String? initialSearch;
+
+  const WebCatalogView({
+    super.key,
+    required this.controller,
+    this.initialCategoryId,
+    this.initialStoreId,
+    this.initialSearch,
+  });
 
   @override
   State<WebCatalogView> createState() => _WebCatalogViewState();
@@ -231,182 +246,94 @@ class _WebCatalogViewState extends State<WebCatalogView>
   final TextEditingController _searchController = TextEditingController();
   CatalogCategory? _selectedCategory;
   String _search = '';
+  bool _initialStateApplied = false;
 
-  /// SKU pendiente extraído de la URL.
-  String? _pendingDeepLinkSku;
-  bool _pendingDeepLinkProcessed = false;
+  List<CatalogSection> get _sections => widget.controller.sections;
+  bool get _driveLoading => widget.controller.isLoading;
+  String? get _driveError => widget.controller.errorMessage;
 
-  /// Datos reales de Drive (null = aún cargando).
-  CatalogDriveData? _driveData;
-  bool _driveLoading = false;
-  String? _driveError;
-
-  Map<String, CatalogProductEntry> _skuIndex = {};
-
-  List<CatalogSection> get _sections => _driveData?.sections ?? [];
+  void _loadDriveData() {
+    widget.controller.refresh();
+  }
 
   @override
   void initState() {
     super.initState();
-    _pendingDeepLinkSku = _extractPendingDeepLinkSku();
-    _loadDriveData();
+    _search = widget.initialSearch?.trim().isNotEmpty == true
+        ? widget.initialSearch!.trim()
+        : widget.controller.currentSearch;
+    _searchController.text = _search;
+
+    if (widget.initialCategoryId != null) {
+      _selectedCategory = widget.controller.categoryById(
+        widget.initialCategoryId!,
+      );
+      widget.controller.selectedCategoryId = widget.initialCategoryId;
+    } else if (widget.controller.selectedCategoryId != null) {
+      _selectedCategory = widget.controller.categoryById(
+        widget.controller.selectedCategoryId!,
+      );
+    }
+
+    if (widget.initialStoreId != null) {
+      widget.controller.selectedStoreId = widget.initialStoreId;
+    }
+
+    widget.controller.addListener(_onControllerChanged);
+    if (widget.controller.isReady) {
+      _applyInitialRouteState();
+    } else {
+      widget.controller.initialize();
+    }
   }
 
   @override
   void dispose() {
+    widget.controller.removeListener(_onControllerChanged);
     _searchController.dispose();
     _tabController?.dispose();
     super.dispose();
   }
 
-  // ── Carga de datos desde Drive ─────────────────────────────────────────────
+  void _onControllerChanged() {
+    if (!mounted) return;
+    if (widget.controller.isReady && !_initialStateApplied) {
+      _applyInitialRouteState();
+    }
+    setState(() {});
+  }
 
-  // ── Carga de datos desde Drive (pública, sin login) ─────────────────────────
+  void _applyInitialRouteState() {
+    _initialStateApplied = true;
+    _tabController?.dispose();
+    _tabController = TabController(
+      length: _sections.isEmpty ? 1 : _sections.length,
+      vsync: this,
+    );
 
-  Future<void> _loadDriveData() async {
-    setState(() {
-      _driveLoading = true;
-      _driveError = null;
-    });
-    try {
-      final data = await DriveDataService.fetchPublic();
-
-      if (!mounted) return;
-
-      _tabController?.dispose();
-
-      _tabController = TabController(
-        length: data.sections.isEmpty ? 1 : data.sections.length,
-        vsync: this,
+    if (widget.initialStoreId != null) {
+      final index = _sections.indexWhere(
+        (section) => section.storeId.toString() == widget.initialStoreId,
       );
-
-      setState(() {
-        _driveData = data;
-        _skuIndex = _buildSkuIndex(data.sections);
-      });
-
-      await _handlePendingDeepLink();
-    } catch (e, stack) {
-      debugPrint("=================================");
-      debugPrint("ERROR EN fetchPublic()");
-      debugPrint(e.toString());
-      debugPrint(stack.toString());
-      debugPrint("=================================");
-
-      if (mounted) {
-        setState(() {
-          _driveError = e.toString();
-        });
+      if (index >= 0 && _tabController != null) {
+        _tabController!.index = index;
       }
-    } finally {
-      if (mounted) setState(() => _driveLoading = false);
+    }
+
+    if (widget.initialCategoryId != null) {
+      _selectedCategory = widget.controller.categoryById(
+        widget.initialCategoryId!,
+      );
     }
   }
 
-  Future<void> _handlePendingDeepLink() async {
-    final sku = _pendingDeepLinkSku?.trim();
-    if (sku == null || sku.isEmpty || _pendingDeepLinkProcessed) {
+  void _onSearchSubmitted(String value) {
+    final trimmed = value.trim();
+    if (trimmed.isEmpty) {
+      GoRouter.of(context).go('/catalog');
       return;
     }
-
-    if (_driveError != null || _driveData == null) {
-      debugPrint('[WebCatalogView] Deep link cancelado: catálogo no cargado.');
-      _pendingDeepLinkProcessed = true;
-      return;
-    }
-
-    _pendingDeepLinkProcessed = true;
-    final lookupKey = sku.toLowerCase();
-    final product = _skuIndex[lookupKey];
-
-    if (product == null) {
-      debugPrint('[WebCatalogView] SKU no encontrado en catálogo: $sku');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Producto no encontrado.'),
-            duration: Duration(seconds: 3),
-          ),
-        );
-      }
-      _clearSkuQueryParameter();
-      return;
-    }
-
-    debugPrint(
-      '[WebCatalogView] Deep link procesado. Navegando a producto SKU=$sku',
-    );
-    await Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => ProductDetailPage(product: product)),
-    );
-
-    _clearSkuQueryParameter();
-  }
-
-  Map<String, CatalogProductEntry> _buildSkuIndex(
-    List<CatalogSection> sections,
-  ) {
-    final Map<String, CatalogProductEntry> index = {};
-
-    for (final section in sections) {
-      for (final category in section.categories) {
-        for (final product in category.products) {
-          final sku = product.sku.trim();
-          if (sku.isNotEmpty) {
-            index[sku.toLowerCase()] = product;
-          }
-          index[product.id.toString()] = product;
-        }
-      }
-    }
-
-    return index;
-  }
-
-  String? _extractPendingDeepLinkSku() {
-    final uri = Uri.base;
-    if (uri.fragment.isNotEmpty) {
-      try {
-        final fragmentUri = Uri.parse(
-          uri.fragment.startsWith('/') ? uri.fragment : '/${uri.fragment}',
-        );
-        return fragmentUri.queryParameters['sku'];
-      } catch (e) {
-        debugPrint(
-          '[WebCatalogView] Error al parsear la URL del fragmento: $e',
-        );
-        return null;
-      }
-    }
-    return uri.queryParameters['sku'];
-  }
-
-  void _clearSkuQueryParameter() {
-    if (_pendingDeepLinkSku == null) return;
-    _pendingDeepLinkSku = null;
-
-    final uri = Uri.base;
-    Uri newUri;
-
-    if (uri.fragment.isNotEmpty) {
-      try {
-        final fragmentUri = Uri.parse(
-          uri.fragment.startsWith('/') ? uri.fragment : '/${uri.fragment}',
-        );
-        final updatedFragment = Uri(
-          path: fragmentUri.path,
-          queryParameters: Map.of(fragmentUri.queryParameters)..remove('sku'),
-        ).toString();
-        newUri = uri.replace(fragment: updatedFragment);
-      } catch (_) {
-        newUri = uri;
-      }
-    } else {
-      final updatedQuery = Map.of(uri.queryParameters)..remove('sku');
-      newUri = uri.replace(queryParameters: updatedQuery);
-    }
-
-    replaceWebUrl(newUri.toString());
+    GoRouter.of(context).go('/search/${Uri.encodeComponent(trimmed)}');
   }
 
   List<CatalogCategory> _filteredCategories(List<CatalogCategory> items) {
@@ -501,7 +428,7 @@ class _WebCatalogViewState extends State<WebCatalogView>
                 ),
               ),
             )
-          else if (_driveData != null)
+          else if (widget.controller.isReady)
             Padding(
               padding: const EdgeInsets.only(right: 10),
               child: Tooltip(
@@ -533,7 +460,7 @@ class _WebCatalogViewState extends State<WebCatalogView>
         bottom: _sections.isEmpty
             ? null
             : PreferredSize(
-                preferredSize: const Size.fromHeight(48),
+                preferredSize: const Size.fromHeight(52),
                 child: TabBar(
                   controller: _tabController,
                   indicatorColor: Colors.white,
@@ -545,6 +472,8 @@ class _WebCatalogViewState extends State<WebCatalogView>
                           icon: Icon(
                             s.storeId == 1
                                 ? Icons.shopping_bag_outlined
+                                : s.storeId == 2
+                                ? Icons.storefront_outlined
                                 : Icons.menu_book_outlined,
                           ),
                           text: s.storeName,
@@ -576,14 +505,23 @@ class _WebCatalogViewState extends State<WebCatalogView>
                         if (_sections.isNotEmpty)
                           CatalogFilters(
                             searchController: _searchController,
-                            onSearchChanged: (value) => setState(() {
-                              _search = value;
-                            }),
+                            onSearchChanged: (value) {
+                              setState(() {
+                                _search = value;
+                                widget.controller.currentSearch = value;
+                              });
+                            },
+                            onSearchSubmitted: _onSearchSubmitted,
                             categories: currentSectionCategories,
                             selectedCategory: _selectedCategory,
-                            onCategoryChanged: (category) => setState(() {
-                              _selectedCategory = category;
-                            }),
+                            onCategoryChanged: (category) {
+                              setState(() {
+                                _selectedCategory = category;
+                                widget.controller.selectedCategoryId = category
+                                    ?.id
+                                    .toString();
+                              });
+                            },
                             resultCount: _sections.fold<int>(0, (
                               count,
                               section,
@@ -598,7 +536,7 @@ class _WebCatalogViewState extends State<WebCatalogView>
                     ),
                   ),
                 ),
-                if (_driveLoading && _sections.isEmpty)
+                if (widget.controller.isLoading && _sections.isEmpty)
                   const SliverFillRemaining(
                     hasScrollBody: false,
                     child: Center(child: CircularProgressIndicator()),

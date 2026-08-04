@@ -1,4 +1,7 @@
+import 'package:bazarnicole/Presentation/View/Catalog/web_history_helper.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
+import 'package:go_router/go_router.dart';
 import 'package:bazarnicole/Presentation/Template/catalog_template.dart';
 import 'package:bazarnicole/Presentation/Utils/Colors.dart';
 import 'package:bazarnicole/Presentation/View/Catalog/product_detail_page.dart';
@@ -504,7 +507,7 @@ class _ProductRow extends StatelessWidget {
   const _ProductRow({required this.product, required this.color});
 
   String get _qrUrl =>
-      'https://bazarypapelerianicole.github.io/PlatformWeb/#/catalog?sku=${Uri.encodeComponent(product.sku.isNotEmpty ? product.sku : product.id.toString())}';
+      'https://bazarypapelerianicole.github.io/PlatformWeb/catalog/${Uri.encodeComponent(product.sku.isNotEmpty ? product.sku : product.id.toString())}';
 
   @override
   Widget build(BuildContext context) {
@@ -516,12 +519,24 @@ class _ProductRow extends StatelessWidget {
       print('[PARENT] URL enviada a DriveImage: ${imageFile.thumbnailLink}');
     }
     return InkWell(
-      onTap: () => Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => ProductDetailPage(product: product),
-        ),
-      ),
+      onTap: () {
+        if (kIsWeb) {
+          final sku = product.sku.isNotEmpty ? product.sku : product.id.toString();
+          final url = '/catalog/${Uri.encodeComponent(sku)}';
+          try {
+            GoRouter.of(context).go(url);
+          } catch (_) {
+            replaceWebUrl(url);
+          }
+          return;
+        }
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => ProductDetailPage(product: product),
+          ),
+        );
+      },
       borderRadius: BorderRadius.circular(10),
       child: Container(
         margin: const EdgeInsets.only(bottom: 10),

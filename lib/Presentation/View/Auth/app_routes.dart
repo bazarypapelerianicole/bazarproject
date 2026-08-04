@@ -12,7 +12,6 @@ import 'package:bazarnicole/Presentation/View/Reports/reports_view.dart';
 import 'package:bazarnicole/Presentation/View/Users/users_view.dart';
 import 'package:bazarnicole/Presentation/View/Suppliers/suppliers_view.dart';
 import 'package:bazarnicole/Presentation/admin/AdminDBPage.dart';
-import 'package:bazarnicole/Presentation/View/Catalog/web_catalog_view.dart';
 import 'package:bazarnicole/Presentation/Widgets/legal_page_widget.dart';
 
 class AppRoutes {
@@ -52,8 +51,7 @@ class AppRoutes {
     users: (context) => const UsersView(),
     suppliers: (context) => const SuppliersView(),
     adminDb: (context) => const AdminDBPage(),
-    // El catálogo público solo se registra en web
-    if (kIsWeb) catalog: (context) => const WebCatalogView(),
+
     if (kIsWeb)
       terms: (context) => const LegalPageWidget(type: LegalDocType.terms),
     if (kIsWeb)
