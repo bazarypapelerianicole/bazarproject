@@ -166,9 +166,22 @@ class CatalogBuilder {
   static List<CatalogSection> buildFromJson({
     required List<Map<String, dynamic>> productsJson,
     required List<Map<String, dynamic>> categoriesJson,
-    List<Map<String, dynamic>> storesJson = const [],
-    List<CatalogImageFile> imageFiles = const [],
+    List<Map<String, dynamic>> storesJson = const <Map<String, dynamic>>[],
+    List<CatalogImageFile> imageFiles = const <CatalogImageFile>[],
+    List<Map<String, dynamic>> stockJson = const <Map<String, dynamic>>[],
   }) {
+    final stockByProductId = <int, int>{};
+    for (final row in stockJson) {
+      final productId = (row['product_id'] as num?)?.toInt() ??
+          (row['productId'] as num?)?.toInt();
+      final stockValue = (row['stock'] as num?)?.toInt() ??
+          (row['quantity'] as num?)?.toInt();
+      if (productId != null && stockValue != null) {
+        stockByProductId[productId] =
+            (stockByProductId[productId] ?? 0) + stockValue;
+      }
+    }
+
     // 1. Índice de categorías: id → datos raw
     final categoryIndex = <int, Map<String, dynamic>>{};
     for (final c in categoriesJson) {
@@ -191,7 +204,8 @@ class CatalogBuilder {
       final name = p['name'] as String?;
       final sku = p['sku'] as String? ?? '';
       final price = (p['price'] as num?)?.toDouble() ?? 0;
-      final stock = (p['stock'] as num?)?.toInt() ?? 0;
+      final fallbackStock = (p['stock'] as num?)?.toInt() ?? 0;
+      final stock = stockByProductId[id] ?? fallbackStock;
       final categoryIdRaw = (p['category_id'] as num?)?.toInt();
       final categoryId = categoryIdRaw != null && categoryIndex.containsKey(categoryIdRaw)
           ? categoryIdRaw

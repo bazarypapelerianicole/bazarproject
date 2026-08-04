@@ -184,11 +184,13 @@ class DriveDataService {
         _publicDownloadJson(jsonFolderId, 'productos.json'),
         _publicDownloadJson(jsonFolderId, 'categories.json'),
         _publicDownloadJson(jsonFolderId, 'stores.json'),
+        _publicDownloadJson(jsonFolderId, 'stock.json'),
       ]);
 
       final productsJson = results[0];
       final categoriesJson = results[1];
       final storesJson = results[2];
+      final stockJson = results[3];
 
       _validateRequiredJson(
         productsJson: productsJson,
@@ -204,6 +206,7 @@ class DriveDataService {
         productsJson: productsJson,
         categoriesJson: categoriesJson,
         storesJson: storesJson,
+        stockJson: stockJson,
       );
 
       final sections = CatalogBuilder.buildFromJson(
@@ -211,6 +214,7 @@ class DriveDataService {
         categoriesJson: categoriesJson,
         storesJson: storesJson,
         imageFiles: imageFiles,
+        stockJson: stockJson,
       );
 
       return CatalogDriveData(
@@ -413,16 +417,18 @@ class DriveDataService {
         'Imagenes',
       );
 
-      // 3. Descargar solo products.json y categories.json
+      // 3. Descargar los JSON necesarios para el catálogo y stock
       final results = await Future.wait([
         _downloadJson(driveApi, jsonFolderId, 'productos.json'),
         _downloadJson(driveApi, jsonFolderId, 'categories.json'),
         _downloadJson(driveApi, jsonFolderId, 'stores.json'),
+        _downloadJson(driveApi, jsonFolderId, 'stock.json'),
       ]);
 
       final productsJson = results[0];
       final categoriesJson = results[1];
       final storesJson = results[2];
+      final stockJson = results[3];
 
       _validateRequiredJson(
         productsJson: productsJson,
@@ -435,6 +441,7 @@ class DriveDataService {
         productsJson: productsJson,
         categoriesJson: categoriesJson,
         storesJson: storesJson,
+        stockJson: stockJson,
       );
 
       // 5. Listar imágenes
@@ -446,6 +453,7 @@ class DriveDataService {
         categoriesJson: categoriesJson,
         storesJson: storesJson,
         imageFiles: imageFiles,
+        stockJson: stockJson,
       );
 
       return CatalogDriveData(
@@ -579,7 +587,21 @@ class DriveDataService {
     required List<Map<String, dynamic>> productsJson,
     required List<Map<String, dynamic>> categoriesJson,
     required List<Map<String, dynamic>> storesJson,
+    required List<Map<String, dynamic>> stockJson,
   }) {
+    final stockByProductId = <int, int>{};
+    for (final row in stockJson) {
+      final productId =
+          (row['product_id'] as num?)?.toInt() ??
+          (row['productId'] as num?)?.toInt();
+      final stockValue =
+          (row['stock'] as num?)?.toInt() ?? (row['quantity'] as num?)?.toInt();
+      if (productId != null && stockValue != null) {
+        stockByProductId[productId] =
+            (stockByProductId[productId] ?? 0) + stockValue;
+      }
+    }
+
     // Mapa categoryId → categoryName
     final categoryNames = <int, String>{};
     for (final c in categoriesJson) {
@@ -605,8 +627,8 @@ class DriveDataService {
       final price = (p['price'] as num?)?.toDouble() ?? 0;
       final categoryId = (p['category_id'] as num?)?.toInt();
       final storeId = (p['store_id'] as num?)?.toInt();
-      // Stock directo desde la tabla products (campo stock si existe)
-      final stock = (p['stock'] as num?)?.toInt() ?? 0;
+      final fallbackStock = (p['stock'] as num?)?.toInt() ?? 0;
+      final stock = stockByProductId[id] ?? fallbackStock;
 
       if (id == null || name == null) continue;
 
