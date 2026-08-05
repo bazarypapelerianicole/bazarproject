@@ -27,6 +27,7 @@ class CatalogProductEntry {
   final int id;
   final String name;
   final String sku;
+  final String description;
   final double price;
   final int stock;
   final int? categoryId;
@@ -39,6 +40,7 @@ class CatalogProductEntry {
     required this.id,
     required this.name,
     required this.sku,
+    this.description = '',
     this.price = 0,
     this.stock = 0,
     this.categoryId,
@@ -217,6 +219,7 @@ class CatalogBuilder {
           .map((imageId) => _findImageById(imageFiles, imageId))
           .whereType<CatalogImageFile>()
           .toList();
+      final description = (p['description'] as String?) ?? '';
       if (id == null || name == null) continue;
       productsByCatId
           .putIfAbsent(categoryId ?? -1, () => [])
@@ -225,6 +228,7 @@ class CatalogBuilder {
               id: id,
               name: name,
               sku: sku,
+              description: description,
               price: price,
               stock: stock,
               categoryId: categoryId,

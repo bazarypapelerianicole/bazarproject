@@ -703,9 +703,11 @@ class _DetailPanel extends StatelessWidget {
                 ),
                 const SizedBox(height: 10),
                 Text(
-                  product.sku.isEmpty && product.name.isEmpty
-                      ? 'Detalle del producto disponible próximamente.'
-                      : 'Producto disponible en el catálogo de ${product.categoryName.isEmpty ? 'la tienda' : product.categoryName}.',
+                  (product.description).trim().isNotEmpty
+                      ? product.description
+                      : (product.sku.isEmpty && product.name.isEmpty
+                            ? 'Detalle del producto disponible próximamente.'
+                            : 'Producto disponible en el catálogo de ${product.categoryName.isEmpty ? 'la tienda' : product.categoryName}.'),
                   style: TextStyle(
                     fontSize: 16,
                     height: 1.7,
