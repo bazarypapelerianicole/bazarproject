@@ -2,9 +2,12 @@ import 'dart:ui';
 
 import 'package:bazarnicole/Presentation/Template/catalog_template.dart';
 import 'package:bazarnicole/Presentation/Utils/Colors.dart';
+import 'package:bazarnicole/Presentation/Utils/web_nav_io.dart';
 import 'package:bazarnicole/Presentation/Widgets/drive_image.dart';
 import 'package:bazarnicole/Presentation/Widgets/product_gallery_viewer.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:bazarnicole/Presentation/Utils/web_nav.dart';
 
 class ProductDetailPage extends StatefulWidget {
   const ProductDetailPage({super.key, required this.product, this.deepLinkSku});
@@ -167,7 +170,16 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                           if (Navigator.canPop(context)) {
                             Navigator.pop(context);
                           } else {
-                            Navigator.pushReplacementNamed(context, '/catalog');
+                            if (kIsWeb) {
+                              navigateToExternalCatalog(
+                                'https://bazarypapelerianicole.github.io/PlatformWeb/#/catalog',
+                              );
+                            } else {
+                              Navigator.pushReplacementNamed(
+                                context,
+                                '/catalog',
+                              );
+                            }
                           }
                         },
                       ),
@@ -785,7 +797,13 @@ class _DetailPanel extends StatelessWidget {
                 if (Navigator.canPop(context)) {
                   Navigator.pop(context);
                 } else {
-                  Navigator.pushReplacementNamed(context, '/catalog');
+                  if (kIsWeb) {
+                    navigateToExternalCatalog(
+                      'https://bazarypapelerianicole.github.io/PlatformWeb/#/catalog',
+                    );
+                  } else {
+                    Navigator.pushReplacementNamed(context, '/catalog');
+                  }
                 }
               },
               icon: const Icon(Icons.arrow_back_rounded),
