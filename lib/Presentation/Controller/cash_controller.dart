@@ -13,6 +13,7 @@ class CashController extends ChangeNotifier {
   // Locales
   List<Map<String, dynamic>> stores = [];
   int? selectedStoreId;
+  final Set<int> openStoreIds = {};
 
   // Métodos de pago
   List<Map<String, dynamic>> paymentMethods = [];
@@ -51,9 +52,9 @@ class CashController extends ChangeNotifier {
   bool isLoadingHistory = false;
 
   bool get hasOpenSession => activeSession != null;
-  int? get sessionId => activeSession != null
-      ? (activeSession!['id'] as num).toInt()
-      : null;
+  bool isStoreOpen(int storeId) => openStoreIds.contains(storeId);
+  int? get sessionId =>
+      activeSession != null ? (activeSession!['id'] as num).toInt() : null;
 
   void _handleDatabaseChanged() {
     if (!isLoading) {
@@ -74,7 +75,14 @@ class CashController extends ChangeNotifier {
       stores = await DatabaseService.getStores();
       paymentMethods = await DatabaseService.getPaymentMethods();
       if (stores.isNotEmpty) {
-        selectedStoreId ??= (stores.first['id'] as num).toInt();
+        await _refreshOpenStoreIds();
+        if (selectedStoreId == null) {
+          if (openStoreIds.isNotEmpty) {
+            selectedStoreId = openStoreIds.first;
+          } else {
+            selectedStoreId = (stores.first['id'] as num).toInt();
+          }
+        }
         await _loadSession();
       }
     } catch (e) {
@@ -95,17 +103,30 @@ class CashController extends ChangeNotifier {
 
   Future<void> refresh() async {
     if (selectedStoreId == null) return;
+    await _refreshOpenStoreIds();
     await _loadSession();
+  }
+
+  Future<void> _refreshOpenStoreIds() async {
+    openStoreIds.clear();
+    for (final store in stores) {
+      final storeId = (store['id'] as num).toInt();
+      final session = await DatabaseService.getActiveCashSession(storeId);
+      if (session != null) openStoreIds.add(storeId);
+    }
   }
 
   Future<void> _loadSession() async {
     if (selectedStoreId == null) return;
     try {
-      activeSession =
-          await DatabaseService.getActiveCashSession(selectedStoreId!);
+      activeSession = await DatabaseService.getActiveCashSession(
+        selectedStoreId!,
+      );
       if (activeSession != null) {
+        openStoreIds.add(selectedStoreId!);
         await _loadMovements();
       } else {
+        openStoreIds.remove(selectedStoreId!);
         movements = [];
         summary = null;
       }
@@ -152,7 +173,9 @@ class CashController extends ChangeNotifier {
       if (denominations != null && denominations.isNotEmpty) {
         await DatabaseService.saveCashDenominations(
           sessionId: sessionId,
-          entries: denominations.map((e) => e.toMap(sessionId, 'open')).toList(),
+          entries: denominations
+              .map((e) => e.toMap(sessionId, 'open'))
+              .toList(),
           moment: 'open',
         );
       }
@@ -172,7 +195,9 @@ class CashController extends ChangeNotifier {
       if (denominations != null && denominations.isNotEmpty) {
         await DatabaseService.saveCashDenominations(
           sessionId: sessionId!,
-          entries: denominations.map((e) => e.toMap(sessionId!, 'close')).toList(),
+          entries: denominations
+              .map((e) => e.toMap(sessionId!, 'close'))
+              .toList(),
           moment: 'close',
         );
       }
@@ -180,6 +205,7 @@ class CashController extends ChangeNotifier {
         sessionId: sessionId!,
         closingAmount: closingAmount,
       );
+      openStoreIds.remove(selectedStoreId);
       activeSession = null;
       movements = [];
       summary = null;
@@ -282,4 +308,3 @@ class CashController extends ChangeNotifier {
     notifyListeners();
   }
 }
-

@@ -4,6 +4,7 @@ import 'package:bazarnicole/Presentation/Renders/responsive_helper.dart';
 import 'package:bazarnicole/Presentation/Services/session_service.dart';
 import 'package:bazarnicole/Presentation/Utils/Colors.dart';
 import 'package:bazarnicole/Presentation/Widgets/cash_widgets.dart';
+import 'package:bazarnicole/Presentation/Widgets/cash_stores_status.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
@@ -83,6 +84,27 @@ class _CashViewState extends State<CashView>
                 'Caja diaria',
                 style: TextStyle(color: AppColors.whiteOverlay),
               ),
+              actions: [
+                Consumer<CashController>(
+                  builder: (context, controller, _) {
+                    return Container(
+                      margin: const EdgeInsets.only(right: 16),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.black26,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: CashStoresStatus(
+                        controller: controller,
+                        isMobile: MediaQuery.of(context).size.width < 600,
+                      ),
+                    );
+                  },
+                ),
+              ],
               bottom: TabBar(
                 controller: _tabController,
                 labelColor: AppColors.whiteOverlay,
@@ -607,9 +629,10 @@ class _HistorySessionCard extends StatelessWidget {
 }
 
 class _InfoRow extends StatelessWidget {
+  const _InfoRow({required this.label, required this.value});
+
   final String label;
   final String value;
-  const _InfoRow({required this.label, required this.value});
 
   @override
   Widget build(BuildContext context) {
@@ -636,18 +659,16 @@ class _InfoRow extends StatelessWidget {
   }
 }
 
-// ─── Picker de mes ────────────────────────────────────────────────────────────
-
 class _MonthPicker extends StatelessWidget {
-  final String? year;
-  final String? selected;
-  final ValueChanged<String?> onChanged;
-
   const _MonthPicker({
     required this.year,
     required this.selected,
     required this.onChanged,
   });
+
+  final String? year;
+  final String? selected;
+  final ValueChanged<String?> onChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -679,9 +700,7 @@ class _MonthPicker extends StatelessWidget {
       'Noviembre',
       'Diciembre',
     ];
-
     final effectiveYear = year ?? DateTime.now().year.toString();
-
     final items = List.generate(
       months.length,
       (i) => DropdownMenuItem<String>(
@@ -689,14 +708,11 @@ class _MonthPicker extends StatelessWidget {
         child: Text(monthNames[i]),
       ),
     );
-
-    final currentValue =
-        (selected != null && selected!.startsWith(effectiveYear))
+    final currentValue = selected != null && selected!.startsWith(effectiveYear)
         ? selected
         : null;
 
     return DropdownButtonFormField<String>(
-      elevation: 4,
       value: currentValue,
       decoration: InputDecoration(
         labelText: 'Mes',
