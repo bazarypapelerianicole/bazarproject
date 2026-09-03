@@ -1800,8 +1800,9 @@ class DatabaseService {
         COALESCE(i.stock, 0) AS stock
       FROM products p
       LEFT JOIN categories c ON c.id = p.category_id
-      LEFT JOIN inventory i ON i.product_id = p.id AND i.store_id = ?
-      WHERE p.name LIKE ? OR p.sku LIKE ? OR COALESCE(c.name, '') LIKE ?
+      INNER JOIN inventory i ON i.product_id = p.id AND i.store_id = ?
+      WHERE i.stock > 0
+        AND (p.name LIKE ? OR p.sku LIKE ? OR COALESCE(c.name, '') LIKE ?)
       ORDER BY p.name COLLATE NOCASE
       ''',
       [storeId, filter, filter, filter],
@@ -2411,6 +2412,7 @@ class DatabaseService {
   static Future<List<Map<String, dynamic>>> getPurchaseHistory({
     int? storeId,
     int? supplierId,
+    String? category,
     DateTime? date,
   }) async {
     final db = await database;
@@ -2424,6 +2426,19 @@ class DatabaseService {
     if (supplierId != null) {
       conditions.add('pu.supplier_id = ?');
       args.add(supplierId);
+    }
+    if (category != null && category.trim().isNotEmpty) {
+      conditions.add('''EXISTS (
+        SELECT 1
+        FROM purchase_items pi_filter
+        INNER JOIN products p_filter
+          ON p_filter.id = pi_filter.product_id
+        LEFT JOIN categories c_filter
+          ON c_filter.id = p_filter.category_id
+        WHERE pi_filter.purchase_id = pu.id
+          AND COALESCE(c_filter.name, '') LIKE ?
+      )''');
+      args.add('%${category.trim()}%');
     }
     if (date != null) {
       conditions.add('pu.date LIKE ?');

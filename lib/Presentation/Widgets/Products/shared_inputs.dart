@@ -2,6 +2,33 @@ import 'package:bazarnicole/Presentation/Utils/Colors.dart';
 import 'package:flutter/material.dart';
 export 'image_preview.dart';
 
+InputDecoration filterFieldDecoration({
+  required String hint,
+  Widget? prefixIcon,
+}) {
+  return InputDecoration(
+    hintText: hint,
+    hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 15),
+    prefixIcon: prefixIcon,
+    filled: true,
+    fillColor: Colors.white,
+    hoverColor: Colors.white,
+    contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+    border: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(16),
+      borderSide: BorderSide.none,
+    ),
+    enabledBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(16),
+      borderSide: BorderSide.none,
+    ),
+    focusedBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(16),
+      borderSide: BorderSide.none,
+    ),
+  );
+}
+
 InputDecoration modernInput({
   required String label,
   String? hint,

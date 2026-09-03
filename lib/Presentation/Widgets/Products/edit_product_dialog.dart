@@ -59,6 +59,26 @@ Future<void> showEditProductDialog(
     builder: (ctx) {
       return StatefulBuilder(
         builder: (ctx, setDialogState) {
+          void recalculateSalePrice() {
+            double parse(TextEditingController field) =>
+                double.tryParse(field.text.trim().replaceAll(',', '.')) ?? 0;
+
+            final cost = parse(costPriceController);
+            final governmentTax = parse(ivaRateController);
+            final profit = parse(profitIvaController);
+            final salePrice =
+                cost * (1 + governmentTax / 100) * (1 + profit / 100);
+
+            setDialogState(() {
+              priceController.value = TextEditingValue(
+                text: salePrice.toStringAsFixed(2),
+                selection: TextSelection.collapsed(
+                  offset: salePrice.toStringAsFixed(2).length,
+                ),
+              );
+            });
+          }
+
           return Dialog(
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(20),
@@ -210,6 +230,7 @@ Future<void> showEditProductDialog(
                                     Expanded(
                                       child: TextField(
                                         controller: priceController,
+                                        readOnly: true,
                                         keyboardType:
                                             const TextInputType.numberWithOptions(
                                               decimal: true,
@@ -228,6 +249,8 @@ Future<void> showEditProductDialog(
                                             const TextInputType.numberWithOptions(
                                               decimal: true,
                                             ),
+                                        onChanged: (_) =>
+                                            recalculateSalePrice(),
                                         decoration: modernInput(
                                           label: 'Precio de compra',
                                           prefix: '\$',
@@ -246,6 +269,8 @@ Future<void> showEditProductDialog(
                                             const TextInputType.numberWithOptions(
                                               decimal: true,
                                             ),
+                                        onChanged: (_) =>
+                                            recalculateSalePrice(),
                                         decoration: modernInput(
                                           label: 'IVA gubernamental',
                                           suffix: '%',
@@ -260,6 +285,8 @@ Future<void> showEditProductDialog(
                                             const TextInputType.numberWithOptions(
                                               decimal: true,
                                             ),
+                                        onChanged: (_) =>
+                                            recalculateSalePrice(),
                                         decoration: modernInput(
                                           label: 'IVA ganancia',
                                           suffix: '%',
@@ -384,9 +411,12 @@ Future<void> showEditProductDialog(
                                                       try {
                                                         await controller
                                                             .removeImageReference(
-                                                              productId: (item['id'] as num)
-                                                                  .toInt(),
-                                                              imageRef: imageRef,
+                                                              productId:
+                                                                  (item['id']
+                                                                          as num)
+                                                                      .toInt(),
+                                                              imageRef:
+                                                                  imageRef,
                                                             );
                                                       } catch (e) {
                                                         if (!context.mounted) {
@@ -671,7 +701,10 @@ Future<void> showEditProductDialog(
                                     context,
                                   );
                                   // show progress notification while saving
-                                  showProgressNotification(context, 'Guardando cambios...');
+                                  showProgressNotification(
+                                    context,
+                                    'Guardando cambios...',
+                                  );
                                   setDialogState(() => isSavingEdit = true);
                                   try {
                                     final productId = (item['id'] as num)

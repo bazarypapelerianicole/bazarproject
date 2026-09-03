@@ -28,6 +28,9 @@ import 'package:bazarnicole/Presentation/Controller/reports_controller.dart';
 import 'package:bazarnicole/Presentation/Context/providers.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:path/path.dart' as p;
+import 'package:path_provider/path_provider.dart';
+import 'package:bazarnicole/Presentation/Services/catalog_sync_service.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
@@ -51,6 +54,15 @@ Future<void> main() async {
 
   // 🗄️ INICIALIZAR BASE DE DATOS DE FORMA SEGURA
   await _initDatabaseSafely();
+
+  if (!kIsWeb) {
+    final appSupportDirectory = await getApplicationSupportDirectory();
+    CatalogSyncService.initialize(
+      exportDir: p.join(appSupportDirectory.path, 'catalog'),
+      gitRepoPath: appSupportDirectory.path,
+      dataDir: appSupportDirectory.path,
+    );
+  }
 
   // 🔄 INICIAR MOTOR DE BACKGROUND JOBS + MANTENIMIENTO (OLAP analytics)
   if (!kIsWeb) {

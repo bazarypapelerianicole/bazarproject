@@ -8,11 +8,13 @@ class PurchasesController extends ChangeNotifier {
 
   int? selectedStoreId;
   int? historySupplierId;
+  String? historyCategory;
   DateTime? historyDate;
   String search = '';
 
   List<Map<String, dynamic>> stores = [];
   List<Map<String, dynamic>> suppliers = [];
+  List<Map<String, dynamic>> categories = [];
   List<Map<String, dynamic>> products = [];
   List<Map<String, dynamic>> cart = [];
   List<Map<String, dynamic>> purchaseHistory = [];
@@ -35,6 +37,7 @@ class PurchasesController extends ChangeNotifier {
     try {
       stores = await DatabaseService.getStores();
       suppliers = await DatabaseService.getSuppliers();
+      categories = await DatabaseService.getCategories();
       if (stores.isNotEmpty) {
         selectedStoreId ??= (stores.first['id'] as num).toInt();
       }
@@ -62,7 +65,16 @@ class PurchasesController extends ChangeNotifier {
   }
 
   Future<void> _loadProducts() async {
-    products = await DatabaseService.getProducts(search: search);
+    if (selectedStoreId == null) {
+      products = [];
+      notifyListeners();
+      return;
+    }
+
+    products = await DatabaseService.getProducts(
+      search: search,
+      storeId: selectedStoreId,
+    );
     notifyListeners();
   }
 
@@ -154,6 +166,11 @@ class PurchasesController extends ChangeNotifier {
     await loadPurchaseHistory();
   }
 
+  Future<void> selectHistoryCategory(String? category) async {
+    historyCategory = category;
+    await loadPurchaseHistory();
+  }
+
   Future<void> setHistoryDate(DateTime? value) async {
     historyDate = value;
     await loadPurchaseHistory();
@@ -161,6 +178,7 @@ class PurchasesController extends ChangeNotifier {
 
   Future<void> clearHistoryFilters() async {
     historySupplierId = null;
+    historyCategory = null;
     historyDate = null;
     await loadPurchaseHistory();
   }
@@ -173,6 +191,7 @@ class PurchasesController extends ChangeNotifier {
       purchaseHistory = await DatabaseService.getPurchaseHistory(
         storeId: selectedStoreId,
         supplierId: historySupplierId,
+        category: historyCategory,
         date: historyDate,
       );
       errorMessage = null;

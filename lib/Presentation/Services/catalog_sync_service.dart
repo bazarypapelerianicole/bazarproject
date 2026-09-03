@@ -253,8 +253,12 @@ class CatalogSyncService {
   /// El input del hash es el JSON canónico ordenado por id, de forma que
   /// dos catálogos idénticos producen siempre el mismo hash.
   Future<String> calculateCatalogHash() async {
-    final products = await DatabaseService.getProducts();
-    final categories = await DatabaseService.getCategories();
+    final products = List<Map<String, dynamic>>.from(
+      await DatabaseService.getProducts(),
+    );
+    final categories = List<Map<String, dynamic>>.from(
+      await DatabaseService.getCategories(),
+    );
 
     // Ordenar para garantizar determinismo.
     products.sort((a, b) => (a['id'] as int).compareTo(b['id'] as int));

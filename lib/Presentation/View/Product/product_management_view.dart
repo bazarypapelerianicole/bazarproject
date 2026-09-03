@@ -348,7 +348,7 @@ class _ProductManagementViewState extends State<ProductManagementView> {
         final isMobile = MediaQuery.of(context).size.width < 600;
         return Scaffold(
           key: _scaffoldKey,
-          backgroundColor: const Color(0xFFF6F7F9),
+          backgroundColor: AppColors.lightGray,
           appBar: isMobile
               ? AppBar(
                   backgroundColor: AppColors.blackOverlay,
@@ -377,43 +377,48 @@ class _ProductManagementViewState extends State<ProductManagementView> {
                 // Header
                 if (!isMobile)
                   SliverToBoxAdapter(
-                    child: Container(
-                      color: AppColors.blackOverlay,
-                      padding: const EdgeInsets.fromLTRB(24, 18, 24, 18),
-                      child: SizedBox(
-                        height: 72,
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            IconButton(
-                              onPressed: () => Navigator.pop(context),
-                              icon: Icon(
-                                Icons.arrow_back,
-                                color: AppColors.whiteOverlay,
-                                size: 28,
-                              ),
+                    child: ClipRRect(
+                      clipBehavior: Clip.hardEdge,
+                      borderRadius: const BorderRadius.vertical(
+                        bottom: Radius.circular(25),
+                      ),
+                      child: Container(
+                        decoration: const BoxDecoration(
+                          color: AppColors.blackOverlay,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black26,
+                              blurRadius: 5,
+                              offset: Offset(0, 3),
                             ),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text(
-                                    'Productos',
-                                    style: TextStyle(
-                                      fontSize: 22,
-                                      fontWeight: FontWeight.w800,
-                                      color: AppColors.whiteOverlay,
-                                      letterSpacing: -0.3,
-                                    ),
-                                  ),
-                                ],
-                              ),
+                          ],
+                        ),
+                        child: AppBar(
+                          surfaceTintColor: Colors.transparent,
+                          backgroundColor: Colors.transparent,
+                          elevation: 0,
+                          toolbarHeight: 72,
+                          centerTitle: true,
+                          automaticallyImplyLeading: false,
+                          iconTheme: const IconThemeData(
+                            color: AppColors.whiteOverlay,
+                          ),
+                          leading: IconButton(
+                            onPressed: () => Navigator.pop(context),
+                            icon: const Icon(Icons.arrow_back, size: 28),
+                          ),
+                          title: const Text(
+                            'Productos',
+                            style: TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.w800,
+                              color: AppColors.whiteOverlay,
+                              letterSpacing: -0.3,
                             ),
-                            const SizedBox(width: 16),
+                          ),
+                          actions: [
                             _buildAddProductButton(),
+                            const SizedBox(width: 16),
                           ],
                         ),
                       ),
@@ -466,10 +471,15 @@ class _ProductManagementViewState extends State<ProductManagementView> {
                           height: 56,
                           child: TextField(
                             controller: _searchController,
-                            style: const TextStyle(fontSize: 15),
+                            style: const TextStyle(
+                              fontSize: 15,
+                              color: Colors.black87,
+                            ),
                             decoration: InputDecoration(
                               hintText: 'Buscar productos...',
-                              hintStyle: TextStyle(color: Colors.grey.shade400),
+                              hintStyle: TextStyle(
+                                color: AppColors.greyOverlay,
+                              ),
                               prefixIcon: Icon(
                                 Icons.search_rounded,
                                 color: Colors.grey.shade400,
@@ -489,7 +499,8 @@ class _ProductManagementViewState extends State<ProductManagementView> {
                                       ),
                                     ),
                               filled: true,
-                              fillColor: Colors.white,
+                              fillColor: AppColors.whiteOverlay,
+                              hoverColor: AppColors.whiteOverlay,
                               contentPadding: const EdgeInsets.symmetric(
                                 horizontal: 20,
                                 vertical: 16,
@@ -504,10 +515,7 @@ class _ProductManagementViewState extends State<ProductManagementView> {
                               ),
                               focusedBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(16),
-                                borderSide: const BorderSide(
-                                  color: AppColors.primaryBlue,
-                                  width: 1.5,
-                                ),
+                                borderSide: BorderSide.none,
                               ),
                             ),
                             onChanged: (value) {
@@ -531,10 +539,9 @@ class _ProductManagementViewState extends State<ProductManagementView> {
                                   ...controller.stores.map((store) {
                                     final storeId = (store['id'] as num)
                                         .toInt();
-                                    final storeName = store['name'] as String;
                                     return DropdownMenuItem<int?>(
                                       value: storeId,
-                                      child: Text(storeName),
+                                      child: Text(store['name'] as String),
                                     );
                                   }),
                                 ],
@@ -716,7 +723,7 @@ class _HoverCardState extends State<_HoverCard> {
           duration: const Duration(milliseconds: 250),
           curve: Curves.easeOut,
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppColors.whiteOverlay,
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
