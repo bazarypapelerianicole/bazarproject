@@ -962,11 +962,15 @@ class _HistorialTab extends StatelessWidget {
 
 // ─── Card de sesión histórica ─────────────────────────────────────────────────
 
-class _HistorySessionCard extends StatelessWidget {
+// ignore: unused_element
+class _LegacyHistorySessionCard extends StatelessWidget {
   final Map<String, dynamic> session;
   final String Function(String?) formatDate;
 
-  const _HistorySessionCard({required this.session, required this.formatDate});
+  const _LegacyHistorySessionCard({
+    required this.session,
+    required this.formatDate,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -1117,7 +1121,7 @@ class _MonthPicker extends StatelessWidget {
         ? selected
         : null;
 
-    return FilterDropdown<String>(
+    return _HistoryDropdown<String>(
       label: 'Mes',
       value: currentValue,
       items: [
@@ -1167,7 +1171,7 @@ class _WeekPicker extends StatelessWidget {
       );
     }
 
-    return FilterDropdown<String>(
+    return _HistoryDropdown<String>(
       label: 'Semana',
       value: (selected != null && weeks.contains(selected)) ? selected : null,
       items: [
