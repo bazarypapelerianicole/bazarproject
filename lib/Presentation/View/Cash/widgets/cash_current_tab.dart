@@ -30,10 +30,37 @@ class CashCurrentTab extends StatelessWidget {
                     },
                   ),
                   const SizedBox(height: 16),
-                  _CashStatusCard(controller: controller, summary: summary),
+                  if (controller.hasOpenSession)
+                    isDesktop
+                        ? Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              SizedBox(
+                                width: 360,
+                                child: _CashStatusCard(
+                                  controller: controller,
+                                  summary: summary,
+                                ),
+                              ),
+                              const SizedBox(width: 20),
+                              Expanded(
+                                child: _CashKpiGrid(summary: summary),
+                              ),
+                            ],
+                          )
+                        : Column(
+                            children: [
+                              _CashStatusCard(
+                                controller: controller,
+                                summary: summary,
+                              ),
+                              const SizedBox(height: 16),
+                              _CashKpiGrid(summary: summary),
+                            ],
+                          )
+                  else
+                    _CashStatusCard(controller: controller, summary: summary),
                   if (controller.hasOpenSession) ...[
-                    const SizedBox(height: 16),
-                    _CashKpiGrid(summary: summary),
                     const SizedBox(height: 20),
                     if (isDesktop)
                       Row(

@@ -85,7 +85,7 @@ class _CashViewState extends State<CashView>
                 onPressed: () => Navigator.pop(context),
               ),
               title: const Text(
-                'Caja diaria',
+                'Gestión de Caja',
                 style: TextStyle(color: AppColors.whiteOverlay),
               ),
               actions: [
@@ -225,7 +225,7 @@ class _CashSectionHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        const Icon(Icons.storefront_outlined, color: AppColors.primaryBlue),
+        const Icon(Icons.storefront_outlined, color: AppColors.blackOverlay),
         const SizedBox(width: 10),
         Expanded(
           child: FilterDropdown<int>(
@@ -268,8 +268,8 @@ class _CashStatusCard extends StatelessWidget {
                 Container(
                   width: 10,
                   height: 10,
-                  decoration: const BoxDecoration(
-                    color: AppColors.primaryBlue,
+                  decoration: BoxDecoration(
+                    color: isOpen ? AppColors.darkGreen : AppColors.primaryRed,
                     shape: BoxShape.circle,
                   ),
                 ),
@@ -324,7 +324,7 @@ class _CashStatusCard extends StatelessWidget {
                   _CashActionButton(
                     label: 'Ingreso',
                     icon: Icons.add,
-                    color: AppColors.primaryBlue,
+                    color: AppColors.darkGreen,
                     onPressed: () =>
                         _CashViewActions.showMovementDialog(context, 'income'),
                   ),
@@ -388,7 +388,7 @@ class _CashKpiGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final kpis = [
-      ('Ingresos', 'total_income', Icons.trending_up, AppColors.primaryBlue),
+      ('Ingresos', 'total_income', Icons.trending_up, AppColors.darkGreen),
       ('Egresos', 'total_expense', Icons.trending_down, AppColors.primaryRed),
       (
         'Saldo esperado',
@@ -416,20 +416,24 @@ class _CashKpiGrid extends StatelessWidget {
             : constraints.maxWidth >= 560
             ? 2
             : 1;
-        return GridView.count(
-          crossAxisCount: columns,
-          crossAxisSpacing: 12,
-          mainAxisSpacing: 12,
-          childAspectRatio: columns == 1 ? 3.4 : 1.65,
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
+        const spacing = 12.0;
+        final itemWidth = columns == 1
+            ? constraints.maxWidth
+            : (constraints.maxWidth - spacing * (columns - 1)) / columns;
+
+        return Wrap(
+          spacing: spacing,
+          runSpacing: spacing,
           children: [
             ...kpis.map(
-              (kpi) => _KpiCard(
-                label: kpi.$1,
-                value: _cashAmount(summary[kpi.$2]),
-                icon: kpi.$3,
-                color: kpi.$4,
+              (kpi) => SizedBox(
+                width: itemWidth,
+                child: _KpiCard(
+                  label: kpi.$1,
+                  value: _cashAmount(summary[kpi.$2]),
+                  icon: kpi.$3,
+                  color: kpi.$4,
+                ),
               ),
             ),
           ],
