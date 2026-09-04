@@ -11,10 +11,7 @@ import 'package:provider/provider.dart';
 class PosClienteSection extends StatelessWidget {
   final void Function(BuildContext, PosController) onShowClientSearch;
 
-  const PosClienteSection({
-    super.key,
-    required this.onShowClientSearch,
-  });
+  const PosClienteSection({super.key, required this.onShowClientSearch});
 
   @override
   Widget build(BuildContext context) {
@@ -96,19 +93,21 @@ class PosClienteSection extends StatelessWidget {
           ],
         ),
         // ── Panel editable del cliente seleccionado
-        if (selectedCustomer != null && selectedCustomer.isNotEmpty)
+        if (!sale.isConsumerFinal)
           PosClienteDetailPanel(
-            customer: selectedCustomer,
-            onUpdate: (data) => controller.updateCustomer(
-              id: (selectedCustomer['id'] as num).toInt(),
-              name: data['name'] ?? '',
-              phone: data['phone'],
-              email: data['email'],
-              notes: data['notes'],
-              cedula: data['cedula'],
-              identificationType: data['identification_type'],
-              address: data['address'],
-            ),
+            customer: selectedCustomer ?? const <String, dynamic>{},
+            onUpdate: selectedCustomer == null
+                ? (_) async {}
+                : (data) => controller.updateCustomer(
+                    id: (selectedCustomer['id'] as num).toInt(),
+                    name: data['name'] ?? '',
+                    phone: data['phone'],
+                    email: data['email'],
+                    notes: data['notes'],
+                    cedula: data['cedula'],
+                    identificationType: data['identification_type'],
+                    address: data['address'],
+                  ),
           ),
       ],
     );
@@ -240,13 +239,7 @@ class _PosClienteDetailPanelState extends State<PosClienteDetailPanel> {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      elevation: 2,
-      color: Colors.grey.shade50,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(14),
-        side: BorderSide(color: Colors.grey.shade200),
-      ),
+    return SizedBox(
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -256,13 +249,17 @@ class _PosClienteDetailPanelState extends State<PosClienteDetailPanel> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.blue.shade50,
+                color: AppColors.blackOverlay.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.blue.shade200),
+                border: Border.all(color: AppColors.blackOverlay.withValues(alpha: 0.2)),
               ),
               child: Row(
                 children: [
-                  Icon(Icons.info_outline, color: Colors.blue.shade700, size: 18),
+                  Icon(
+                    Icons.info_outline,
+                    color: AppColors.blackOverlay,
+                    size: 18,
+                  ),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
@@ -270,7 +267,7 @@ class _PosClienteDetailPanelState extends State<PosClienteDetailPanel> {
                       'presionar "Actualizar Cliente" para guardar los cambios.',
                       style: TextStyle(
                         fontSize: 12,
-                        color: Colors.blue.shade800,
+                        color: AppColors.blackOverlay.withValues(alpha: 0.8),
                       ),
                     ),
                   ),
@@ -287,7 +284,10 @@ class _PosClienteDetailPanelState extends State<PosClienteDetailPanel> {
                   children: [
                     const Text(
                       'Tipo ident.:',
-                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                     DropdownButton<String>(
                       value: _idType,
@@ -299,7 +299,9 @@ class _PosClienteDetailPanelState extends State<PosClienteDetailPanel> {
                         fontSize: 14,
                       ),
                       items: _idTypes
-                          .map((t) => DropdownMenuItem(value: t, child: Text(t)))
+                          .map(
+                            (t) => DropdownMenuItem(value: t, child: Text(t)),
+                          )
                           .toList(),
                       onChanged: (v) {
                         if (v != null) setState(() => _idType = v);
@@ -314,7 +316,10 @@ class _PosClienteDetailPanelState extends State<PosClienteDetailPanel> {
                     children: [
                       Text(
                         _idType,
-                        style: const TextStyle(fontSize: 11, color: Colors.black45),
+                        style: const TextStyle(
+                          fontSize: 11,
+                          color: Colors.black45,
+                        ),
                       ),
                       TextField(
                         controller: _cedulaCtrl,
@@ -338,7 +343,10 @@ class _PosClienteDetailPanelState extends State<PosClienteDetailPanel> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('Nombres', style: TextStyle(fontWeight: FontWeight.w600)),
+                      const Text(
+                        'Nombres',
+                        style: TextStyle(fontWeight: FontWeight.w600),
+                      ),
                       TextField(
                         controller: _nombresCtrl,
                         decoration: const InputDecoration(
@@ -354,7 +362,10 @@ class _PosClienteDetailPanelState extends State<PosClienteDetailPanel> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('Apellidos', style: TextStyle(fontWeight: FontWeight.w600)),
+                      const Text(
+                        'Apellidos',
+                        style: TextStyle(fontWeight: FontWeight.w600),
+                      ),
                       TextField(
                         controller: _apellidosCtrl,
                         decoration: const InputDecoration(
@@ -375,7 +386,10 @@ class _PosClienteDetailPanelState extends State<PosClienteDetailPanel> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('Correo electrónico', style: TextStyle(fontWeight: FontWeight.w600)),
+                      const Text(
+                        'Correo electrónico',
+                        style: TextStyle(fontWeight: FontWeight.w600),
+                      ),
                       TextField(
                         controller: _emailCtrl,
                         keyboardType: TextInputType.emailAddress,
@@ -392,7 +406,10 @@ class _PosClienteDetailPanelState extends State<PosClienteDetailPanel> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('Teléfono', style: TextStyle(fontWeight: FontWeight.w600)),
+                      const Text(
+                        'Teléfono',
+                        style: TextStyle(fontWeight: FontWeight.w600),
+                      ),
                       TextField(
                         controller: _telefonoCtrl,
                         keyboardType: TextInputType.phone,
@@ -411,7 +428,10 @@ class _PosClienteDetailPanelState extends State<PosClienteDetailPanel> {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Dirección', style: TextStyle(fontWeight: FontWeight.w600)),
+                const Text(
+                  'Dirección',
+                  style: TextStyle(fontWeight: FontWeight.w600),
+                ),
                 TextField(
                   controller: _direccionCtrl,
                   decoration: const InputDecoration(
@@ -422,30 +442,30 @@ class _PosClienteDetailPanelState extends State<PosClienteDetailPanel> {
               ],
             ),
             const SizedBox(height: 20),
-            // ── Botón guardar
-            Align(
-              alignment: Alignment.centerRight,
-              child: FilledButton.icon(
-                style: FilledButton.styleFrom(
-                  backgroundColor: AppColors.blackOverlay,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
+            if (widget.customer['id'] != null)
+              Align(
+                alignment: Alignment.centerRight,
+                child: FilledButton.icon(
+                  style: FilledButton.styleFrom(
+                    backgroundColor: AppColors.blackOverlay,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
                   ),
+                  onPressed: _saving ? null : _save,
+                  icon: _saving
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Icon(Icons.save_outlined, size: 18),
+                  label: const Text('Actualizar Cliente'),
                 ),
-                onPressed: _saving ? null : _save,
-                icon: _saving
-                    ? const SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
-                        ),
-                      )
-                    : const Icon(Icons.save_outlined, size: 18),
-                label: const Text('Actualizar Cliente'),
               ),
-            ),
           ],
         ),
       ),

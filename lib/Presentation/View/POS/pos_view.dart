@@ -6,7 +6,6 @@ import 'package:bazarnicole/Presentation/Widgets/POS/pos_receipt_type_card.dart'
 import 'package:bazarnicole/Presentation/Widgets/POS/pos_cliente_section.dart';
 import 'package:bazarnicole/Presentation/Widgets/POS/pos_productos_section.dart';
 import 'package:bazarnicole/Presentation/Widgets/POS/pos_forma_pago_section.dart';
-import 'package:bazarnicole/Presentation/Widgets/POS/pos_pagos_recibidos_section.dart';
 import 'package:bazarnicole/Presentation/Widgets/POS/pos_resumen_venta_card.dart';
 import 'package:bazarnicole/Presentation/Widgets/POS/pos_product_search_dialog.dart';
 import 'package:bazarnicole/Presentation/Widgets/POS/pos_client_search_dialog.dart';
@@ -116,9 +115,7 @@ class _PosScaffoldState extends State<_PosScaffold> {
   Widget build(BuildContext context) {
     final appBarHeight = ResponsiveHelper.getAppBarHeight(context) + 48;
     final posCtrl = context.watch<PosController>();
-    final sale = context.watch<PosSaleProvider>();
     final cartTotal = posCtrl.total;
-    final total = sale.effectiveTotal(cartTotal);
 
     return CallbackShortcuts(
       bindings: {
@@ -292,18 +289,6 @@ class _PosScaffoldState extends State<_PosScaffold> {
                             begin: 0.1,
                             end: 0,
                             delay: 240.ms,
-                            duration: 350.ms,
-                            curve: Curves.easeOut,
-                          ),
-                      const SizedBox(height: 16),
-                      // ── Pagos recibidos
-                      PosPagosRecibidosSection(total: total)
-                          .animate()
-                          .fadeIn(delay: 300.ms, duration: 350.ms)
-                          .slideY(
-                            begin: 0.1,
-                            end: 0,
-                            delay: 300.ms,
                             duration: 350.ms,
                             curve: Curves.easeOut,
                           ),
