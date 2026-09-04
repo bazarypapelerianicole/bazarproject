@@ -2477,32 +2477,82 @@ class DatabaseService {
     );
   }
 
-  static Future<Map<String, dynamic>> getReportsSnapshot() async {
+  static Future<Map<String, dynamic>> getReportsSnapshot({
+    DateTime? fromDate,
+    DateTime? toDate,
+  }) async {
     final db = await database;
     final now = DateTime.now();
-    final dayStart = DateTime(now.year, now.month, now.day).toIso8601String();
+    final dayStart = DateTime(now.year, now.month, now.day);
+    final from = fromDate != null
+        ? DateTime(fromDate.year, fromDate.month, fromDate.day)
+        : dayStart;
+    final to = toDate != null
+        ? DateTime(toDate.year, toDate.month, toDate.day, 23, 59, 59, 999)
+        : DateTime(now.year, now.month, now.day, 23, 59, 59, 999);
+
+    final salesArgs = <dynamic>[];
+    String salesWhere = 'WHERE 1 = 1';
+    if (fromDate != null) {
+      salesWhere += ' AND date >= ?';
+      salesArgs.add(from.toIso8601String());
+    }
+    if (toDate != null) {
+      salesWhere += ' AND date <= ?';
+      salesArgs.add(to.toIso8601String());
+    }
 
     final salesToday = await db.rawQuery(
-      'SELECT COUNT(*) AS sales_count, COALESCE(SUM(total), 0) AS total FROM sales WHERE date >= ?',
-      [dayStart],
+      'SELECT COUNT(*) AS sales_count, COALESCE(SUM(total), 0) AS total FROM sales $salesWhere',
+      salesArgs,
     );
+
+    final storeArgs = <dynamic>[];
+    String storeWhere = '';
+    if (fromDate != null) {
+      storeWhere += 'sa.date >= ?';
+      storeArgs.add(from.toIso8601String());
+    }
+    if (toDate != null) {
+      if (storeWhere.isNotEmpty) {
+        storeWhere += ' AND ';
+      }
+      storeWhere += 'sa.date <= ?';
+      storeArgs.add(to.toIso8601String());
+    }
 
     final salesByStore = await db.rawQuery('''
       SELECT st.name, COUNT(sa.id) AS sales_count, COALESCE(SUM(sa.total), 0) AS total
       FROM stores st
-      LEFT JOIN sales sa ON sa.store_id = st.id
+      LEFT JOIN sales sa ON sa.store_id = st.id ${storeWhere.isEmpty ? '' : 'AND $storeWhere'}
       GROUP BY st.id, st.name
       ORDER BY total DESC, st.name ASC
-    ''');
+    ''', storeArgs);
+
+    final productArgs = <dynamic>[];
+    String productWhere = '';
+    if (fromDate != null) {
+      productWhere += 's.date >= ?';
+      productArgs.add(from.toIso8601String());
+    }
+    if (toDate != null) {
+      if (productWhere.isNotEmpty) {
+        productWhere += ' AND ';
+      }
+      productWhere += 's.date <= ?';
+      productArgs.add(to.toIso8601String());
+    }
 
     final topProducts = await db.rawQuery('''
       SELECT p.name, COALESCE(SUM(si.quantity), 0) AS units, COALESCE(SUM(si.quantity * si.price), 0) AS revenue
       FROM sale_items si
       INNER JOIN products p ON p.id = si.product_id
+      INNER JOIN sales s ON s.id = si.sale_id
+      ${productWhere.isEmpty ? '' : 'WHERE $productWhere'}
       GROUP BY p.id, p.name
       ORDER BY units DESC, revenue DESC
       LIMIT 10
-    ''');
+    ''', productArgs);
 
     return {
       'salesToday': salesToday.isNotEmpty

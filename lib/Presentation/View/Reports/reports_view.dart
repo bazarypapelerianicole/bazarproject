@@ -1,8 +1,10 @@
 import 'package:bazarnicole/Presentation/Controller/reports_controller.dart';
 import 'package:bazarnicole/Presentation/Renders/responsive_helper.dart';
+import 'package:bazarnicole/Presentation/Services/reports_pdf_service.dart';
 import 'package:bazarnicole/Presentation/Utils/Colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:printing/printing.dart';
 import 'package:provider/provider.dart';
 
 class ReportsView extends StatefulWidget {
@@ -13,12 +15,63 @@ class ReportsView extends StatefulWidget {
 }
 
 class _ReportsViewState extends State<ReportsView> {
+  bool _isGeneratingPdf = false;
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<ReportsController>().initialize();
     });
+  }
+
+  Future<void> _generatePdf() async {
+    if (_isGeneratingPdf) return;
+
+    setState(() => _isGeneratingPdf = true);
+
+    try {
+      final controller = context.read<ReportsController>();
+      final pdfService = const ReportsPdfService();
+      final pdfBytes = await pdfService.generateCommercialReport(controller);
+      final filename = pdfService.buildReportFilename();
+
+      await Printing.sharePdf(bytes: pdfBytes, filename: filename);
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No se pudo generar el reporte PDF.'),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isGeneratingPdf = false);
+      }
+    }
+  }
+
+  Future<void> _pickDateRange() async {
+    final controller = context.read<ReportsController>();
+    final initialRange = DateTimeRange(
+      start: controller.selectedFromDate ?? DateTime.now(),
+      end: controller.selectedToDate ?? DateTime.now(),
+    );
+
+    final picked = await showDateRangePicker(
+      context: context,
+      firstDate: DateTime(2024),
+      lastDate: DateTime(2100),
+      initialDateRange: initialRange,
+      saveText: 'Aplicar',
+    );
+
+    if (picked == null) return;
+
+    await controller.setDateRange(
+      fromDate: picked.start,
+      toDate: picked.end,
+    );
   }
 
   @override
@@ -109,7 +162,12 @@ class _ReportsViewState extends State<ReportsView> {
                 ? const _ReportsLoading()
                 : ListView(
                     children: [
-                      const _PeriodSelector(),
+                      _ReportsHeader(
+                        controller: controller,
+                        isGenerating: _isGeneratingPdf,
+                        onGeneratePdf: _generatePdf,
+                        onSelectDateRange: _pickDateRange,
+                      ),
                       const SizedBox(height: 18),
                       _MetricsGrid(controller: controller),
                       const SizedBox(height: 18),
@@ -283,37 +341,139 @@ class _ReportCard extends StatelessWidget {
   }
 }
 
-class _PeriodSelector extends StatelessWidget {
-  const _PeriodSelector();
+class _ReportsHeader extends StatelessWidget {
+  final ReportsController controller;
+  final bool isGenerating;
+  final VoidCallback onGeneratePdf;
+  final VoidCallback onSelectDateRange;
+
+  const _ReportsHeader({
+    required this.controller,
+    required this.isGenerating,
+    required this.onGeneratePdf,
+    required this.onSelectDateRange,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        const Expanded(
-          child: Text(
-            'Resumen de ventas',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
-          ),
+    final hasRange = controller.selectedFromDate != null || controller.selectedToDate != null;
+    final rangeLabel = hasRange
+        ? '${controller.selectedFromDate != null ? _formatDate(controller.selectedFromDate!) : 'Inicio'} - ${controller.selectedToDate != null ? _formatDate(controller.selectedToDate!) : 'Fin'}'
+        : 'Hoy';
+
+    final button = FilledButton.icon(
+      onPressed: isGenerating ? null : onGeneratePdf,
+      icon: isGenerating
+          ? const SizedBox(
+              width: 16,
+              height: 16,
+              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+            )
+          : const Icon(Icons.picture_as_pdf_outlined),
+      label: Text(isGenerating ? 'Generando reporte...' : 'Generar reporte PDF'),
+      style: FilledButton.styleFrom(
+        backgroundColor: AppColors.blackOverlay,
+        foregroundColor: AppColors.whiteOverlay,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
         ),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-          decoration: BoxDecoration(
-            color: AppColors.whiteOverlay,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: AppColors.lightSlateGrey.withAlpha(128)),
-          ),
-          child: const Row(
+      ),
+    );
+
+    final dateButton = Container(
+      height: 56,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: InkWell(
+        onTap: isGenerating ? null : onSelectDateRange,
+        borderRadius: BorderRadius.circular(16),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text('Hoy', style: TextStyle(fontWeight: FontWeight.w600)),
-              SizedBox(width: 8),
-              Icon(Icons.keyboard_arrow_down, size: 18),
+              const Icon(
+                Icons.calendar_month_outlined,
+                color: Colors.grey,
+                size: 20,
+              ),
+              const SizedBox(width: 10),
+              Flexible(
+                child: Text(
+                  rangeLabel,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    color: Colors.black87,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Icon(
+                Icons.keyboard_arrow_down_rounded,
+                color: Colors.grey.shade400,
+                size: 22,
+              ),
             ],
           ),
         ),
-      ],
+      ),
     );
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final compactLayout = constraints.maxWidth < 700;
+
+        if (compactLayout) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Wrap(
+                spacing: 10,
+                runSpacing: 10,
+                children: [
+                  dateButton,
+                  if (hasRange)
+                    TextButton.icon(
+                      onPressed: isGenerating ? null : () async {
+                        await controller.clearDateRange();
+                      },
+                      icon: const Icon(Icons.clear),
+                      label: const Text('Limpiar'),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Align(alignment: Alignment.centerLeft, child: button),
+            ],
+          );
+        }
+
+        return Row(
+          children: [
+            Expanded(child: dateButton),
+            const SizedBox(width: 12),
+            if (hasRange)
+              TextButton.icon(
+                onPressed: isGenerating ? null : () async {
+                  await controller.clearDateRange();
+                },
+                icon: const Icon(Icons.clear),
+                label: const Text('Limpiar'),
+              ),
+            const SizedBox(width: 12),
+            button,
+          ],
+        );
+      },
+    );
+  }
+
+  String _formatDate(DateTime date) {
+    return '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
   }
 }
 
