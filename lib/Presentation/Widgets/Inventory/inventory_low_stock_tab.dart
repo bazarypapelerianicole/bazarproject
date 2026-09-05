@@ -11,10 +11,12 @@ class InventoryLowStockTab extends StatefulWidget {
     super.key,
     required this.items,
     required this.onOpenDetail,
+    this.onBuyProduct,
   });
 
   final List<InventoryItem> items;
   final ValueChanged<InventoryItem> onOpenDetail;
+  final ValueChanged<InventoryItem>? onBuyProduct;
 
   @override
   State<InventoryLowStockTab> createState() => _InventoryLowStockTabState();
@@ -187,7 +189,7 @@ class _InventoryLowStockTabState extends State<InventoryLowStockTab> {
                   label: 'Estable',
                   icon: Icons.check_circle_outline,
                   active: activeFilter == 3,
-                  color: Colors.green,
+                  color: AppColors.darkGreen,
                   onTap: () => setState(() => activeFilter = 3),
                 ),
                 const SizedBox(width: 8),
@@ -223,7 +225,9 @@ class _InventoryLowStockTabState extends State<InventoryLowStockTab> {
                       item: item,
                       isZero: isZero,
                       isLow: isLow,
+                      accentColor: activeFilter == 3 ? AppColors.darkGreen : null,
                       onTap: () => widget.onOpenDetail(item),
+                      onPurchase: widget.onBuyProduct,
                     )
                         .animate()
                         .fadeIn(

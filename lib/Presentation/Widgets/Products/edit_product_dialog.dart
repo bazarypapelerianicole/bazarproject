@@ -143,7 +143,7 @@ Future<void> showEditProductDialog(
                   // Body
                   Flexible(
                     child: Container(
-                      color: AppColors.whiteOverlay,
+                      color: AppColors.lightGray,
                       child: SingleChildScrollView(
                         padding: const EdgeInsets.all(24),
                         child: Column(

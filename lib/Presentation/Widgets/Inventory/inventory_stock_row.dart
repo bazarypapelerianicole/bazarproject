@@ -9,17 +9,26 @@ class InventoryStockRow extends StatelessWidget {
     required this.isZero,
     required this.isLow,
     required this.onTap,
+    this.onPurchase,
+    this.accentColor,
   });
 
   final InventoryItem item;
   final bool isZero;
   final bool isLow;
   final VoidCallback onTap;
+  final void Function(InventoryItem item)? onPurchase;
+  final Color? accentColor;
 
   @override
   Widget build(BuildContext context) {
-    final Color iconBg = isZero ? AppColors.lightRed : const Color(0xFFFFEDD5);
-    final Color iconColor = isZero ? AppColors.primaryRed : Colors.orange;
+    final effectiveColor = accentColor ?? (isZero ? AppColors.primaryRed : Colors.orange);
+    final Color iconBg = isZero
+        ? AppColors.lightRed
+        : effectiveColor == AppColors.darkGreen
+        ? AppColors.darkGreen.withValues(alpha: 0.2)
+        : const Color(0xFFFFEDD5);
+    final Color iconColor = isZero ? AppColors.primaryRed : effectiveColor;
     final progress = (item.quantity / 5).clamp(0.0, 1.0);
     final code = item.sku.isNotEmpty
         ? item.sku
@@ -48,7 +57,7 @@ class InventoryStockRow extends StatelessWidget {
               margin: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: iconBg,
-                border: Border.all(color: Colors.orange.shade300, width: 1.5),
+                border: Border.all(color: AppColors.blackOverlay.withValues(alpha: 0.1), width: 1.5),
                 borderRadius: BorderRadius.circular(15),
               ),
               child: Column(
@@ -101,7 +110,7 @@ class InventoryStockRow extends StatelessWidget {
                       'Stock: ${item.quantity} / 5',
                       style: TextStyle(
                         fontSize: 11,
-                        color: isZero ? AppColors.primaryRed : Colors.orange,
+                        color: isZero ? AppColors.primaryRed : effectiveColor,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -119,18 +128,27 @@ class InventoryStockRow extends StatelessWidget {
                 ),
               ),
             ),
-            Container(
-              margin: const EdgeInsets.only(right: 16),
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Material(
                 color: AppColors.blackOverlay,
                 borderRadius: BorderRadius.circular(13),
-              ),
-              child: const Icon(
-                Icons.shopping_cart_outlined,
-                color: Colors.white,
-                size: 18,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(13),
+                  onTap: () => onPurchase?.call(item),
+                  child: Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(13),
+                    ),
+                    child: const Icon(
+                      Icons.shopping_cart_outlined,
+                      color: Colors.white,
+                      size: 18,
+                    ),
+                  ),
+                ),
               ),
             ),
           ],

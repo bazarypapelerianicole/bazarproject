@@ -857,6 +857,24 @@ class DatabaseService {
     );
     await _ensureColumn(
       db,
+      table: 'purchases',
+      column: 'invoice_number',
+      definition: 'TEXT',
+    );
+    await _ensureColumn(
+      db,
+      table: 'purchases',
+      column: 'auxiliary_invoice_number',
+      definition: 'TEXT',
+    );
+    await _ensureColumn(
+      db,
+      table: 'purchases',
+      column: 'payment_method',
+      definition: "TEXT NOT NULL DEFAULT 'Contado'",
+    );
+    await _ensureColumn(
+      db,
       table: 'products',
       column: 'aux_code',
       definition: 'TEXT',
@@ -1717,9 +1735,9 @@ class DatabaseService {
     if (normalizedSearch.isNotEmpty) {
       final filter = '%$normalizedSearch%';
       clauses.add(
-        '(p.name LIKE ? OR p.sku LIKE ? OR COALESCE(c.name, \"\") LIKE ? OR COALESCE(p.aux_code, \"\") LIKE ?)',
+        "(p.name LIKE ? OR p.sku LIKE ? OR COALESCE(p.description, '') LIKE ? OR COALESCE(p.aux_code, '') LIKE ? OR COALESCE(c.name, '') LIKE ?)",
       );
-      params.addAll([filter, filter, filter, filter]);
+      params.addAll([filter, filter, filter, filter, filter]);
     }
 
     if (storeId != null) {
@@ -2246,6 +2264,11 @@ class DatabaseService {
     required List<Map<String, dynamic>> items,
     String? supplierName,
     String? supplierPhone,
+    double vatRate = 0,
+    double discount = 0,
+    String? invoiceNumber,
+    String? auxiliaryInvoiceNumber,
+    String paymentMethod = 'Contado',
   }) async {
     if (items.isEmpty) {
       throw Exception('La compra debe contener al menos un producto');
@@ -2266,8 +2289,10 @@ class DatabaseService {
           throw Exception('El costo no puede ser negativo');
         }
 
-        total += quantity * cost;
+        total += quantity * cost * (1 + vatRate / 100);
       }
+
+      total = (total - discount).clamp(0, double.infinity);
 
       final supplierId = await _ensureSupplier(
         txn,
@@ -2276,8 +2301,16 @@ class DatabaseService {
       );
 
       final purchaseId = await txn.rawInsert(
-        'INSERT INTO purchases (store_id, supplier_id, total, date) VALUES (?, ?, ?, ?)',
-        [storeId, supplierId, total, DateTime.now().toIso8601String()],
+        'INSERT INTO purchases (store_id, supplier_id, total, date, invoice_number, auxiliary_invoice_number, payment_method) VALUES (?, ?, ?, ?, ?, ?, ?)',
+        [
+          storeId,
+          supplierId,
+          total,
+          DateTime.now().toIso8601String(),
+          invoiceNumber,
+          auxiliaryInvoiceNumber,
+          paymentMethod,
+        ],
       );
 
       for (final item in items) {
@@ -2423,6 +2456,8 @@ class DatabaseService {
     int? supplierId,
     String? category,
     DateTime? date,
+    DateTime? fromDate,
+    DateTime? toDate,
   }) async {
     final db = await database;
     final conditions = <String>[];
@@ -2453,13 +2488,22 @@ class DatabaseService {
       conditions.add('pu.date LIKE ?');
       args.add('${date.toIso8601String().split('T').first}%');
     }
+    if (fromDate != null) {
+      conditions.add('pu.date >= ?');
+      args.add(fromDate.toIso8601String());
+    }
+    if (toDate != null) {
+      conditions.add('pu.date < ?');
+      args.add(toDate.toIso8601String());
+    }
 
     final whereClause = conditions.isEmpty
         ? ''
         : 'WHERE ${conditions.join(' AND ')}';
 
     return db.rawQuery('''
-      SELECT pu.id, pu.date, pu.total,
+            SELECT pu.id, pu.date, pu.total,
+              pu.invoice_number, pu.payment_method,
              st.name AS store_name,
              COALESCE(sp.name, 'Sin proveedor') AS supplier_name
       FROM purchases pu
@@ -2660,6 +2704,13 @@ class DatabaseService {
     return db.rawQuery(
       'SELECT id, name, is_cash FROM payment_methods ORDER BY id',
     );
+  }
+
+  static Future<String> getNextPurchaseInvoiceNumber() async {
+    final db = await database;
+    final rows = await db.rawQuery('SELECT COUNT(*) AS total FROM purchases');
+    final next = ((rows.first['total'] as num?)?.toInt() ?? 0) + 1;
+    return next.toString().padLeft(8, '0');
   }
 
   // ─────────────────────────────────────────────

@@ -64,6 +64,7 @@ class NewProductDrawer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Drawer(
+      backgroundColor: AppColors.lightGray,
       width: 480,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.horizontal(left: Radius.circular(20)),
@@ -121,7 +122,7 @@ class NewProductDrawer extends StatelessWidget {
           ),
           Expanded(
             child: Container(
-              color: AppColors.whiteOverlay,
+              color: AppColors.lightGray,
               child: SingleChildScrollView(
                 padding: const EdgeInsets.all(24),
                 child: Form(
@@ -395,7 +396,7 @@ class NewProductDrawer extends StatelessWidget {
               MediaQuery.of(context).padding.bottom + 16,
             ),
             decoration: BoxDecoration(
-              color: AppColors.whiteOverlay,
+              color: AppColors.lightGray,
               border: Border(top: BorderSide(color: Colors.grey.shade200)),
             ),
             child: SizedBox(

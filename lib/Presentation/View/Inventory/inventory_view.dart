@@ -1,6 +1,7 @@
 import 'package:bazarnicole/Presentation/Context/inventory_provider.dart';
 import 'package:bazarnicole/Presentation/Model/inventory_model.dart';
 import 'package:bazarnicole/Presentation/Renders/responsive_helper.dart';
+import 'package:bazarnicole/Presentation/Services/database_service.dart';
 import 'package:bazarnicole/Presentation/Utils/Colors.dart';
 import 'package:bazarnicole/Presentation/Widgets/Inventory/inventory_header.dart';
 import 'package:bazarnicole/Presentation/Widgets/Inventory/inventory_low_stock_tab.dart';
@@ -9,6 +10,8 @@ import 'package:bazarnicole/Presentation/Widgets/Inventory/inventory_products_ta
 import 'package:bazarnicole/Presentation/Widgets/Inventory/inventory_summary_tab.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:bazarnicole/Presentation/Controller/purchases_controller.dart';
+import 'package:bazarnicole/Presentation/View/Purchases/purchases_view.dart';
 
 class InventoryView extends StatefulWidget {
   const InventoryView({super.key});
@@ -48,6 +51,45 @@ class _InventoryViewState extends State<InventoryView> {
       backgroundColor: Colors.transparent,
       builder: (_) => InventoryProductDetailSheet(item: item),
     );
+  }
+
+  Future<void> _buyProduct(InventoryItem item) async {
+    final purchaseController = context.read<PurchasesController>();
+
+    try {
+      final product = await DatabaseService.getProducts(
+        storeId: purchaseController.selectedStoreId,
+        search: item.name,
+      );
+
+      final match = product.firstWhere(
+        (entry) => (entry['id'] as num).toInt() == item.productId,
+        orElse: () => <String, dynamic>{},
+      );
+
+      if (match.isEmpty) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('No se encontró el producto ${item.name} para comprar.')),
+        );
+        return;
+      }
+
+      purchaseController.addToCart(match);
+
+      if (!mounted) return;
+      await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => const PurchasesView(),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('No se pudo abrir la compra: $e')),
+      );
+    }
   }
 
   @override
@@ -97,6 +139,7 @@ class _InventoryViewState extends State<InventoryView> {
               return InventoryLowStockTab(
                 items: provider.inventoryItems,
                 onOpenDetail: _showProductDetailSheet,
+                onBuyProduct: _buyProduct,
               );
             default:
               return const SizedBox.shrink();
