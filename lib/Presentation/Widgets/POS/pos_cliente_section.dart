@@ -1,6 +1,7 @@
 import 'package:bazarnicole/Presentation/Context/pos_sale_provider.dart';
 import 'package:bazarnicole/Presentation/Controller/pos_controller.dart';
 import 'package:bazarnicole/Presentation/Utils/Colors.dart';
+import 'package:bazarnicole/Presentation/Widgets/Products/shared_inputs.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -321,14 +322,10 @@ class _PosClienteDetailPanelState extends State<PosClienteDetailPanel> {
                           color: Colors.black45,
                         ),
                       ),
-                      TextField(
+                      SharedTextField(
                         controller: _cedulaCtrl,
                         keyboardType: TextInputType.number,
-                        decoration: const InputDecoration(
-                          hintText: 'Número de identificación',
-                          border: UnderlineInputBorder(),
-                          isDense: true,
-                        ),
+                        hint: 'Número de identificación',
                       ),
                     ],
                   ),
@@ -347,12 +344,9 @@ class _PosClienteDetailPanelState extends State<PosClienteDetailPanel> {
                         'Nombres',
                         style: TextStyle(fontWeight: FontWeight.w600),
                       ),
-                      TextField(
+                      SharedTextField(
                         controller: _nombresCtrl,
-                        decoration: const InputDecoration(
-                          border: UnderlineInputBorder(),
-                          isDense: true,
-                        ),
+                        label: 'Nombres',
                       ),
                     ],
                   ),
@@ -366,12 +360,9 @@ class _PosClienteDetailPanelState extends State<PosClienteDetailPanel> {
                         'Apellidos',
                         style: TextStyle(fontWeight: FontWeight.w600),
                       ),
-                      TextField(
+                      SharedTextField(
                         controller: _apellidosCtrl,
-                        decoration: const InputDecoration(
-                          border: UnderlineInputBorder(),
-                          isDense: true,
-                        ),
+                        label: 'Apellidos',
                       ),
                     ],
                   ),
@@ -390,13 +381,10 @@ class _PosClienteDetailPanelState extends State<PosClienteDetailPanel> {
                         'Correo electrónico',
                         style: TextStyle(fontWeight: FontWeight.w600),
                       ),
-                      TextField(
+                      SharedTextField(
                         controller: _emailCtrl,
                         keyboardType: TextInputType.emailAddress,
-                        decoration: const InputDecoration(
-                          border: UnderlineInputBorder(),
-                          isDense: true,
-                        ),
+                        label: 'Correo electrónico',
                       ),
                     ],
                   ),
@@ -410,13 +398,10 @@ class _PosClienteDetailPanelState extends State<PosClienteDetailPanel> {
                         'Teléfono',
                         style: TextStyle(fontWeight: FontWeight.w600),
                       ),
-                      TextField(
+                      SharedTextField(
                         controller: _telefonoCtrl,
                         keyboardType: TextInputType.phone,
-                        decoration: const InputDecoration(
-                          border: UnderlineInputBorder(),
-                          isDense: true,
-                        ),
+                        label: 'Teléfono',
                       ),
                     ],
                   ),
@@ -432,12 +417,9 @@ class _PosClienteDetailPanelState extends State<PosClienteDetailPanel> {
                   'Dirección',
                   style: TextStyle(fontWeight: FontWeight.w600),
                 ),
-                TextField(
+                SharedTextField(
                   controller: _direccionCtrl,
-                  decoration: const InputDecoration(
-                    border: UnderlineInputBorder(),
-                    isDense: true,
-                  ),
+                  label: 'Dirección',
                 ),
               ],
             ),

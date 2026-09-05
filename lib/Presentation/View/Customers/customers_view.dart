@@ -75,7 +75,7 @@ class _CustomersViewState extends State<CustomersView>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.lightWhite,
+      backgroundColor: AppColors.lightGray,
       appBar: AppBar(
         backgroundColor: AppColors.primaryLogo,
         foregroundColor: AppColors.whiteOverlay,
@@ -115,8 +115,13 @@ class _CustomersViewState extends State<CustomersView>
                       ),
                       const SizedBox(height: 12),
                       SharedTextFormField(
+                        style: const TextStyle(
+                          fontSize: 15,
+                          color: Colors.black87,
+                        ),
+
                         controller: _nameController,
-                        hint: 'Nombre completo',
+                        label: 'Nombre completo',
                         validator: (value) =>
                             value == null || value.trim().isEmpty
                             ? 'Ingresa el nombre'
@@ -124,19 +129,31 @@ class _CustomersViewState extends State<CustomersView>
                       ),
                       const SizedBox(height: 10),
                       SharedTextField(
+                        style: const TextStyle(
+                          fontSize: 15,
+                          color: Colors.black87,
+                        ),
                         controller: _phoneController,
-                        hint: 'Teléfono',
+                        label: 'Teléfono',
                       ),
                       const SizedBox(height: 10),
                       SharedTextField(
+                        style: const TextStyle(
+                          fontSize: 15,
+                          color: Colors.black87,
+                        ),
                         controller: _emailController,
-                        hint: 'Correo',
+                        label: 'Correo',
                       ),
                       const SizedBox(height: 10),
                       SharedTextField(
+                        style: const TextStyle(
+                          fontSize: 15,
+                          color: Colors.black87,
+                        ),
                         controller: _notesController,
                         maxLines: 2,
-                        hint: 'Notas',
+                        label: 'Notas',
                       ),
                       const SizedBox(height: 12),
                       SizedBox(
@@ -169,9 +186,12 @@ class _CustomersViewState extends State<CustomersView>
                       mainAxisSize: MainAxisSize.max,
                       children: [
                         SharedTextField(
+                          style: const TextStyle(
+                            fontSize: 15,
+                            color: Colors.black87,
+                          ),
                           controller: _searchController,
-                          hint:
-                              'Buscar cliente por nombre, correo o teléfono',
+                          hint: 'Buscar cliente por nombre, correo o teléfono',
                           prefixIcon: const Icon(Icons.search),
                           suffixIcon: _searchController.text.isEmpty
                               ? null

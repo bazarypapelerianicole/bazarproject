@@ -3,6 +3,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:bazarnicole/Presentation/Utils/Colors.dart';
+import 'package:bazarnicole/Presentation/Widgets/Products/shared_inputs.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:path/path.dart';
@@ -2046,22 +2047,14 @@ class _AdminDBPageState extends State<AdminDBPage>
                         ),
                       ],
                     ),
-                    child: TextField(
+                    child: SharedTextField(
                       controller: _queryController,
-                      decoration: InputDecoration(
-                        labelText: 'Escribe tu consulta SQL aquí',
-                        labelStyle: TextStyle(
-                          color: AppColors.mediumGray,
-                          fontWeight: FontWeight.w500,
-                        ),
-                        border: InputBorder.none,
-                        contentPadding: const EdgeInsets.all(20),
-                        suffixIcon: IconButton(
-                          icon: const Icon(Icons.play_circle_fill),
-                          color: AppColors.primaryBlue,
-                          iconSize: 36,
-                          onPressed: _runQuery,
-                        ),
+                      label: 'Escribe tu consulta SQL aquí',
+                      suffixIcon: IconButton(
+                        icon: const Icon(Icons.play_circle_fill),
+                        color: AppColors.primaryBlue,
+                        iconSize: 36,
+                        onPressed: _runQuery,
                       ),
                       style: TextStyle(
                         color: AppColors.darkGray,

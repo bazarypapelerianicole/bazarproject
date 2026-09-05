@@ -1,6 +1,7 @@
 import 'package:bazarnicole/Presentation/Context/pos_sale_provider.dart';
 import 'package:bazarnicole/Presentation/Controller/pos_controller.dart';
 import 'package:bazarnicole/Presentation/Utils/Colors.dart';
+import 'package:bazarnicole/Presentation/Widgets/Products/shared_inputs.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -293,13 +294,9 @@ class _PosFormaPagoSectionState extends State<PosFormaPagoSection> {
               const SizedBox(height: 24),
               _FieldShell(
                 label: 'Referencia de Transacción',
-                child: TextField(
+                child: SharedTextField(
                   controller: _referenceController,
-                  decoration: const InputDecoration(
-                    hintText: 'Número de transacción / Referencia',
-                    border: OutlineInputBorder(),
-                    isDense: true,
-                  ),
+                  hint: 'Número de transacción / Referencia',
                 ),
               ),
             ],
@@ -343,13 +340,9 @@ class _PosFormaPagoSectionState extends State<PosFormaPagoSection> {
               const SizedBox(height: 24),
               _FieldShell(
                 label: 'Referencia de Transacción',
-                child: TextField(
+                child: SharedTextField(
                   controller: _referenceController,
-                  decoration: const InputDecoration(
-                    hintText: 'Número de depósito / Referencia',
-                    border: OutlineInputBorder(),
-                    isDense: true,
-                  ),
+                  hint: 'Número de depósito / Referencia',
                 ),
               ),
             ],
@@ -391,13 +384,9 @@ class _PosFormaPagoSectionState extends State<PosFormaPagoSection> {
               const SizedBox(height: 24),
               _FieldShell(
                 label: 'Referencia de Transacción',
-                child: TextField(
+                child: SharedTextField(
                   controller: _referenceController,
-                  decoration: const InputDecoration(
-                    hintText: 'Número de transacción / Referencia',
-                    border: OutlineInputBorder(),
-                    isDense: true,
-                  ),
+                  hint: 'Número de transacción / Referencia',
                 ),
               ),
             ],
@@ -448,13 +437,9 @@ class _PosFormaPagoSectionState extends State<PosFormaPagoSection> {
               const SizedBox(height: 24),
               _FieldShell(
                 label: 'Referencia de Transacción',
-                child: TextField(
+                child: SharedTextField(
                   controller: _referenceController,
-                  decoration: const InputDecoration(
-                    hintText: 'Número de transacción / Referencia',
-                    border: OutlineInputBorder(),
-                    isDense: true,
-                  ),
+                  hint: 'Número de transacción / Referencia',
                 ),
               ),
             ],
@@ -573,14 +558,10 @@ class _PosFormaPagoSectionState extends State<PosFormaPagoSection> {
                     flex: 6,
                     child: _FieldShell(
                       label: 'Monto',
-                      child: TextField(
+                      child: SharedTextField(
                         controller: _amountController,
                         keyboardType: const TextInputType.numberWithOptions(
                           decimal: true,
-                        ),
-                        decoration: const InputDecoration(
-                          border: OutlineInputBorder(),
-                          isDense: true,
                         ),
                       ),
                     ),

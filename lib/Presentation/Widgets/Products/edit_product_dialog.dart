@@ -152,11 +152,9 @@ Future<void> showEditProductDialog(
                             formSection(
                               title: 'Información básica',
                               children: [
-                                TextField(
+                                SharedTextField(
                                   controller: nameController,
-                                  decoration: modernInput(
-                                    label: 'Nombre del producto',
-                                  ),
+                                  label: 'Nombre del producto',
                                 ),
                                 const SizedBox(height: 12),
                                 DropdownButtonFormField<String?>(
@@ -184,38 +182,32 @@ Future<void> showEditProductDialog(
                                 Row(
                                   children: [
                                     Expanded(
-                                      child: TextField(
+                                      child: SharedTextField(
                                         controller: skuController,
-                                        decoration: modernInput(label: 'SKU'),
+                                        label: 'SKU',
                                       ),
                                     ),
                                     const SizedBox(width: 12),
                                     Expanded(
-                                      child: TextField(
+                                      child: SharedTextField(
                                         controller: auxCodeController,
-                                        decoration: modernInput(
-                                          label: 'Código auxiliar',
-                                        ),
+                                        label: 'Código auxiliar',
                                       ),
                                     ),
                                   ],
                                 ),
                                 const SizedBox(height: 12),
-                                TextField(
+                                SharedTextField(
                                   controller: descriptionController,
                                   maxLines: 3,
-                                  decoration: modernInput(
-                                    label: 'Descripción',
-                                    hint: 'Describe el producto...',
-                                  ),
+                                  label: 'Descripción',
+                                  hint: 'Describe el producto...',
                                 ),
                                 const SizedBox(height: 12),
-                                TextField(
+                                SharedTextField(
                                   controller: tagsController,
-                                  decoration: modernInput(
-                                    label: 'Etiquetas',
-                                    hint: 'Ej: oferta, nuevo, importado',
-                                  ),
+                                  label: 'Etiquetas',
+                                  hint: 'Ej: oferta, nuevo, importado',
                                 ),
                               ],
                             ),
@@ -228,22 +220,20 @@ Future<void> showEditProductDialog(
                                 Row(
                                   children: [
                                     Expanded(
-                                      child: TextField(
+                                      child: SharedTextField(
                                         controller: priceController,
                                         readOnly: true,
                                         keyboardType:
                                             const TextInputType.numberWithOptions(
                                               decimal: true,
                                             ),
-                                        decoration: modernInput(
-                                          label: 'Precio de venta',
-                                          prefix: '\$',
-                                        ),
+                                        label: 'Precio de venta',
+                                        prefix: '\$',
                                       ),
                                     ),
                                     const SizedBox(width: 12),
                                     Expanded(
-                                      child: TextField(
+                                      child: SharedTextField(
                                         controller: costPriceController,
                                         keyboardType:
                                             const TextInputType.numberWithOptions(
@@ -251,10 +241,8 @@ Future<void> showEditProductDialog(
                                             ),
                                         onChanged: (_) =>
                                             recalculateSalePrice(),
-                                        decoration: modernInput(
-                                          label: 'Precio de compra',
-                                          prefix: '\$',
-                                        ),
+                                        label: 'Precio de compra',
+                                        prefix: '\$',
                                       ),
                                     ),
                                   ],
@@ -263,7 +251,7 @@ Future<void> showEditProductDialog(
                                 Row(
                                   children: [
                                     Expanded(
-                                      child: TextField(
+                                      child: SharedTextField(
                                         controller: ivaRateController,
                                         keyboardType:
                                             const TextInputType.numberWithOptions(
@@ -271,15 +259,13 @@ Future<void> showEditProductDialog(
                                             ),
                                         onChanged: (_) =>
                                             recalculateSalePrice(),
-                                        decoration: modernInput(
-                                          label: 'IVA gubernamental',
-                                          suffix: '%',
-                                        ),
+                                        label: 'IVA gubernamental',
+                                        suffix: '%',
                                       ),
                                     ),
                                     const SizedBox(width: 12),
                                     Expanded(
-                                      child: TextField(
+                                      child: SharedTextField(
                                         controller: profitIvaController,
                                         keyboardType:
                                             const TextInputType.numberWithOptions(
@@ -287,10 +273,8 @@ Future<void> showEditProductDialog(
                                             ),
                                         onChanged: (_) =>
                                             recalculateSalePrice(),
-                                        decoration: modernInput(
-                                          label: 'IVA ganancia',
-                                          suffix: '%',
-                                        ),
+                                        label: 'IVA ganancia',
+                                        suffix: '%',
                                       ),
                                     ),
                                   ],
@@ -328,22 +312,18 @@ Future<void> showEditProductDialog(
                                 Row(
                                   children: [
                                     Expanded(
-                                      child: TextField(
+                                      child: SharedTextField(
                                         controller: bazarStockController,
                                         keyboardType: TextInputType.number,
-                                        decoration: modernInput(
-                                          label: 'Cantidad Bazar',
-                                        ),
+                                        label: 'Cantidad Bazar',
                                       ),
                                     ),
                                     const SizedBox(width: 12),
                                     Expanded(
-                                      child: TextField(
+                                      child: SharedTextField(
                                         controller: tiendaStockController,
                                         keyboardType: TextInputType.number,
-                                        decoration: modernInput(
-                                          label: 'Cantidad Tienda',
-                                        ),
+                                        label: 'Cantidad Tienda',
                                       ),
                                     ),
                                   ],

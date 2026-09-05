@@ -66,11 +66,8 @@ class SharedTextField extends StatelessWidget {
   final bool alignLabelWithHint;
 
   InputDecoration get _decoration {
-    final decoration = useFilterStyle
-        ? filterFieldDecoration(
-            hint: hint ?? '',
-            prefixIcon: prefixIcon,
-          )
+    final decoration = useFilterStyle || label == null
+        ? filterFieldDecoration(hint: hint ?? '', prefixIcon: prefixIcon)
         : modernInput(
             label: label ?? '',
             hint: hint,
@@ -181,11 +178,8 @@ class SharedTextFormField extends StatelessWidget {
   final bool alignLabelWithHint;
 
   InputDecoration _decoration() {
-    final decoration = useFilterStyle
-        ? filterFieldDecoration(
-            hint: hint ?? '',
-            prefixIcon: prefixIcon,
-          )
+    final decoration = useFilterStyle || label == null
+        ? filterFieldDecoration(hint: hint ?? '', prefixIcon: prefixIcon)
         : modernInput(
             label: label ?? '',
             hint: hint,
@@ -232,9 +226,11 @@ class SharedTextFormField extends StatelessWidget {
 
 InputDecoration filterFieldDecoration({
   required String hint,
+  String? label,
   Widget? prefixIcon,
 }) {
   return InputDecoration(
+    labelText: label,
     hintText: hint,
     hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 15),
     prefixIcon: prefixIcon,
@@ -264,29 +260,13 @@ InputDecoration modernInput({
   String? suffix,
   Widget? prefixIcon,
 }) {
-  return InputDecoration(
-    labelText: label,
-    hintText: hint,
+  return filterFieldDecoration(
+    hint: hint ?? label,
+    label: label,
+    prefixIcon: prefixIcon,
+  ).copyWith(
     prefixText: prefix,
     suffixText: suffix,
-    prefixIcon: prefixIcon,
-    filled: true,
-    fillColor: AppColors.lightWhite,
-    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-    border: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(12),
-      borderSide: BorderSide(color: Colors.grey.shade200),
-    ),
-    enabledBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(12),
-      borderSide: BorderSide(color: Colors.grey.shade200),
-    ),
-    focusedBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(12),
-      borderSide: const BorderSide(color: AppColors.primaryBlue, width: 1.5),
-    ),
-    labelStyle: TextStyle(color: Colors.grey.shade600, fontSize: 13),
-    hintStyle: TextStyle(color: Colors.grey.shade400),
   );
 }
 

@@ -132,9 +132,9 @@ class NewProductDrawer extends StatelessWidget {
                       formSection(
                         title: 'Información básica',
                         children: [
-                          TextFormField(
+                          SharedTextFormField(
                             controller: nameController,
-                            decoration: modernInput(label: 'Nombre del producto'),
+                            label: 'Nombre del producto',
                             validator: (value) {
                               if (value == null || value.trim().isEmpty) {
                                 return 'Ingresa un nombre';
@@ -174,31 +174,32 @@ class NewProductDrawer extends StatelessWidget {
                           Row(
                             children: [
                               Expanded(
-                                child: TextFormField(
+                                child: SharedTextFormField(
                                   controller: skuController,
-                                  decoration: modernInput(label: 'SKU (opcional)'),
+                                  label: 'SKU (opcional)',
                                 ),
                               ),
                               const SizedBox(width: 12),
                               Expanded(
-                                child: TextFormField(
+                                child: SharedTextFormField(
                                   controller: auxCodeController,
-                                  decoration: modernInput(label: 'Código auxiliar'),
+                                  label: 'Código auxiliar',
                                 ),
                               ),
                             ],
                           ),
                           const SizedBox(height: 12),
-                          TextFormField(
+                          SharedTextFormField(
                             controller: descriptionController,
                             maxLines: 3,
-                            decoration:
-                                modernInput(label: 'Descripción', hint: 'Describe el producto...'),
+                            label: 'Descripción',
+                            hint: 'Describe el producto...',
                           ),
                           const SizedBox(height: 12),
-                          TextFormField(
+                          SharedTextFormField(
                             controller: tagsController,
-                            decoration: modernInput(label: 'Etiquetas', hint: 'oferta, nuevo, importado'),
+                            label: 'Etiquetas',
+                            hint: 'oferta, nuevo, importado',
                           ),
                         ],
                       ),
@@ -211,18 +212,20 @@ class NewProductDrawer extends StatelessWidget {
                           Row(
                             children: [
                               Expanded(
-                                child: TextFormField(
+                                child: SharedTextFormField(
                                   controller: priceController,
                                   keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                                  decoration: modernInput(label: 'Precio de venta', prefix: '\$'),
+                                  label: 'Precio de venta',
+                                  prefix: '\$',
                                 ),
                               ),
                               const SizedBox(width: 12),
                               Expanded(
-                                child: TextFormField(
+                                child: SharedTextFormField(
                                   controller: costPriceController,
                                   keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                                  decoration: modernInput(label: 'Precio de compra', prefix: '\$'),
+                                  label: 'Precio de compra',
+                                  prefix: '\$',
                                 ),
                               ),
                             ],
@@ -231,18 +234,20 @@ class NewProductDrawer extends StatelessWidget {
                           Row(
                             children: [
                               Expanded(
-                                child: TextFormField(
+                                child: SharedTextFormField(
                                   controller: ivaRateController,
                                   keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                                  decoration: modernInput(label: 'IVA gubernamental', suffix: '%'),
+                                  label: 'IVA gubernamental',
+                                  suffix: '%',
                                 ),
                               ),
                               const SizedBox(width: 12),
                               Expanded(
-                                child: TextFormField(
+                                child: SharedTextFormField(
                                   controller: profitIvaController,
                                   keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                                  decoration: modernInput(label: 'IVA ganancia', suffix: '%'),
+                                  label: 'IVA ganancia',
+                                  suffix: '%',
                                 ),
                               ),
                             ],
@@ -271,18 +276,18 @@ class NewProductDrawer extends StatelessWidget {
                           Row(
                             children: [
                               Expanded(
-                                child: TextFormField(
+                                child: SharedTextFormField(
                                   controller: bazarController,
                                   keyboardType: TextInputType.number,
-                                  decoration: modernInput(label: 'Stock Bazar'),
+                                  label: 'Stock Bazar',
                                 ),
                               ),
                               const SizedBox(width: 12),
                               Expanded(
-                                child: TextFormField(
+                                child: SharedTextFormField(
                                   controller: tiendaController,
                                   keyboardType: TextInputType.number,
-                                  decoration: modernInput(label: 'Stock Tienda'),
+                                  label: 'Stock Tienda',
                                 ),
                               ),
                             ],
