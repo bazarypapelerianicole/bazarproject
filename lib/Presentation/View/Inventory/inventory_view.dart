@@ -814,28 +814,30 @@ class _InventoryViewState extends State<InventoryView> {
                             filtered.length,
                             (i) => SizedBox(
                               width: cardWidth,
-                              child: _ProductGridCard(
-                                item: filtered[i],
-                                fmt: fmt,
-                                onTap: () =>
-                                    _showProductDetailSheet(filtered[i]),
-                              )
-                                  .animate()
-                                  .fadeIn(
-                                    delay: Duration(
-                                      milliseconds: 25 * (i % 24),
-                                    ),
-                                    duration: 300.ms,
-                                  )
-                                  .slideY(
-                                    begin: 0.15,
-                                    end: 0,
-                                    delay: Duration(
-                                      milliseconds: 25 * (i % 24),
-                                    ),
-                                    duration: 300.ms,
-                                    curve: Curves.easeOut,
-                                  ),
+                              child:
+                                  _ProductGridCard(
+                                        item: filtered[i],
+                                        fmt: fmt,
+                                        onTap: () => _showProductDetailSheet(
+                                          filtered[i],
+                                        ),
+                                      )
+                                      .animate()
+                                      .fadeIn(
+                                        delay: Duration(
+                                          milliseconds: 25 * (i % 24),
+                                        ),
+                                        duration: 300.ms,
+                                      )
+                                      .slideY(
+                                        begin: 0.15,
+                                        end: 0,
+                                        delay: Duration(
+                                          milliseconds: 25 * (i % 24),
+                                        ),
+                                        duration: 300.ms,
+                                        curve: Curves.easeOut,
+                                      ),
                             ),
                           ),
                         ),
@@ -849,104 +851,135 @@ class _InventoryViewState extends State<InventoryView> {
   }
 
   Widget _buildStockBajoTab(InventoryProvider provider) {
-    final allLow =
-        provider.inventoryItems.where((i) => i.quantity <= 5).toList()
-          ..sort((a, b) => a.quantity.compareTo(b.quantity));
+    final allItems = provider.inventoryItems;
+    final allSorted = [...allItems]
+      ..sort((a, b) => a.quantity.compareTo(b.quantity));
 
     return StatefulBuilder(
       builder: (context, setLocal) {
         // Filtros: 0=Todos, 1=Agotado(=0), 2=Pedir(1-2), 3=Estable(3-5)
         int activeFilter = 0;
-        List<InventoryItem> filtered = allLow;
+        List<InventoryItem> filtered = allSorted;
 
         return StatefulBuilder(
           builder: (context, setFilter) {
             switch (activeFilter) {
               case 1:
-                filtered = allLow.where((i) => i.quantity == 0).toList();
+                filtered = allSorted.where((i) => i.quantity == 0).toList();
                 break;
               case 2:
-                filtered = allLow
+                filtered = allSorted
                     .where((i) => i.quantity >= 1 && i.quantity <= 2)
                     .toList();
                 break;
               case 3:
-                filtered = allLow
+                filtered = allSorted
                     .where((i) => i.quantity >= 3 && i.quantity <= 5)
                     .toList();
                 break;
+              case 4:
+                filtered = allSorted.where((i) => i.quantity > 10).toList()
+                  ..sort((a, b) => b.quantity.compareTo(a.quantity));
+                break;
               default:
-                filtered = allLow;
+                filtered = allSorted;
             }
 
             return Column(
               children: [
                 // ── Encabezado con contador y alerta ─────────────────
                 Container(
-                      color: AppColors.lightGray,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 12,
+                      margin: const EdgeInsets.fromLTRB(18, 8, 18, 16),
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: AppColors.blackOverlay,
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: const [
+                          BoxShadow(
+                            color: Colors.black26,
+                            blurRadius: 8,
+                            offset: Offset(0, 4),
+                          ),
+                        ],
                       ),
                       child: Row(
                         children: [
                           Container(
-                            padding: const EdgeInsets.all(8),
+                            width: 56,
+                            height: 56,
+                            alignment: Alignment.center,
                             decoration: BoxDecoration(
-                              color: AppColors.lightGray,
-                              borderRadius: BorderRadius.circular(8),
+                              color: Colors.white.withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(16),
                             ),
                             child: const Icon(
-                              Icons.filter_list,
-                              size: 20,
-                              color: AppColors.darkGray,
+                              Icons.filter_list_rounded,
+                              size: 30,
+                              color: Colors.white,
                             ),
                           ),
-                          const SizedBox(width: 12),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                'Filtros de Stock Bajo',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 14,
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Filtros de Stock Bajo',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 18,
+                                  ),
                                 ),
-                              ),
-                              RichText(
-                                text: TextSpan(
+                                const SizedBox(height: 4),
+                                Row(
                                   children: [
-                                    TextSpan(
-                                      text: '${filtered.length} ',
-                                      style: const TextStyle(
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 9,
+                                        vertical: 4,
+                                      ),
+                                      decoration: BoxDecoration(
                                         color: AppColors.primaryRed,
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 13,
+                                        borderRadius: BorderRadius.circular(14),
+                                      ),
+                                      child: Text(
+                                        '${filtered.length}',
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 12,
+                                        ),
                                       ),
                                     ),
-                                    TextSpan(
-                                      text: 'de ${allLow.length} productos',
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      'de ${allItems.length} productos',
                                       style: const TextStyle(
-                                        color: Colors.black54,
+                                        color: Colors.white54,
                                         fontSize: 13,
                                       ),
                                     ),
                                   ],
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
-                          const Spacer(),
                           Container(
-                            padding: const EdgeInsets.all(8),
+                            width: 40,
+                            height: 40,
+                            alignment: Alignment.center,
                             decoration: BoxDecoration(
-                              color: AppColors.lightRed,
-                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                color: AppColors.primaryRed,
+                                width: 1.5,
+                              ),
+                              shape: BoxShape.circle,
                             ),
                             child: const Icon(
                               Icons.warning_amber_rounded,
                               color: AppColors.primaryRed,
-                              size: 20,
+                              size: 22,
                             ),
                           ),
                         ],
@@ -964,7 +997,7 @@ class _InventoryViewState extends State<InventoryView> {
                 // ── Chips de filtro ───────────────────────────────────
                 Container(
                   color: AppColors.lightGray,
-                  padding: const EdgeInsets.fromLTRB(12, 0, 12, 10),
+                  padding: const EdgeInsets.fromLTRB(15, 0, 15, 4),
                   child: SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
                     child: Row(
@@ -1652,68 +1685,62 @@ class _ProductGridCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: Text(
-                            item.name,
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14,
-                              height: 1.2,
-                            ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        if (isZero || isLow)
-                          Padding(
-                            padding: const EdgeInsets.only(left: 2),
-                            child: Icon(
-                              Icons.warning_rounded,
-                              color: isZero
-                                  ? AppColors.primaryRed
-                                  : Colors.orange,
-                              size: 21,
-                            ),
-                          ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Código:',
-                      style: TextStyle(fontSize: 8, color: Colors.grey[500]),
-                    ),
-                    Text(
-                      code,
-                      style: const TextStyle(
-                        fontSize: 13,
-                        color: Colors.black54,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        Text(
-                          'Almacén: ',
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: Colors.grey[600],
-                          ),
-                        ),
-                        Text(
-                          item.quantity.toString(),
-                          style: TextStyle(
-                            fontSize: 14,
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          item.name,
+                          style: const TextStyle(
                             fontWeight: FontWeight.bold,
-                            color: stockColor,
+                            fontSize: 14,
+                            height: 1.2,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      if (isZero || isLow)
+                        Padding(
+                          padding: const EdgeInsets.only(left: 2),
+                          child: Icon(
+                            Icons.warning_rounded,
+                            color: isZero
+                                ? AppColors.primaryRed
+                                : Colors.orange,
+                            size: 21,
                           ),
                         ),
-                      ],
-                    ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Código:',
+                    style: TextStyle(fontSize: 8, color: Colors.grey[500]),
+                  ),
+                  Text(
+                    code,
+                    style: const TextStyle(fontSize: 13, color: Colors.black54),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      Text(
+                        'Almacén: ',
+                        style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+                      ),
+                      Text(
+                        item.quantity.toString(),
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: stockColor,
+                        ),
+                      ),
+                    ],
+                  ),
                 ],
               ),
             ),
@@ -1966,6 +1993,10 @@ class _StockBajoRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final Color iconBg = isZero ? AppColors.lightRed : const Color(0xFFFFEDD5);
     final Color iconColor = isZero ? AppColors.primaryRed : Colors.orange;
+    final progress = (item.quantity / 5).clamp(0.0, 1.0);
+    final code = item.sku.isNotEmpty
+        ? item.sku
+        : 'Prod${item.productId.toString().padLeft(9, '0')}';
 
     return GestureDetector(
       onTap: onTap,
@@ -1973,7 +2004,7 @@ class _StockBajoRow extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 10),
         decoration: BoxDecoration(
           color: AppColors.whiteOverlay,
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(16),
           boxShadow: const [
             BoxShadow(
               color: Colors.black12,
@@ -1987,11 +2018,12 @@ class _StockBajoRow extends StatelessWidget {
             // Ícono con cantidad
             Container(
               width: 60,
-              height: 72,
-              margin: const EdgeInsets.all(10),
+              height: 60,
+              margin: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: iconBg,
-                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: Colors.orange.shade300, width: 1.5),
+                borderRadius: BorderRadius.circular(15),
               ),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -2001,7 +2033,7 @@ class _StockBajoRow extends StatelessWidget {
                         ? Icons.cancel_outlined
                         : Icons.warning_amber_rounded,
                     color: iconColor,
-                    size: 22,
+                    size: 20,
                   ),
                   const SizedBox(height: 2),
                   Text(
@@ -2009,7 +2041,7 @@ class _StockBajoRow extends StatelessWidget {
                     style: TextStyle(
                       color: iconColor,
                       fontWeight: FontWeight.bold,
-                      fontSize: 16,
+                      fontSize: 14,
                     ),
                   ),
                 ],
@@ -2018,7 +2050,7 @@ class _StockBajoRow extends StatelessWidget {
             // Info
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 12),
+                padding: const EdgeInsets.symmetric(vertical: 14),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -2026,16 +2058,16 @@ class _StockBajoRow extends StatelessWidget {
                       item.name,
                       style: const TextStyle(
                         fontWeight: FontWeight.bold,
-                        fontSize: 13,
+                        fontSize: 16,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 3),
                     Text(
-                      'Código: ${item.sku.isNotEmpty ? item.sku : 'Prod${item.productId.toString().padLeft(9, '0')}'}',
+                      'Código: $code',
                       style: const TextStyle(
-                        fontSize: 11,
+                        fontSize: 12,
                         color: Colors.black45,
                       ),
                     ),
@@ -2048,18 +2080,28 @@ class _StockBajoRow extends StatelessWidget {
                         fontWeight: FontWeight.w500,
                       ),
                     ),
+                    const SizedBox(height: 5),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(4),
+                      child: LinearProgressIndicator(
+                        minHeight: 6,
+                        value: progress,
+                        backgroundColor: Colors.black12,
+                        valueColor: AlwaysStoppedAnimation<Color>(iconColor),
+                      ),
+                    ),
                   ],
                 ),
               ),
             ),
             // Botón carrito
             Container(
-              margin: const EdgeInsets.only(right: 10),
-              width: 40,
-              height: 40,
+              margin: const EdgeInsets.only(right: 16),
+              width: 44,
+              height: 44,
               decoration: BoxDecoration(
                 color: AppColors.blackOverlay,
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(13),
               ),
               child: const Icon(
                 Icons.shopping_cart_outlined,
