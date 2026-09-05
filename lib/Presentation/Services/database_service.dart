@@ -1795,17 +1795,26 @@ class DatabaseService {
         p.id AS product_id,
         p.name,
         p.sku,
+        COALESCE(p.aux_code, '') AS aux_code,
+        COALESCE(p.description, '') AS description,
         p.price,
+        COALESCE(p.cost_price, 0) AS cost_price,
         COALESCE(c.name, 'Sin categoria') AS category,
         COALESCE(i.stock, 0) AS stock
       FROM products p
       LEFT JOIN categories c ON c.id = p.category_id
       INNER JOIN inventory i ON i.product_id = p.id AND i.store_id = ?
-      WHERE i.stock > 0
-        AND (p.name LIKE ? OR p.sku LIKE ? OR COALESCE(c.name, '') LIKE ?)
+      WHERE i.stock >= 0
+        AND (
+          p.name LIKE ? OR
+          p.sku LIKE ? OR
+          COALESCE(p.aux_code, '') LIKE ? OR
+          COALESCE(p.description, '') LIKE ? OR
+          COALESCE(c.name, '') LIKE ?
+        )
       ORDER BY p.name COLLATE NOCASE
       ''',
-      [storeId, filter, filter, filter],
+      [storeId, filter, filter, filter, filter, filter],
     );
   }
 

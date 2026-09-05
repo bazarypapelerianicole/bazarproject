@@ -19,7 +19,6 @@ class InventoryView extends StatefulWidget {
 
 class _InventoryViewState extends State<InventoryView> {
   final _searchController = TextEditingController();
-  final _descController = TextEditingController();
   final _codeController = TextEditingController();
   // 0 = Resumen, 1 = Productos, 2 = Stock Bajo
   int _selectedTab = 0;
@@ -39,7 +38,6 @@ class _InventoryViewState extends State<InventoryView> {
   @override
   void dispose() {
     _searchController.dispose();
-    _descController.dispose();
     _codeController.dispose();
     super.dispose();
   }
@@ -259,18 +257,11 @@ class _InventoryViewState extends State<InventoryView> {
               actions: [
                 IconButton(
                   icon: const Icon(
-                    Icons.shopping_cart_outlined,
-                    color: AppColors.whiteOverlay,
-                  ),
-                  onPressed: () {},
-                ),
-                IconButton(
-                  icon: const Icon(
                     Icons.refresh,
                     color: AppColors.whiteOverlay,
                   ),
                   onPressed: () =>
-                      context.read<InventoryProvider>().loadInventory(),
+                      context.read<InventoryProvider>().refreshInventory(),
                 ),
               ],
               bottom: PreferredSize(
@@ -661,21 +652,20 @@ class _InventoryViewState extends State<InventoryView> {
   }
 
   List<InventoryItem> _filtrarProductos(InventoryProvider provider) {
-    final nombre = _searchController.text.toLowerCase();
-    final desc = _descController.text.toLowerCase();
-    final codigo = _codeController.text.toLowerCase();
+    final texto = _searchController.text.trim().toLowerCase();
+    final codigo = _codeController.text.trim().toLowerCase();
     return provider.inventoryItems.where((item) {
-      final matchNombre =
-          nombre.isEmpty || item.name.toLowerCase().contains(nombre);
-      final matchDesc =
-          desc.isEmpty ||
-          item.name.toLowerCase().contains(desc) ||
-          item.category.toLowerCase().contains(desc);
+      final matchTexto =
+          texto.isEmpty ||
+          item.name.toLowerCase().contains(texto) ||
+          item.description.toLowerCase().contains(texto) ||
+          item.category.toLowerCase().contains(texto);
       final matchCodigo =
           codigo.isEmpty ||
           item.sku.toLowerCase().contains(codigo) ||
+          item.auxCode.toLowerCase().contains(codigo) ||
           item.productId.toString().contains(codigo);
-      return matchNombre && matchDesc && matchCodigo;
+      return matchTexto && matchCodigo;
     }).toList();
   }
 
@@ -735,7 +725,7 @@ class _InventoryViewState extends State<InventoryView> {
             children: [
               if (provider.stores.length > 1) ...[
                 FilterDropdown<int>(
-                  label: 'Local',
+                  label: 'Bazar',
                   value: provider.selectedStoreId,
                   items: provider.stores
                       .map(
@@ -756,7 +746,7 @@ class _InventoryViewState extends State<InventoryView> {
                   Expanded(
                     child: SharedTextField(
                       controller: _searchController,
-                      hint: 'Buscar por Producto...',
+                      hint: 'Buscar producto o descripción...',
                       prefixIcon: const Icon(
                         Icons.search,
                         size: 18,
@@ -767,33 +757,6 @@ class _InventoryViewState extends State<InventoryView> {
                           : GestureDetector(
                               onTap: () {
                                 _searchController.clear();
-                                setState(() {});
-                              },
-                              child: const Icon(
-                                Icons.clear,
-                                size: 16,
-                                color: Colors.black38,
-                              ),
-                            ),
-                      useFilterStyle: true,
-                      onChanged: (_) => setState(() {}),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: SharedTextField(
-                      controller: _descController,
-                      hint: 'Buscar por Descripción...',
-                      prefixIcon: const Icon(
-                        Icons.search,
-                        size: 18,
-                        color: Colors.black38,
-                      ),
-                      suffixIcon: _descController.text.isEmpty
-                          ? null
-                          : GestureDetector(
-                              onTap: () {
-                                _descController.clear();
                                 setState(() {});
                               },
                               child: const Icon(
@@ -826,36 +789,59 @@ class _InventoryViewState extends State<InventoryView> {
         Expanded(
           child: filtered.isEmpty
               ? const Center(child: Text('No hay productos para este local'))
-              : GridView.builder(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 4,
-                  ),
-                  gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                    maxCrossAxisExtent: 160,
-                    mainAxisSpacing: 10,
-                    crossAxisSpacing: 10,
-                    childAspectRatio: 0.75,
-                  ),
-                  itemCount: filtered.length,
-                  itemBuilder: (_, i) =>
-                      _ProductGridCard(
-                            item: filtered[i],
-                            fmt: fmt,
-                            onTap: () => _showProductDetailSheet(filtered[i]),
-                          )
-                          .animate()
-                          .fadeIn(
-                            delay: Duration(milliseconds: 25 * (i % 24)),
-                            duration: 300.ms,
-                          )
-                          .slideY(
-                            begin: 0.15,
-                            end: 0,
-                            delay: Duration(milliseconds: 25 * (i % 24)),
-                            duration: 300.ms,
-                            curve: Curves.easeOut,
+              : LayoutBuilder(
+                  builder: (context, constraints) {
+                    final crossAxisCount = constraints.maxWidth >= 1100
+                        ? 4
+                        : constraints.maxWidth >= 700
+                        ? 3
+                        : 2;
+                    final availableWidth = constraints.maxWidth - 24;
+                    final cardWidth =
+                        (availableWidth - (crossAxisCount - 1) * 10) /
+                        crossAxisCount;
+
+                    return ListView(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 4,
+                      ),
+                      children: [
+                        Wrap(
+                          spacing: 10,
+                          runSpacing: 10,
+                          children: List.generate(
+                            filtered.length,
+                            (i) => SizedBox(
+                              width: cardWidth,
+                              child: _ProductGridCard(
+                                item: filtered[i],
+                                fmt: fmt,
+                                onTap: () =>
+                                    _showProductDetailSheet(filtered[i]),
+                              )
+                                  .animate()
+                                  .fadeIn(
+                                    delay: Duration(
+                                      milliseconds: 25 * (i % 24),
+                                    ),
+                                    duration: 300.ms,
+                                  )
+                                  .slideY(
+                                    begin: 0.15,
+                                    end: 0,
+                                    delay: Duration(
+                                      milliseconds: 25 * (i % 24),
+                                    ),
+                                    duration: 300.ms,
+                                    curve: Curves.easeOut,
+                                  ),
+                            ),
                           ),
+                        ),
+                      ],
+                    );
+                  },
                 ),
         ),
       ],
@@ -1634,11 +1620,14 @@ class _ProductGridCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final isZero = item.quantity == 0;
     final isLow = !isZero && item.quantity <= 5;
+    final code = item.sku.isNotEmpty
+        ? item.sku
+        : 'Prod${item.productId.toString().padLeft(9, '0')}';
     final stockColor = isZero
         ? AppColors.primaryRed
         : isLow
         ? Colors.orange
-        : Colors.green;
+        : AppColors.darkGreen.withValues(alpha: 0.2);
 
     return GestureDetector(
       onTap: onTap,
@@ -1658,12 +1647,11 @@ class _ProductGridCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Nombre + ícono de alerta
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(10, 10, 10, 4),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -1672,9 +1660,10 @@ class _ProductGridCard extends StatelessWidget {
                             item.name,
                             style: const TextStyle(
                               fontWeight: FontWeight.bold,
-                              fontSize: 11,
+                              fontSize: 14,
+                              height: 1.2,
                             ),
-                            maxLines: 3,
+                            maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
@@ -1682,26 +1671,28 @@ class _ProductGridCard extends StatelessWidget {
                           Padding(
                             padding: const EdgeInsets.only(left: 2),
                             child: Icon(
-                              Icons.warning_amber_rounded,
+                              Icons.warning_rounded,
                               color: isZero
                                   ? AppColors.primaryRed
                                   : Colors.orange,
-                              size: 14,
+                              size: 21,
                             ),
                           ),
                       ],
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 8),
                     Text(
                       'Código:',
-                      style: TextStyle(fontSize: 9, color: Colors.grey[500]),
+                      style: TextStyle(fontSize: 8, color: Colors.grey[500]),
                     ),
                     Text(
-                      item.sku,
+                      code,
                       style: const TextStyle(
-                        fontSize: 10,
+                        fontSize: 13,
                         color: Colors.black54,
                       ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 4),
                     Row(
@@ -1709,45 +1700,38 @@ class _ProductGridCard extends StatelessWidget {
                         Text(
                           'Almacén: ',
                           style: TextStyle(
-                            fontSize: 10,
+                            fontSize: 13,
                             color: Colors.grey[600],
                           ),
                         ),
                         Text(
                           item.quantity.toString(),
                           style: TextStyle(
-                            fontSize: 11,
+                            fontSize: 14,
                             fontWeight: FontWeight.bold,
                             color: stockColor,
                           ),
                         ),
                       ],
                     ),
-                  ],
-                ),
+                ],
               ),
             ),
             // Precio compra
             Padding(
-              padding: const EdgeInsets.all(8.0),
+              padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
               child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 6,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
                 decoration: BoxDecoration(
-                  color: AppColors.lightGreen,
-                  borderRadius: const BorderRadius.vertical(
-                    bottom: Radius.circular(12),
-                  ),
+                  color: AppColors.darkGreen.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
                   'Compra: \$${fmt.format(item.costPrice)}',
                   style: const TextStyle(
-                    fontSize: 10,
+                    fontSize: 14,
                     fontWeight: FontWeight.bold,
-                    color: Colors.green,
+                    color: AppColors.darkGreen,
                   ),
                 ),
               ),
@@ -1848,7 +1832,11 @@ class _StatusCard extends StatelessWidget {
           color: bgColor,
           borderRadius: BorderRadius.circular(14),
           boxShadow: const [
-            BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(0, 2)),
+            BoxShadow(
+              color: Colors.black12,
+              blurRadius: 4,
+              offset: Offset(0, 2),
+            ),
           ],
         ),
         child: Padding(
@@ -1876,7 +1864,10 @@ class _StatusCard extends StatelessWidget {
               const SizedBox(height: 2),
               Text(
                 label,
-                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
+                style: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
               const SizedBox(height: 2),
               Text(
