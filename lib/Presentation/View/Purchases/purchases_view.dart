@@ -1,5 +1,4 @@
 import 'package:bazarnicole/Presentation/Controller/purchases_controller.dart';
-import 'package:bazarnicole/Presentation/Renders/responsive_helper.dart';
 import 'package:bazarnicole/Presentation/Utils/Colors.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -13,14 +12,18 @@ class PurchasesView extends StatefulWidget {
   State<PurchasesView> createState() => _PurchasesViewState();
 }
 
-class _PurchasesViewState extends State<PurchasesView> {
+class _PurchasesViewState extends State<PurchasesView>
+    with TickerProviderStateMixin {
   final _searchController = TextEditingController();
   final _supplierController = TextEditingController();
   final _supplierPhoneController = TextEditingController();
+  late TabController _tabController;
+  int _saleCount = 1;
 
   @override
   void initState() {
     super.initState();
+    _tabController = TabController(length: 2, vsync: this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<PurchasesController>().initialize();
     });
@@ -28,6 +31,7 @@ class _PurchasesViewState extends State<PurchasesView> {
 
   @override
   void dispose() {
+    _tabController.dispose();
     _searchController.dispose();
     _supplierController.dispose();
     _supplierPhoneController.dispose();
@@ -59,87 +63,138 @@ class _PurchasesViewState extends State<PurchasesView> {
     }
   }
 
+  void _agregarCompra() {
+    final newTabIndex = _saleCount;
+
+    setState(() {
+      _saleCount++;
+      _tabController.dispose();
+      _tabController = TabController(
+        length: _saleCount + 1,
+        vsync: this,
+        initialIndex: newTabIndex,
+      );
+    });
+  }
+
+  void _cerrarCompra(int saleIndex) {
+    if (_saleCount == 1) return;
+
+    final currentIndex = _tabController.index;
+    final newSaleCount = _saleCount - 1;
+    var newTabIndex = currentIndex;
+
+    if (currentIndex > saleIndex) {
+      newTabIndex--;
+    }
+    newTabIndex = newTabIndex.clamp(0, newSaleCount);
+
+    setState(() {
+      _saleCount = newSaleCount;
+      _tabController.dispose();
+      _tabController = TabController(
+        length: _saleCount + 1,
+        vsync: this,
+        initialIndex: newTabIndex,
+      );
+    });
+  }
+
+  Widget _buildSaleTab(int index) {
+    return Tab(
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text('Compra ${index + 1}'),
+          if (_saleCount > 1)
+            IconButton(
+              tooltip: 'Cerrar Compra',
+              onPressed: () => _cerrarCompra(index),
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+              icon: const Icon(Icons.close, size: 18),
+            ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final appBarHeight = ResponsiveHelper.getAppBarHeight(context) + 48;
-
-    return DefaultTabController(
-      length: 2,
-      child: Scaffold(
-        backgroundColor: AppColors.lightGray,
-        appBar: PreferredSize(
-          preferredSize: Size.fromHeight(appBarHeight),
-          child: ClipRRect(
-            clipBehavior: Clip.hardEdge,
-            borderRadius: const BorderRadius.vertical(
-              bottom: Radius.circular(25),
+    return Scaffold(
+      backgroundColor: AppColors.lightGray,
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(kToolbarHeight + 48),
+        child: ClipRRect(
+          borderRadius: const BorderRadius.only(
+            bottomLeft: Radius.circular(20),
+            bottomRight: Radius.circular(20),
+          ),
+          child: AppBar(
+            title: const Text(
+              'Compras · Abastecimiento',
+              style: TextStyle(fontSize: 16, color: AppColors.whiteOverlay),
             ),
-            child: Container(
-              decoration: const BoxDecoration(
-                color: AppColors.blackOverlay,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black26,
-                    blurRadius: 5,
-                    offset: Offset(0, 3),
-                  ),
-                ],
+            iconTheme: const IconThemeData(color: AppColors.lightWhite),
+            backgroundColor: AppColors.blackOverlay,
+            elevation: 4,
+            centerTitle: true,
+            surfaceTintColor: Colors.transparent,
+            leading: IconButton(
+              icon: const Icon(
+                Icons.arrow_back,
+                color: AppColors.whiteOverlay,
+                size: 30,
               ),
-              child: AppBar(
-                surfaceTintColor: Colors.transparent,
-                backgroundColor: Colors.transparent,
-                elevation: 4,
-                leading: IconButton(
-                  icon: const Icon(
-                    Icons.arrow_back,
-                    color: AppColors.whiteOverlay,
-                    size: 30,
-                  ),
-                  onPressed: () => Navigator.pop(context),
-                ),
-                title: const Text(
-                  'Compras · Abastecimiento',
-                  style: TextStyle(fontSize: 16, color: AppColors.whiteOverlay),
-                ),
-                bottom: TabBar(
-                  labelColor: _searchController.text.isEmpty
-                      ? AppColors.whiteOverlay
-                      : AppColors.mediumGray,
-                  unselectedLabelColor: _searchController.text.isEmpty
-                      ? AppColors.mediumGray
-                      : AppColors.whiteOverlay,
-                  unselectedLabelStyle: TextStyle(
-                    color: _searchController.text.isEmpty
-                        ? AppColors.mediumGray
-                        : AppColors.whiteOverlay,
-                  ),
-                  indicatorColor: AppColors.whiteOverlay,
-                  tabs: const [
-                    Tab(
-                      text: 'Nueva compra',
-                      icon: Icon(Icons.add),
-                    ),
-                    Tab(
-                      text: 'Historial de compras',
-                      icon: Icon(Icons.history_outlined),
-                    ),
-                  ],
+              onPressed: () => Navigator.pop(context),
+            ),
+            actions: [
+              IconButton(
+                tooltip: 'Nueva Compra',
+                onPressed: _agregarCompra,
+                icon: const Icon(
+                  Icons.add,
+                  color: AppColors.whiteOverlay,
+                  size: 28,
                 ),
               ),
+            ],
+            bottom: TabBar(
+              controller: _tabController,
+              isScrollable: true,
+              labelColor: AppColors.whiteOverlay,
+              unselectedLabelColor: AppColors.mediumGray,
+              indicatorColor: AppColors.whiteOverlay,
+              tabs: [
+                for (var index = 0; index < _saleCount; index++)
+                  _buildSaleTab(index),
+                const Tab(
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.history),
+                      SizedBox(width: 4),
+                      Text('Historial'),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ),
         ),
-        body: TabBarView(
-          children: [
+      ),
+      body: TabBarView(
+        controller: _tabController,
+        children: [
+          for (var index = 0; index < _saleCount; index++)
             NewPurchaseTab(
               searchController: _searchController,
               supplierController: _supplierController,
               supplierPhoneController: _supplierPhoneController,
               onSave: _savePurchase,
             ),
-            const PurchaseHistoryTab(),
-          ],
-        ),
+          const PurchaseHistoryTab(),
+        ],
       ),
     );
   }

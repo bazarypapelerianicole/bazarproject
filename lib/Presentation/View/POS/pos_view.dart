@@ -189,7 +189,7 @@ class _PosScaffoldState extends State<_PosScaffold>
       child: Focus(
         autofocus: true,
         child: Scaffold(
-          backgroundColor: const Color(0xFFF2F2F2),
+          backgroundColor: AppColors.lightGray,
           appBar: PreferredSize(
             preferredSize: const Size.fromHeight(kToolbarHeight + 48),
             child: ClipRRect(
@@ -235,7 +235,9 @@ class _PosScaffoldState extends State<_PosScaffold>
                   controller: _tabController,
                   isScrollable: true,
                   labelColor: AppColors.lightWhite,
-                  unselectedLabelColor: AppColors.lightWhite.withOpacity(0.6),
+                  unselectedLabelColor: AppColors.lightWhite.withValues(
+                    alpha: 0.6,
+                  ),
                   indicatorColor: AppColors.lightWhite,
                   tabs: [
                     for (var index = 0; index < _saleCount; index++)
