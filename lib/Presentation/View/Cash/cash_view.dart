@@ -6,6 +6,7 @@ import 'package:bazarnicole/Presentation/Utils/Colors.dart';
 import 'package:bazarnicole/Presentation/Widgets/cash_widgets.dart';
 import 'package:bazarnicole/Presentation/Widgets/cash_stores_status.dart';
 import 'package:bazarnicole/Presentation/Widgets/Products/filter_dropdown.dart';
+import 'package:bazarnicole/Presentation/Widgets/Products/shared_inputs.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
@@ -1296,12 +1297,12 @@ class _CashViewActions {
             return Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                TextField(
+                SharedTextField(
                   controller: amountController,
                   keyboardType: const TextInputType.numberWithOptions(
                     decimal: true,
                   ),
-                  decoration: const InputDecoration(labelText: 'Monto'),
+                  label: 'Monto',
                 ),
                 const SizedBox(height: 8),
                 FilterDropdown<String>(
@@ -1318,9 +1319,9 @@ class _CashViewActions {
                   onChanged: (v) => setLocalState(() => selectedMethod = v),
                 ),
                 const SizedBox(height: 8),
-                TextField(
+                SharedTextField(
                   controller: descController,
-                  decoration: const InputDecoration(labelText: 'Descripción'),
+                  label: 'Descripción',
                 ),
               ],
             );

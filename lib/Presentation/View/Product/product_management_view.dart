@@ -469,55 +469,32 @@ class _ProductManagementViewState extends State<ProductManagementView> {
                       children: [
                         SizedBox(
                           height: 56,
-                          child: TextField(
+                          child: SharedTextField(
                             controller: _searchController,
                             style: const TextStyle(
                               fontSize: 15,
                               color: Colors.black87,
                             ),
-                            decoration: InputDecoration(
-                              hintText: 'Buscar productos...',
-                              hintStyle: TextStyle(
-                                color: AppColors.greyOverlay,
-                              ),
-                              prefixIcon: Icon(
-                                Icons.search_rounded,
-                                color: Colors.grey.shade400,
-                                size: 22,
-                              ),
-                              suffixIcon: _searchController.text.isEmpty
-                                  ? null
-                                  : IconButton(
-                                      onPressed: () {
-                                        _searchController.clear();
-                                        _applyCatalogFilters();
-                                      },
-                                      icon: Icon(
-                                        Icons.close,
-                                        color: Colors.grey.shade400,
-                                        size: 18,
-                                      ),
-                                    ),
-                              filled: true,
-                              fillColor: AppColors.whiteOverlay,
-                              hoverColor: AppColors.whiteOverlay,
-                              contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 20,
-                                vertical: 16,
-                              ),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(16),
-                                borderSide: BorderSide.none,
-                              ),
-                              enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(16),
-                                borderSide: BorderSide.none,
-                              ),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(16),
-                                borderSide: BorderSide.none,
-                              ),
+                            hint: 'Buscar productos...',
+                            prefixIcon: Icon(
+                              Icons.search_rounded,
+                              color: Colors.grey.shade400,
+                              size: 22,
                             ),
+                            suffixIcon: _searchController.text.isEmpty
+                                ? null
+                                : IconButton(
+                                    onPressed: () {
+                                      _searchController.clear();
+                                      _applyCatalogFilters();
+                                    },
+                                    icon: Icon(
+                                      Icons.close,
+                                      color: Colors.grey.shade400,
+                                      size: 18,
+                                    ),
+                                  ),
+                            useFilterStyle: true,
                             onChanged: (value) {
                               setState(() {});
                               _applyCatalogFilters();

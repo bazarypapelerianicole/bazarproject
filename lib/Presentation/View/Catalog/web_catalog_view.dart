@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:bazarnicole/Presentation/Controller/Catalog/catalog_controller.dart';
 import 'package:bazarnicole/Presentation/Utils/Colors.dart';
 import 'package:bazarnicole/Presentation/Widgets/Catalog/catalog_card_widget.dart';
+import 'package:bazarnicole/Presentation/Widgets/Products/shared_inputs.dart';
 import 'package:bazarnicole/Presentation/Widgets/legal_page_widget.dart';
 import 'package:flutter/material.dart';
 
@@ -127,7 +128,6 @@ class CatalogSearchBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return Container(
       height: 56,
       decoration: BoxDecoration(
@@ -141,35 +141,14 @@ class CatalogSearchBar extends StatelessWidget {
           ),
         ],
       ),
-      child: TextField(
+      child: SharedTextField(
         controller: controller,
         textInputAction: TextInputAction.search,
         onChanged: onChanged,
         onSubmitted: onSubmitted,
-        decoration: InputDecoration(
-          hintText: 'Buscar producto',
-          prefixIcon: const Icon(Icons.search_rounded, size: 20),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(18),
-            borderSide: BorderSide.none,
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(18),
-            borderSide: BorderSide.none,
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(18),
-            borderSide: BorderSide(
-              color: theme.colorScheme.primary.withValues(alpha: 0.2),
-            ),
-          ),
-          filled: true,
-          fillColor: Colors.white,
-          contentPadding: EdgeInsets.symmetric(
-            horizontal: isCompact ? 16 : 20,
-            vertical: isCompact ? 14 : 16,
-          ),
-        ),
+        hint: 'Buscar producto',
+        prefixIcon: const Icon(Icons.search_rounded, size: 20),
+        useFilterStyle: true,
       ),
     );
   }

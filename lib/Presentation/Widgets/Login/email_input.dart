@@ -1,4 +1,5 @@
 import 'package:bazarnicole/Presentation/Utils/Colors.dart';
+import 'package:bazarnicole/Presentation/Widgets/Products/shared_inputs.dart';
 import 'package:flutter/material.dart';
 
 class EmailInput extends StatelessWidget {
@@ -20,17 +21,10 @@ class EmailInput extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 4),
-        TextField(
+        SharedTextField(
           controller: controller,
-          decoration: InputDecoration(
-            prefixIcon: Icon(Icons.email, color: AppColors.accentColor),
-            enabledBorder: UnderlineInputBorder(
-              borderSide: BorderSide(color: AppColors.primaryLogo),
-            ),
-            focusedBorder: UnderlineInputBorder(
-              borderSide: BorderSide(color: AppColors.primaryLogo, width: 2),
-            ),
-          ),
+          prefixIcon: Icon(Icons.email, color: AppColors.accentColor),
+          keyboardType: TextInputType.emailAddress,
         ),
       ],
     );

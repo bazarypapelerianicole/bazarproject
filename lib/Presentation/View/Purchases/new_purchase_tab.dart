@@ -112,10 +112,11 @@ class _CatalogPanel extends StatelessWidget {
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: TextField(
+                child: SharedTextField(
                   controller: supplierController,
                   style: const TextStyle(fontSize: 15, color: Colors.black87),
-                  decoration: filterFieldDecoration(hint: 'Proveedor opcional'),
+                  hint: 'Proveedor opcional',
+                  useFilterStyle: true,
                 ),
               ),
             ],
@@ -124,21 +125,21 @@ class _CatalogPanel extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: TextField(
+                child: SharedTextField(
                   controller: supplierPhoneController,
                   style: const TextStyle(fontSize: 15, color: Colors.black87),
-                  decoration: filterFieldDecoration(hint: 'Teléfono proveedor'),
+                  hint: 'Teléfono proveedor',
+                  useFilterStyle: true,
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: TextField(
+                child: SharedTextField(
                   controller: searchController,
                   style: const TextStyle(fontSize: 15, color: Colors.black87),
-                  decoration: filterFieldDecoration(
-                    hint: 'Buscar producto',
-                    prefixIcon: const Icon(Icons.search),
-                  ),
+                  hint: 'Buscar producto',
+                  prefixIcon: const Icon(Icons.search),
+                  useFilterStyle: true,
                   onChanged: controller.updateSearch,
                 ),
               ),
@@ -390,13 +391,10 @@ class _SummaryPanel extends StatelessWidget {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Actualizar costo'),
-        content: TextField(
+        content: SharedTextField(
           controller: costController,
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          decoration: const InputDecoration(
-            labelText: 'Costo unitario',
-            border: OutlineInputBorder(),
-          ),
+          label: 'Costo unitario',
         ),
         actions: [
           TextButton(

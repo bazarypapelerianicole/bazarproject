@@ -701,12 +701,11 @@ class _InventoryViewState extends State<InventoryView> {
                 ),
                 const SizedBox(width: 10),
                 Expanded(
-                  child: TextField(
+                  child: SharedTextField(
                     controller: _codeController,
-                    decoration: filterFieldDecoration(
-                      hint:
-                          'Buscar por código, código auxiliar o código de barras...',
-                    ),
+                    hint:
+                        'Buscar por código, código auxiliar o código de barras...',
+                    useFilterStyle: true,
                     onChanged: (_) => setState(() {}),
                   ),
                 ),
@@ -755,59 +754,55 @@ class _InventoryViewState extends State<InventoryView> {
               Row(
                 children: [
                   Expanded(
-                    child: TextField(
+                    child: SharedTextField(
                       controller: _searchController,
-                      decoration: filterFieldDecoration(
-                        hint: 'Buscar por Producto...',
-                        prefixIcon: const Icon(
-                          Icons.search,
-                          size: 18,
-                          color: Colors.black38,
-                        ),
-                      ).copyWith(
-                        suffixIcon: _searchController.text.isEmpty
-                            ? null
-                            : GestureDetector(
-                                onTap: () {
-                                  _searchController.clear();
-                                  setState(() {});
-                                },
-                                child: const Icon(
-                                  Icons.clear,
-                                  size: 16,
-                                  color: Colors.black38,
-                                ),
-                              ),
+                      hint: 'Buscar por Producto...',
+                      prefixIcon: const Icon(
+                        Icons.search,
+                        size: 18,
+                        color: Colors.black38,
                       ),
+                      suffixIcon: _searchController.text.isEmpty
+                          ? null
+                          : GestureDetector(
+                              onTap: () {
+                                _searchController.clear();
+                                setState(() {});
+                              },
+                              child: const Icon(
+                                Icons.clear,
+                                size: 16,
+                                color: Colors.black38,
+                              ),
+                            ),
+                      useFilterStyle: true,
                       onChanged: (_) => setState(() {}),
                     ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: TextField(
+                    child: SharedTextField(
                       controller: _descController,
-                      decoration: filterFieldDecoration(
-                        hint: 'Buscar por Descripción...',
-                        prefixIcon: const Icon(
-                          Icons.search,
-                          size: 18,
-                          color: Colors.black38,
-                        ),
-                      ).copyWith(
-                        suffixIcon: _descController.text.isEmpty
-                            ? null
-                            : GestureDetector(
-                                onTap: () {
-                                  _descController.clear();
-                                  setState(() {});
-                                },
-                                child: const Icon(
-                                  Icons.clear,
-                                  size: 16,
-                                  color: Colors.black38,
-                                ),
-                              ),
+                      hint: 'Buscar por Descripción...',
+                      prefixIcon: const Icon(
+                        Icons.search,
+                        size: 18,
+                        color: Colors.black38,
                       ),
+                      suffixIcon: _descController.text.isEmpty
+                          ? null
+                          : GestureDetector(
+                              onTap: () {
+                                _descController.clear();
+                                setState(() {});
+                              },
+                              child: const Icon(
+                                Icons.clear,
+                                size: 16,
+                                color: Colors.black38,
+                              ),
+                            ),
+                      useFilterStyle: true,
                       onChanged: (_) => setState(() {}),
                     ),
                   ),

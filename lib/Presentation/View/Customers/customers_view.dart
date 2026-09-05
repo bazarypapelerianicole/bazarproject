@@ -1,5 +1,6 @@
 import 'package:bazarnicole/Presentation/Controller/customers_controller.dart';
 import 'package:bazarnicole/Presentation/Utils/Colors.dart';
+import 'package:bazarnicole/Presentation/Widgets/Products/shared_inputs.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:intl/intl.dart';
@@ -113,145 +114,29 @@ class _CustomersViewState extends State<CustomersView>
                         ),
                       ),
                       const SizedBox(height: 12),
-                      TextFormField(
+                      SharedTextFormField(
                         controller: _nameController,
-                        decoration: InputDecoration(
-                          filled: true,
-                          fillColor: AppColors.whiteOverlay,
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 20,
-                            vertical: 16,
-                          ),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(16),
-                            borderSide: const BorderSide(
-                              color: AppColors.whiteOverlay,
-                              width: 1.5,
-                            ),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(16),
-                            borderSide: const BorderSide(
-                              color: AppColors.whiteOverlay,
-                              width: 1.5,
-                            ),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(16),
-                            borderSide: const BorderSide(
-                              color: AppColors.whiteOverlay,
-                              width: 1.5,
-                            ),
-                          ),
-                          hintText: 'Nombre completo',
-                        ),
+                        hint: 'Nombre completo',
                         validator: (value) =>
                             value == null || value.trim().isEmpty
                             ? 'Ingresa el nombre'
                             : null,
                       ),
                       const SizedBox(height: 10),
-                      TextField(
+                      SharedTextField(
                         controller: _phoneController,
-                        decoration: InputDecoration(
-                          filled: true,
-                          fillColor: AppColors.whiteOverlay,
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 20,
-                            vertical: 16,
-                          ),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(16),
-                            borderSide: const BorderSide(
-                              color: AppColors.whiteOverlay,
-                              width: 1.5,
-                            ),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(16),
-                            borderSide: const BorderSide(
-                              color: AppColors.whiteOverlay,
-                              width: 1.5,
-                            ),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(16),
-                            borderSide: const BorderSide(
-                              color: AppColors.whiteOverlay,
-                              width: 1.5,
-                            ),
-                          ),
-                          hintText: 'Teléfono',
-                        ),
+                        hint: 'Teléfono',
                       ),
                       const SizedBox(height: 10),
-                      TextField(
+                      SharedTextField(
                         controller: _emailController,
-                        decoration: InputDecoration(
-                          filled: true,
-                          fillColor: AppColors.whiteOverlay,
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 20,
-                            vertical: 16,
-                          ),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(16),
-                            borderSide: const BorderSide(
-                              color: AppColors.whiteOverlay,
-                              width: 1.5,
-                            ),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(16),
-                            borderSide: const BorderSide(
-                              color: AppColors.whiteOverlay,
-                              width: 1.5,
-                            ),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(16),
-                            borderSide: const BorderSide(
-                              color: AppColors.whiteOverlay,
-                              width: 1.5,
-                            ),
-                          ),
-                          hintText: 'Correo',
-                        ),
+                        hint: 'Correo',
                       ),
                       const SizedBox(height: 10),
-                      TextField(
+                      SharedTextField(
                         controller: _notesController,
                         maxLines: 2,
-                        decoration: InputDecoration(
-                          filled: true,
-                          fillColor: AppColors.whiteOverlay,
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 20,
-                            vertical: 16,
-                          ),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(16),
-                            borderSide: const BorderSide(
-                              color: AppColors.whiteOverlay,
-                              width: 1.5,
-                            ),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(16),
-                            borderSide: const BorderSide(
-                              color: AppColors.whiteOverlay,
-                              width: 1.5,
-                            ),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(16),
-                            borderSide: const BorderSide(
-                              color: AppColors.whiteOverlay,
-                              width: 1.5,
-                            ),
-                          ),
-                          hintText: 'Notas',
-                        ),
+                        hint: 'Notas',
                       ),
                       const SizedBox(height: 12),
                       SizedBox(
@@ -283,51 +168,22 @@ class _CustomersViewState extends State<CustomersView>
                       mainAxisAlignment: MainAxisAlignment.center,
                       mainAxisSize: MainAxisSize.max,
                       children: [
-                        TextField(
+                        SharedTextField(
                           controller: _searchController,
-                          decoration: InputDecoration(
-                            filled: true,
-                            fillColor: AppColors.whiteOverlay,
-                            contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 20,
-                              vertical: 16,
-                            ),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(16),
-                              borderSide: const BorderSide(
-                                color: AppColors.whiteOverlay,
-                                width: 1.5,
-                              ),
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(16),
-                              borderSide: const BorderSide(
-                                color: AppColors.whiteOverlay,
-                                width: 1.5,
-                              ),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(16),
-                              borderSide: const BorderSide(
-                                color: AppColors.whiteOverlay,
-                                width: 1.5,
-                              ),
-                            ),
-                            hintText:
-                                'Buscar cliente por nombre, correo o teléfono',
-                            prefixIcon: const Icon(Icons.search),
-
-                            suffixIcon: _searchController.text.isEmpty
-                                ? null
-                                : IconButton(
-                                    onPressed: () {
-                                      _searchController.clear();
-                                      controller.loadCustomers();
-                                      setState(() {});
-                                    },
-                                    icon: const Icon(Icons.clear),
-                                  ),
-                          ),
+                          hint:
+                              'Buscar cliente por nombre, correo o teléfono',
+                          prefixIcon: const Icon(Icons.search),
+                          suffixIcon: _searchController.text.isEmpty
+                              ? null
+                              : IconButton(
+                                  onPressed: () {
+                                    _searchController.clear();
+                                    controller.loadCustomers();
+                                    setState(() {});
+                                  },
+                                  icon: const Icon(Icons.clear),
+                                ),
+                          useFilterStyle: true,
                           onChanged: (value) {
                             setState(() {});
                             controller.loadCustomers(searchValue: value);

@@ -1,4 +1,5 @@
 import 'package:bazarnicole/Presentation/Utils/Colors.dart';
+import 'package:bazarnicole/Presentation/Widgets/Products/shared_inputs.dart';
 import 'package:flutter/material.dart';
 
 class PasswordInput extends StatelessWidget {
@@ -27,24 +28,16 @@ class PasswordInput extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 16),
-        TextField(
+        SharedTextField(
           controller: controller,
           obscureText: obscurePassword,
-          decoration: InputDecoration(
-            prefixIcon: const Icon(Icons.lock, color: AppColors.accentColor),
-            suffixIcon: IconButton(
-              icon: Icon(
-                obscurePassword ? Icons.visibility_off : Icons.visibility,
-                color: AppColors.accentColor,
-              ),
-              onPressed: onToggle,
+          prefixIcon: const Icon(Icons.lock, color: AppColors.accentColor),
+          suffixIcon: IconButton(
+            icon: Icon(
+              obscurePassword ? Icons.visibility_off : Icons.visibility,
+              color: AppColors.accentColor,
             ),
-            enabledBorder: UnderlineInputBorder(
-              borderSide: BorderSide(color: AppColors.primaryLogo),
-            ),
-            focusedBorder: UnderlineInputBorder(
-              borderSide: BorderSide(color: AppColors.primaryLogo, width: 2),
-            ),
+            onPressed: onToggle,
           ),
         ),
       ],
