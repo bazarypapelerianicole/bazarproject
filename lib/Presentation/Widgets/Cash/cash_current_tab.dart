@@ -1,4 +1,4 @@
-part of '../cash_view.dart';
+part of '../../View/Cash/cash_view.dart';
 
 class CashCurrentTab extends StatelessWidget {
   const CashCurrentTab({super.key});

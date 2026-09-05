@@ -11,8 +11,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
 
-part 'widgets/cash_current_tab.dart';
-part 'widgets/cash_history_tab.dart';
+part '../../Widgets/Cash/cash_current_tab.dart';
+part '../../Widgets/Cash/cash_history_tab.dart';
 
 class CashView extends StatefulWidget {
   const CashView({super.key});
