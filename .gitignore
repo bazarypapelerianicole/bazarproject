@@ -105,3 +105,26 @@ app.*.map.json
 /distributable/
 /installer_assets/
 /installer_output/
+
+# Instaladores generados
+installer_output/
+
+# Archivos ejecutables generados
+*.exe
+
+# Build / distribución
+distributable/
+installer_output/
+
+# Ejecutables
+*.exe
+
+# Bases de datos generadas
+*.db
+*.db-shm
+*.db-wal
+
+# Variables de entorno / secretos
+.env
+.env.*
+*.env
