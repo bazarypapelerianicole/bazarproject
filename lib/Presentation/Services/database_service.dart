@@ -613,11 +613,14 @@ class DatabaseService {
       )
     ''');
 
-    // ── Migracion: columnas cedula, identification_type, address ──
+    // ── Migracion: datos adicionales del cliente ──
     for (final colDef in [
       'cedula TEXT',
       'identification_type TEXT DEFAULT "cedula"',
       'address TEXT',
+      'apellidos TEXT',
+      'referencias TEXT',
+      'uid TEXT',
     ]) {
       try {
         await db.execute('ALTER TABLE clients ADD COLUMN $colDef');
@@ -2162,7 +2165,7 @@ class DatabaseService {
     return db.rawQuery(
       '''
       SELECT id, name, phone, email, notes, created_at,
-             cedula, identification_type, address
+              cedula, identification_type, address, apellidos, referencias, uid
       FROM clients
       WHERE name LIKE ? OR COALESCE(phone, '') LIKE ?
          OR COALESCE(email, '') LIKE ? OR COALESCE(cedula, '') LIKE ?
@@ -2202,11 +2205,15 @@ class DatabaseService {
     );
   }
 
-  static Future<void> createCustomer({
+  static Future<String> createCustomer({
     required String name,
     String? phone,
     String? email,
     String? notes,
+    String? apellidos,
+    String? cedula,
+    String? address,
+    String? referencias,
   }) async {
     final cleanName = _cleanName(name);
     if (cleanName.isEmpty) {
@@ -2214,16 +2221,30 @@ class DatabaseService {
     }
 
     final db = await database;
-    await db.rawInsert(
-      'INSERT INTO clients (name, phone, email, notes, created_at) VALUES (?, ?, ?, ?, ?)',
+    final customerId = await db.rawInsert(
+      '''INSERT INTO clients
+         (name, phone, email, notes, apellidos, cedula, address, referencias, uid, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, lower(hex(randomblob(16))), ?)''',
       [
         cleanName,
         phone?.trim(),
         email?.trim(),
         notes?.trim(),
+        apellidos?.trim(),
+        cedula?.trim(),
+        address?.trim(),
+        referencias?.trim(),
         DateTime.now().toIso8601String(),
       ],
     );
+    final rows = await db.query(
+      'clients',
+      columns: ['uid'],
+      where: 'id = ?',
+      whereArgs: [customerId],
+      limit: 1,
+    );
+    return rows.first['uid']?.toString() ?? '';
   }
 
   static Future<List<Map<String, dynamic>>> getCustomerHistory(

@@ -17,8 +17,13 @@ class _CustomersViewState extends State<CustomersView>
     with TickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
+  final _lastNameController = TextEditingController();
   final _phoneController = TextEditingController();
   final _emailController = TextEditingController();
+  final _idController = TextEditingController();
+  final _addressController = TextEditingController();
+  final _referencesController = TextEditingController();
+  final _uuidController = TextEditingController();
   final _notesController = TextEditingController();
   final _searchController = TextEditingController();
   late TabController _tabController;
@@ -36,8 +41,13 @@ class _CustomersViewState extends State<CustomersView>
   void dispose() {
     _tabController.dispose();
     _nameController.dispose();
+    _lastNameController.dispose();
     _phoneController.dispose();
     _emailController.dispose();
+    _idController.dispose();
+    _addressController.dispose();
+    _referencesController.dispose();
+    _uuidController.dispose();
     _notesController.dispose();
     _searchController.dispose();
     super.dispose();
@@ -48,16 +58,25 @@ class _CustomersViewState extends State<CustomersView>
 
     final controller = context.read<CustomersController>();
     try {
-      await controller.createCustomer(
+      final uid = await controller.createCustomer(
         name: _nameController.text,
         phone: _phoneController.text,
         email: _emailController.text,
         notes: _notesController.text,
+        apellidos: _lastNameController.text,
+        cedula: _idController.text,
+        address: _addressController.text,
+        referencias: _referencesController.text,
       );
 
       _nameController.clear();
+      _lastNameController.clear();
       _phoneController.clear();
       _emailController.clear();
+      _idController.clear();
+      _addressController.clear();
+      _referencesController.clear();
+      _uuidController.text = uid;
       _notesController.clear();
 
       if (!mounted) return;
@@ -99,76 +118,241 @@ class _CustomersViewState extends State<CustomersView>
             children: [
               /// TAB 1
               SingleChildScrollView(
-                padding: const EdgeInsets.all(16),
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Text(
-                        'Registrar cliente',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      SharedTextFormField(
-                        style: const TextStyle(
-                          fontSize: 15,
-                          color: Colors.black87,
-                        ),
+                padding: const EdgeInsets.fromLTRB(16, 28, 16, 32),
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 580),
+                    child: SizedBox(
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(24, 28, 24, 24),
+                        child: Form(
+                          key: _formKey,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Center(
+                                child: Column(
+                                  children: [
+                                    SizedBox(
+                                      width: 88,
+                                      height: 88,
+                                      child: Stack(
+                                        alignment: Alignment.center,
+                                        children: [
+                                          CircleAvatar(
+                                            radius: 42,
+                                            backgroundColor:
+                                                AppColors.whiteOverlay,
+                                            child: Icon(
+                                              Icons.person_outline,
+                                              size: 48,
+                                              color: AppColors.primaryLogo,
+                                            ),
+                                          ),
+                                          Positioned(
+                                            right: 0,
+                                            bottom: 3,
+                                            child: Container(
+                                              width: 28,
+                                              height: 28,
+                                              decoration: BoxDecoration(
+                                                color: AppColors.primaryLogo,
+                                                shape: BoxShape.circle,
+                                                border: Border.all(
+                                                  color: AppColors.whiteOverlay,
+                                                  width: 3,
+                                                ),
+                                              ),
+                                              child: const Icon(
+                                                Icons.add,
+                                                size: 17,
+                                                color: AppColors.whiteOverlay,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    const SizedBox(height: 16),
+                                    const Text(
+                                      'Registrar cliente',
+                                      style: TextStyle(
+                                        fontSize: 22,
+                                        fontWeight: FontWeight.bold,
+                                        color: AppColors.primaryLogo,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 6),
+                                    Text(
+                                      'Agrega un nuevo cliente a tu sistema',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        color: AppColors.mediumGray,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(height: 28),
+                              LayoutBuilder(
+                                builder: (context, constraints) {
+                                  final isTwoColumns =
+                                      constraints.maxWidth >= 520;
+                                  final fieldWidth = isTwoColumns
+                                      ? (constraints.maxWidth - 14) / 2
+                                      : constraints.maxWidth;
 
-                        controller: _nameController,
-                        label: 'Nombre completo',
-                        validator: (value) =>
-                            value == null || value.trim().isEmpty
-                            ? 'Ingresa el nombre'
-                            : null,
-                      ),
-                      const SizedBox(height: 10),
-                      SharedTextField(
-                        style: const TextStyle(
-                          fontSize: 15,
-                          color: Colors.black87,
-                        ),
-                        controller: _phoneController,
-                        label: 'Teléfono',
-                      ),
-                      const SizedBox(height: 10),
-                      SharedTextField(
-                        style: const TextStyle(
-                          fontSize: 15,
-                          color: Colors.black87,
-                        ),
-                        controller: _emailController,
-                        label: 'Correo',
-                      ),
-                      const SizedBox(height: 10),
-                      SharedTextField(
-                        style: const TextStyle(
-                          fontSize: 15,
-                          color: Colors.black87,
-                        ),
-                        controller: _notesController,
-                        maxLines: 2,
-                        label: 'Notas',
-                      ),
-                      const SizedBox(height: 12),
-                      SizedBox(
-                        width: double.infinity,
-                        child: FilledButton.icon(
-                          onPressed: _saveCustomer,
-                          style: FilledButton.styleFrom(
-                            backgroundColor: Colors.black,
-                            foregroundColor: AppColors.whiteOverlay,
+                                  return Wrap(
+                                    spacing: 14,
+                                    runSpacing: 14,
+                                    children: [
+                                      SizedBox(
+                                        width: fieldWidth,
+                                        child: SharedTextFormField(
+                                          style: const TextStyle(
+                                            fontSize: 15,
+                                            color: Colors.black87,
+                                          ),
+                                          controller: _nameController,
+                                          label: 'Nombre completo',
+                                          prefixIcon: const Icon(
+                                            Icons.person_outline,
+                                          ),
+                                          validator: (value) =>
+                                              value == null ||
+                                                  value.trim().isEmpty
+                                              ? 'Ingresa el nombre'
+                                              : null,
+                                        ),
+                                      ),
+                                      SizedBox(
+                                        width: fieldWidth,
+                                        child: SharedTextField(
+                                          style: const TextStyle(
+                                            fontSize: 15,
+                                            color: Colors.black87,
+                                          ),
+                                          controller: _lastNameController,
+                                          label: 'Apellidos',
+                                          prefixIcon: const Icon(
+                                            Icons.person_outline,
+                                          ),
+                                        ),
+                                      ),
+                                      SizedBox(
+                                        width: fieldWidth,
+                                        child: SharedTextField(
+                                          style: const TextStyle(
+                                            fontSize: 15,
+                                            color: Colors.black87,
+                                          ),
+                                          controller: _phoneController,
+                                          label: 'Teléfono',
+                                          prefixIcon: const Icon(
+                                            Icons.phone_outlined,
+                                          ),
+                                        ),
+                                      ),
+                                      SizedBox(
+                                        width: fieldWidth,
+                                        child: SharedTextField(
+                                          style: const TextStyle(
+                                            fontSize: 15,
+                                            color: Colors.black87,
+                                          ),
+                                          controller: _emailController,
+                                          label: 'Correo',
+                                          prefixIcon: const Icon(
+                                            Icons.email_outlined,
+                                          ),
+                                        ),
+                                      ),
+                                      SizedBox(
+                                        width: fieldWidth,
+                                        child: SharedTextField(
+                                          style: const TextStyle(
+                                            fontSize: 15,
+                                            color: Colors.black87,
+                                          ),
+                                          controller: _idController,
+                                          label: 'Cédula',
+                                          prefixIcon: const Icon(
+                                            Icons.badge_outlined,
+                                          ),
+                                          keyboardType: TextInputType.number,
+                                        ),
+                                      ),
+                                      SizedBox(
+                                        width: fieldWidth,
+                                        child: SharedTextField(
+                                          style: const TextStyle(
+                                            fontSize: 15,
+                                            color: Colors.black87,
+                                          ),
+                                          controller: _addressController,
+                                          label: 'Dirección',
+                                          prefixIcon: const Icon(
+                                            Icons.location_on_outlined,
+                                          ),
+                                        ),
+                                      ),
+                                      SizedBox(
+                                        width: fieldWidth,
+                                        child: SharedTextField(
+                                          style: const TextStyle(
+                                            fontSize: 15,
+                                            color: Colors.black87,
+                                          ),
+                                          controller: _referencesController,
+                                          label: 'Referencias',
+                                          prefixIcon: const Icon(
+                                            Icons.bookmark_border,
+                                          ),
+                                        ),
+                                      ),
+                                      SizedBox(
+                                        width: fieldWidth,
+                                        child: SharedTextField(
+                                          style: const TextStyle(
+                                            fontSize: 13,
+                                            color: AppColors.mediumGray,
+                                          ),
+                                          controller: _uuidController,
+                                          label: 'Código (UUID)',
+                                          hint: 'Se genera automáticamente',
+                                          prefixIcon: const Icon(
+                                            Icons.fingerprint,
+                                          ),
+                                          readOnly: true,
+                                        ),
+                                      ),
+                                    ],
+                                  );
+                                },
+                              ),
+                              const SizedBox(height: 24),
+                              SizedBox(
+                                width: double.infinity,
+                                height: 52,
+                                child: FilledButton.icon(
+                                  onPressed: _saveCustomer,
+                                  style: FilledButton.styleFrom(
+                                    backgroundColor: Colors.black,
+                                    foregroundColor: AppColors.whiteOverlay,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(14),
+                                    ),
+                                  ),
+                                  icon: const Icon(Icons.person_add_alt_1),
+                                  label: const Text('Guardar cliente'),
+                                ),
+                              ),
+                            ],
                           ),
-                          icon: const Icon(Icons.person_add_alt_1),
-                          label: const Text('Guardar cliente'),
                         ),
                       ),
-                    ],
+                    ),
                   ),
                 ).animate().fadeIn(duration: 400.ms).slideY(begin: .1),
               ),

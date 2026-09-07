@@ -50,19 +50,28 @@ class CustomersController extends ChangeNotifier {
     }
   }
 
-  Future<void> createCustomer({
+  Future<String> createCustomer({
     required String name,
     String? phone,
     String? email,
     String? notes,
+    String? apellidos,
+    String? cedula,
+    String? address,
+    String? referencias,
   }) async {
-    await DatabaseService.createCustomer(
+    final uid = await DatabaseService.createCustomer(
       name: name,
       phone: phone,
       email: email,
       notes: notes,
+      apellidos: apellidos,
+      cedula: cedula,
+      address: address,
+      referencias: referencias,
     );
     await loadCustomers(searchValue: search);
+    return uid;
   }
 
   Future<void> selectCustomer(Map<String, dynamic> customer) async {
