@@ -3,7 +3,9 @@ import 'dart:math';
 import 'package:bazarnicole/Presentation/Controller/customers_controller.dart';
 import 'package:bazarnicole/Presentation/Utils/Colors.dart';
 import 'package:bazarnicole/Presentation/View/Customers/customer_details_dialog.dart';
+import 'package:bazarnicole/Presentation/View/Customers/customer_background.dart';
 import 'package:bazarnicole/Presentation/View/Customers/customer_form_fields.dart';
+import 'package:bazarnicole/Presentation/View/Customers/customer_table.dart';
 import 'package:bazarnicole/Presentation/Widgets/Products/shared_inputs.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -110,7 +112,21 @@ class _CustomersViewState extends State<CustomersView> {
     }
   }
 
+  void _resetCustomerForm() {
+    _nameController.clear();
+    _lastNameController.clear();
+    _phoneController.clear();
+    _emailController.clear();
+    _idController.clear();
+    _addressController.clear();
+    _referencesController.clear();
+    _uuidController.text = _generateCustomerUuid();
+    _notesController.clear();
+    _isReadyForNextCustomer = false;
+  }
+
   void _showCustomerDialog() {
+    _resetCustomerForm();
     showDialog<void>(
       context: context,
       builder: (_) => Dialog(
@@ -509,29 +525,156 @@ class _CustomersViewState extends State<CustomersView> {
   }
 
   Future<void> _confirmDeleteCustomer(Map<String, dynamic> customer) async {
+    final customerName = customer['name']?.toString().trim().isNotEmpty == true
+        ? customer['name'].toString()
+        : 'este cliente';
+
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Eliminar cliente'),
-        content: Text(
-          '¿Deseas eliminar a ${customer['name'] ?? 'este cliente'}? Esta acción no se puede deshacer.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancelar'),
-          ),
-          FilledButton(
-            style: FilledButton.styleFrom(
-              backgroundColor: AppColors.primaryRed,
+      barrierDismissible: true,
+      builder: (dialogContext) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          insetPadding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(24),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.12),
+                  blurRadius: 30,
+                  offset: const Offset(0, 12),
+                ),
+              ],
             ),
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Eliminar'),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Icono
+                Container(
+                  width: 64,
+                  height: 64,
+                  decoration: BoxDecoration(
+                    color: AppColors.primaryRed.withOpacity(0.10),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.delete_outline_rounded,
+                    size: 32,
+                    color: AppColors.primaryRed,
+                  ),
+                ),
+
+                const SizedBox(height: 20),
+
+                // Título
+                const Text(
+                  'Eliminar cliente',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.blackOverlay,
+                  ),
+                ),
+
+                const SizedBox(height: 10),
+
+                // Mensaje
+                Text.rich(
+                  TextSpan(
+                    style: const TextStyle(
+                      fontSize: 14,
+                      height: 1.5,
+                      color: Colors.black54,
+                    ),
+                    children: [
+                      const TextSpan(
+                        text: '¿Estás seguro de que deseas eliminar a ',
+                      ),
+                      TextSpan(
+                        text: customerName,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.blackOverlay,
+                        ),
+                      ),
+                      const TextSpan(
+                        text:
+                            '? Esta acción es permanente y no se puede deshacer.',
+                      ),
+                    ],
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+
+                const SizedBox(height: 24),
+
+                // Botones
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () {
+                          Navigator.of(dialogContext).pop(false);
+                        },
+                        style: OutlinedButton.styleFrom(
+                          minimumSize: const Size.fromHeight(48),
+                          side: BorderSide(color: Colors.grey.shade300),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                        ),
+                        child: const Text(
+                          'Cancelar',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.blackOverlay,
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(width: 12),
+
+                    Expanded(
+                      child: FilledButton.icon(
+                        onPressed: () {
+                          Navigator.of(dialogContext).pop(true);
+                        },
+                        icon: const Icon(
+                          Icons.delete_outline_rounded,
+                          size: 19,
+                        ),
+                        label: const Text(
+                          'Eliminar',
+                          style: TextStyle(fontWeight: FontWeight.w700),
+                        ),
+                        style: FilledButton.styleFrom(
+                          backgroundColor: AppColors.primaryRed,
+                          foregroundColor: Colors.white,
+                          minimumSize: const Size.fromHeight(48),
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
-        ],
-      ),
+        );
+      },
     );
+
     if (confirmed != true || !mounted) return;
+
     await context.read<CustomersController>().deleteCustomer(
       (customer['id'] as num).toInt(),
     );
@@ -545,29 +688,13 @@ class _CustomersViewState extends State<CustomersView> {
         backgroundColor: AppColors.primaryLogo,
         foregroundColor: AppColors.whiteOverlay,
         title: const Text('Clientes'),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 12),
-            child: FilledButton.icon(
-              onPressed: _showCustomerDialog,
-              icon: const Icon(Icons.person_add_alt_1, size: 18),
-              label: const Text('Nuevo cliente'),
-              style: FilledButton.styleFrom(
-                backgroundColor: AppColors.primaryBlue,
-                foregroundColor: AppColors.whiteOverlay,
-              ),
-            ),
-          ),
-        ],
       ),
       body: Consumer<CustomersController>(
         builder: (context, controller, _) {
           return Stack(
             fit: StackFit.expand,
             children: [
-              const IgnorePointer(
-                child: CustomPaint(painter: _CustomerBackgroundPainter()),
-              ),
+              const CustomerBackground(),
               Column(
                 children: [
                   /// TAB 1
@@ -885,68 +1012,105 @@ class _CustomersViewState extends State<CustomersView> {
                               SizedBox(height: 5),
                               Padding(
                                 padding: const EdgeInsets.fromLTRB(8, 8, 8, 6),
-                                child: Row(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    const Text(
-                                      'Lista de clientes',
-                                      style: TextStyle(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.bold,
-                                        color: AppColors.primaryLogo,
-                                      ),
+                                    Row(
+                                      children: [
+                                        const Text(
+                                          'Lista de Clientes',
+                                          style: TextStyle(
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.bold,
+                                            color: AppColors.primaryLogo,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 10),
+                                        if (controller.customers.isNotEmpty)
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 9,
+                                              vertical: 4,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: AppColors.blackOverlay,
+                                              borderRadius:
+                                                  BorderRadius.circular(12),
+                                            ),
+                                            child: Text(
+                                              controller.customers.isEmpty
+                                                  ? 'Sin Clientes'
+                                                  : '${controller.customers.length} ${controller.customers.length == 1 ? 'Cliente' : 'Clientes'}',
+
+                                              style: const TextStyle(
+                                                fontSize: 11,
+                                                fontWeight: FontWeight.w600,
+                                                color: AppColors.whiteOverlay,
+                                              ),
+                                            ),
+                                          ),
+                                      ],
                                     ),
-                                    const SizedBox(width: 10),
-                                    if (controller.customers.isNotEmpty)
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 9,
-                                          vertical: 4,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color: AppColors.blackOverlay,
-                                          borderRadius: BorderRadius.circular(
-                                            12,
+                                    const SizedBox(height: 10),
+                                    Row(
+                                      children: [
+                                        Expanded(
+                                          child: SharedTextField(
+                                            style: const TextStyle(
+                                              fontSize: 15,
+                                              color: Colors.black87,
+                                            ),
+                                            controller: _searchController,
+                                            hint:
+                                                'Buscar cliente por nombre, correo o teléfono',
+                                            prefixIcon: const Icon(
+                                              Icons.search,
+                                            ),
+                                            suffixIcon:
+                                                _searchController.text.isEmpty
+                                                ? null
+                                                : IconButton(
+                                                    onPressed: () {
+                                                      _searchController.clear();
+                                                      controller
+                                                          .loadCustomers();
+                                                      setState(() {});
+                                                    },
+                                                    icon: const Icon(
+                                                      Icons.clear,
+                                                    ),
+                                                  ),
+                                            useFilterStyle: true,
+                                            onChanged: (value) {
+                                              setState(() {});
+                                              controller.loadCustomers(
+                                                searchValue: value,
+                                              );
+                                            },
                                           ),
                                         ),
-                                        child: Text(
-                                          '${controller.customers.length} clientes',
-                                          style: const TextStyle(
-                                            fontSize: 11,
-                                            fontWeight: FontWeight.w600,
-                                            color: AppColors.whiteOverlay,
+                                        const SizedBox(width: 10),
+                                        FilledButton.icon(
+                                          onPressed: _showCustomerDialog,
+                                          icon: const Icon(
+                                            Icons.person_add_alt_1,
+                                            size: 18,
+                                          ),
+                                          label: const Text('Nuevo'),
+                                          style: FilledButton.styleFrom(
+                                            backgroundColor:
+                                                AppColors.primaryBlue,
+                                            foregroundColor:
+                                                AppColors.whiteOverlay,
                                           ),
                                         ),
-                                      ),
+                                      ],
+                                    ),
                                   ],
                                 ),
                               ),
                               SizedBox(height: 10),
-                              SharedTextField(
-                                style: const TextStyle(
-                                  fontSize: 15,
-                                  color: Colors.black87,
-                                ),
-                                controller: _searchController,
-                                hint:
-                                    'Buscar cliente por nombre, correo o teléfono',
-                                prefixIcon: const Icon(Icons.search),
-                                suffixIcon: _searchController.text.isEmpty
-                                    ? null
-                                    : IconButton(
-                                        onPressed: () {
-                                          _searchController.clear();
-                                          controller.loadCustomers();
-                                          setState(() {});
-                                        },
-                                        icon: const Icon(Icons.clear),
-                                      ),
-                                useFilterStyle: true,
-                                onChanged: (value) {
-                                  setState(() {});
-                                  controller.loadCustomers(searchValue: value);
-                                },
-                              ),
-                              const SizedBox(height: 10),
+
                               Expanded(
                                 child:
                                     controller.isLoading &&
@@ -958,7 +1122,7 @@ class _CustomersViewState extends State<CustomersView> {
                                           size: 28,
                                         ),
                                       )
-                                    : _CustomerTable(
+                                    : CustomerTable(
                                         customers: controller.customers,
                                         selectedCustomer:
                                             controller.selectedCustomer,
@@ -996,413 +1160,4 @@ class _CustomersViewState extends State<CustomersView> {
       ),
     );
   }
-}
-
-class _CustomerTable extends StatelessWidget {
-  const _CustomerTable({
-    required this.customers,
-    required this.selectedCustomer,
-    required this.onCustomerTap,
-    required this.onEdit,
-    required this.onDelete,
-  });
-
-  final List<Map<String, dynamic>> customers;
-  final Map<String, dynamic>? selectedCustomer;
-  final ValueChanged<Map<String, dynamic>> onCustomerTap;
-  final ValueChanged<Map<String, dynamic>> onEdit;
-  final ValueChanged<Map<String, dynamic>> onDelete;
-
-  @override
-  Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final isCompact = constraints.maxWidth < 700;
-        if (isCompact) {
-          return ListView.separated(
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            itemCount: customers.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 8),
-            itemBuilder: (context, index) => _CustomerCompactRow(
-              customer: customers[index],
-              isSelected: selectedCustomer?['id'] == customers[index]['id'],
-              onTap: () => onCustomerTap(customers[index]),
-              onEdit: () => onEdit(customers[index]),
-              onDelete: () => onDelete(customers[index]),
-            ),
-          );
-        }
-
-        return ClipRRect(
-          borderRadius: BorderRadius.circular(20),
-          child: Column(
-            children: [
-              const _CustomerTableHeader(),
-              Expanded(
-                child: ListView.separated(
-                  itemCount: customers.length,
-                  separatorBuilder: (_, __) =>
-                      Divider(height: 1, color: AppColors.lightGray),
-                  itemBuilder: (context, index) => _CustomerTableRow(
-                    customer: customers[index],
-                    isSelected:
-                        selectedCustomer?['id'] == customers[index]['id'],
-                    onTap: () => onCustomerTap(customers[index]),
-                    onEdit: () => onEdit(customers[index]),
-                    onDelete: () => onDelete(customers[index]),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-}
-
-class _CustomerTableHeader extends StatelessWidget {
-  const _CustomerTableHeader();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      color: AppColors.whiteOverlay.withValues(alpha: .9),
-      child: const Row(
-        children: [
-          Expanded(flex: 3, child: _HeaderLabel('Cliente')),
-          Expanded(flex: 2, child: _HeaderLabel('Teléfono')),
-          Expanded(flex: 3, child: _HeaderLabel('Correo')),
-          Expanded(flex: 2, child: _HeaderLabel('Notas')),
-          SizedBox(width: 112, child: _HeaderLabel('Acciones')),
-        ],
-      ),
-    );
-  }
-}
-
-class _HeaderLabel extends StatelessWidget {
-  const _HeaderLabel(this.text);
-
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(
-      text,
-      style: const TextStyle(
-        color: AppColors.mediumGray,
-        fontSize: 10,
-        fontWeight: FontWeight.w700,
-      ),
-    );
-  }
-}
-
-class _CustomerTableRow extends StatelessWidget {
-  const _CustomerTableRow({
-    required this.customer,
-    required this.isSelected,
-    required this.onTap,
-    required this.onEdit,
-    required this.onDelete,
-  });
-
-  final Map<String, dynamic> customer;
-  final bool isSelected;
-  final VoidCallback onTap;
-  final VoidCallback onEdit;
-  final VoidCallback onDelete;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: isSelected ? AppColors.whiteOverlay : AppColors.whiteOverlay,
-      child: InkWell(
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-          child: Row(
-            children: [
-              Expanded(flex: 3, child: _CustomerIdentity(customer: customer)),
-              Expanded(
-                flex: 2,
-                child: _TableValue(customer['phone']?.toString()),
-              ),
-              Expanded(
-                flex: 3,
-                child: _TableValue(customer['email']?.toString()),
-              ),
-              Expanded(
-                flex: 2,
-                child: _TableValue(customer['notes']?.toString()),
-              ),
-              SizedBox(
-                width: 112,
-                child: _CustomerActions(onEdit: onEdit, onDelete: onDelete),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _CustomerCompactRow extends StatelessWidget {
-  const _CustomerCompactRow({
-    required this.customer,
-    required this.isSelected,
-    required this.onTap,
-    required this.onEdit,
-    required this.onDelete,
-  });
-
-  final Map<String, dynamic> customer;
-  final bool isSelected;
-  final VoidCallback onTap;
-  final VoidCallback onEdit;
-  final VoidCallback onDelete;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: isSelected ? AppColors.whiteOverlay : AppColors.lightWhite,
-      borderRadius: BorderRadius.circular(10),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(10),
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Row(
-            children: [
-              _CustomerIdentity(customer: customer),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _TableValue(customer['phone']?.toString()),
-                    _TableValue(customer['email']?.toString()),
-                  ],
-                ),
-              ),
-              _CustomerActions(onEdit: onEdit, onDelete: onDelete),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _CustomerIdentity extends StatelessWidget {
-  const _CustomerIdentity({required this.customer});
-
-  final Map<String, dynamic> customer;
-
-  @override
-  Widget build(BuildContext context) {
-    final name = customer['name']?.toString() ?? 'Sin nombre';
-    final initials = name.trim().isEmpty
-        ? '?'
-        : name
-              .trim()
-              .split(RegExp(r'\s+'))
-              .take(2)
-              .map((part) => part[0].toUpperCase())
-              .join();
-
-    return Row(
-      children: [
-        CircleAvatar(
-          radius: 17,
-          backgroundColor: AppColors.lightBlue,
-          child: Text(
-            initials,
-            style: const TextStyle(
-              color: AppColors.primaryLogo,
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Text(
-            name,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              color: AppColors.primaryLogo,
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _TableValue extends StatelessWidget {
-  const _TableValue(this.value);
-
-  final String? value;
-
-  @override
-  Widget build(BuildContext context) {
-    final displayValue = value?.trim().isNotEmpty == true
-        ? value!.trim()
-        : 'Sin información';
-    return Text(
-      displayValue,
-      maxLines: 1,
-      overflow: TextOverflow.ellipsis,
-      style: const TextStyle(color: AppColors.mediumGray, fontSize: 11),
-    );
-  }
-}
-
-class _CustomerActions extends StatelessWidget {
-  const _CustomerActions({required this.onEdit, required this.onDelete});
-
-  final VoidCallback onEdit;
-  final VoidCallback onDelete;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        IconButton(
-          tooltip: 'Editar cliente',
-          visualDensity: VisualDensity.compact,
-          onPressed: onEdit,
-          icon: const Icon(
-            Icons.edit_outlined,
-            size: 18,
-            color: AppColors.primaryBlue,
-          ),
-        ),
-        IconButton(
-          tooltip: 'Eliminar cliente',
-          visualDensity: VisualDensity.compact,
-          onPressed: onDelete,
-          icon: const Icon(
-            Icons.delete_outline,
-            size: 18,
-            color: AppColors.primaryRed,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _CustomerBackgroundPainter extends CustomPainter {
-  const _CustomerBackgroundPainter();
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final diagonalPaint = Paint()
-      ..color = AppColors.primaryBlue.withValues(alpha: .045)
-      ..style = PaintingStyle.fill;
-    final accentPaint = Paint()
-      ..color = AppColors.accentColor.withValues(alpha: .08)
-      ..style = PaintingStyle.fill;
-    final linePaint = Paint()
-      ..color = AppColors.primaryLogo.withValues(alpha: .07)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.2;
-    final patternPaint = Paint()
-      ..color = AppColors.primaryBlue.withValues(alpha: .055)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1;
-
-    final upperShape = Path()
-      ..moveTo(size.width, 0)
-      ..lineTo(size.width, size.height * .28)
-      ..lineTo(size.width * .72, 0)
-      ..close();
-    canvas.drawPath(upperShape, diagonalPaint);
-
-    final lowerShape = Path()
-      ..moveTo(0, size.height)
-      ..lineTo(0, size.height * .72)
-      ..lineTo(size.width * .28, size.height)
-      ..close();
-    canvas.drawPath(lowerShape, accentPaint);
-
-    final stripeWidth = size.width * .34;
-    for (var index = 0; index < 3; index++) {
-      final offset = index * 18.0;
-      final stripe = Path()
-        ..moveTo(size.width - stripeWidth + offset, 0)
-        ..lineTo(size.width + offset, 0)
-        ..lineTo(size.width - size.height * .18 + offset, size.height * .18)
-        ..lineTo(size.width - stripeWidth + offset, size.height * .18)
-        ..close();
-      canvas.drawPath(stripe, diagonalPaint);
-    }
-
-    final shapeWidth = size.width < 520 ? size.width * .34 : 220.0;
-    final shapeHeight = size.height < 700 ? 150.0 : 190.0;
-    final cardRect = RRect.fromRectAndRadius(
-      Rect.fromLTWH(
-        size.width - shapeWidth - 28,
-        size.height * .22,
-        shapeWidth,
-        shapeHeight,
-      ),
-      const Radius.circular(22),
-    );
-    canvas.drawRRect(cardRect, patternPaint);
-
-    final cardLeft = cardRect.left + 20;
-    final cardRight = cardRect.right - 20;
-    for (var index = 0; index < 4; index++) {
-      final lineY = cardRect.top + 38 + (index * 23);
-      canvas.drawLine(
-        Offset(cardLeft, lineY),
-        Offset(cardRight - (index.isEven ? 16 : 42), lineY),
-        patternPaint,
-      );
-    }
-
-    final plusPaint = Paint()
-      ..color = AppColors.accentColor.withValues(alpha: .16)
-      ..strokeWidth = 2
-      ..strokeCap = StrokeCap.round;
-    for (final point in [
-      Offset(size.width * .12, size.height * .18),
-      Offset(size.width * .86, size.height * .78),
-    ]) {
-      canvas.drawLine(
-        Offset(point.dx - 7, point.dy),
-        Offset(point.dx + 7, point.dy),
-        plusPaint,
-      );
-      canvas.drawLine(
-        Offset(point.dx, point.dy - 7),
-        Offset(point.dx, point.dy + 7),
-        plusPaint,
-      );
-    }
-
-    final frame = RRect.fromRectAndRadius(
-      Rect.fromLTWH(
-        -size.width * .08,
-        size.height * .08,
-        size.width * 1.16,
-        size.height * .84,
-      ),
-      const Radius.circular(34),
-    );
-    canvas.drawRRect(frame, linePaint);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

@@ -91,9 +91,9 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Clientes'), findsOneWidget);
-    expect(find.text('Nuevo cliente'), findsOneWidget);
+    expect(find.text('Nuevo'), findsOneWidget);
 
-    await tester.tap(find.text('Nuevo cliente'));
+    await tester.tap(find.text('Nuevo'));
     await tester.pumpAndSettle();
 
     expect(find.text('Agrega la información del cliente'), findsOneWidget);
