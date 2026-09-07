@@ -1,6 +1,7 @@
 import 'package:bazarnicole/Presentation/Model/cash_model.dart';
 import 'package:bazarnicole/Presentation/Services/database_service.dart';
 import 'package:flutter/foundation.dart';
+import 'package:bazarnicole/Presentation/Services/audit_service.dart';
 
 class CashController extends ChangeNotifier {
   CashController() {
@@ -179,7 +180,19 @@ class CashController extends ChangeNotifier {
           moment: 'open',
         );
       }
+      await AuditService.log(
+        action: AuditAction.cashOpen, module: 'Cash', page: 'CashView',
+        entity: 'cash_session', entityId: sessionId,
+        newData: {'opening_amount': openingAmount, 'store_id': selectedStoreId},
+        controller: 'CashController',
+      );
       await _loadSession();
+    } catch (error) {
+      await AuditService.log(
+        action: AuditAction.cashOpen, module: 'Cash', page: 'CashView',
+        controller: 'CashController', success: false, error: error,
+      );
+      rethrow;
     } finally {
       _setLoading(false);
     }
@@ -205,6 +218,11 @@ class CashController extends ChangeNotifier {
         sessionId: sessionId!,
         closingAmount: closingAmount,
       );
+      await AuditService.log(
+        action: AuditAction.cashClose, module: 'Cash', page: 'CashView',
+        entity: 'cash_session', entityId: sessionId,
+        newData: {'closing_amount': closingAmount}, controller: 'CashController',
+      );
       openStoreIds.remove(selectedStoreId);
       activeSession = null;
       movements = [];
@@ -222,13 +240,24 @@ class CashController extends ChangeNotifier {
     String? description,
   }) async {
     if (sessionId == null) throw Exception('No hay sesión de caja abierta');
-    await DatabaseService.addCashMovement(
-      sessionId: sessionId!,
-      type: 'expense',
-      amount: amount,
-      method: method,
-      description: description,
-    );
+    try {
+      await DatabaseService.addCashMovement(
+        sessionId: sessionId!, type: 'expense', amount: amount,
+        method: method, description: description,
+      );
+      await AuditService.log(
+        action: AuditAction.cashExpense, module: 'Cash', page: 'CashView',
+        entity: 'cash_movement', entityId: sessionId,
+        newData: {'type': 'expense', 'amount': amount, 'method': method,
+          'description': description}, controller: 'CashController',
+      );
+    } catch (error) {
+      await AuditService.log(
+        action: AuditAction.cashExpense, module: 'Cash', page: 'CashView',
+        controller: 'CashController', success: false, error: error,
+      );
+      rethrow;
+    }
     await _loadMovements();
     notifyListeners();
   }
@@ -239,13 +268,24 @@ class CashController extends ChangeNotifier {
     String? description,
   }) async {
     if (sessionId == null) throw Exception('No hay sesión de caja abierta');
-    await DatabaseService.addCashMovement(
-      sessionId: sessionId!,
-      type: 'income',
-      amount: amount,
-      method: method,
-      description: description,
-    );
+    try {
+      await DatabaseService.addCashMovement(
+        sessionId: sessionId!, type: 'income', amount: amount,
+        method: method, description: description,
+      );
+      await AuditService.log(
+        action: AuditAction.cashIncome, module: 'Cash', page: 'CashView',
+        entity: 'cash_movement', entityId: sessionId,
+        newData: {'type': 'income', 'amount': amount, 'method': method,
+          'description': description}, controller: 'CashController',
+      );
+    } catch (error) {
+      await AuditService.log(
+        action: AuditAction.cashIncome, module: 'Cash', page: 'CashView',
+        controller: 'CashController', success: false, error: error,
+      );
+      rethrow;
+    }
     await _loadMovements();
     notifyListeners();
   }
