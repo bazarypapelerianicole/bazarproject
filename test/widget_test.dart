@@ -90,8 +90,14 @@ void main() {
 
     await tester.pumpAndSettle();
 
-    expect(find.text('Clientes · CRM'), findsOneWidget);
-    expect(find.text('Registrar cliente'), findsOneWidget);
+    expect(find.text('Clientes'), findsOneWidget);
+    expect(find.text('Nuevo cliente'), findsOneWidget);
+
+    await tester.tap(find.text('Nuevo cliente'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Agrega la información del cliente'), findsOneWidget);
+    expect(find.text('Guardar cliente'), findsOneWidget);
   });
 
   testWidgets('muestra la pantalla de reportes', (WidgetTester tester) async {

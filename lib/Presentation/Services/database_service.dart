@@ -2178,12 +2178,15 @@ class DatabaseService {
   static Future<void> updateCustomer({
     required int id,
     required String name,
+    String? uid,
     String? phone,
     String? email,
     String? notes,
+    String? apellidos,
     String? cedula,
     String? identificationType,
     String? address,
+    String? referencias,
   }) async {
     if (name.trim().isEmpty) {
       throw Exception('El nombre del cliente es obligatorio');
@@ -2193,20 +2196,33 @@ class DatabaseService {
       'clients',
       {
         'name': _cleanName(name),
+        'uid': uid?.trim().isNotEmpty == true ? uid!.trim() : null,
         'phone': phone?.trim().isNotEmpty == true ? phone!.trim() : null,
         'email': email?.trim().isNotEmpty == true ? email!.trim() : null,
         'notes': notes?.trim().isNotEmpty == true ? notes!.trim() : null,
+        'apellidos': apellidos?.trim().isNotEmpty == true
+            ? apellidos!.trim()
+            : null,
         'cedula': cedula?.trim().isNotEmpty == true ? cedula!.trim() : null,
         'identification_type': identificationType,
         'address': address?.trim().isNotEmpty == true ? address!.trim() : null,
+        'referencias': referencias?.trim().isNotEmpty == true
+            ? referencias!.trim()
+            : null,
       },
       where: 'id = ?',
       whereArgs: [id],
     );
   }
 
+  static Future<void> deleteCustomer(int id) async {
+    final db = await database;
+    await db.delete('clients', where: 'id = ?', whereArgs: [id]);
+  }
+
   static Future<String> createCustomer({
     required String name,
+    String? uid,
     String? phone,
     String? email,
     String? notes,
@@ -2224,7 +2240,7 @@ class DatabaseService {
     final customerId = await db.rawInsert(
       '''INSERT INTO clients
          (name, phone, email, notes, apellidos, cedula, address, referencias, uid, created_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, lower(hex(randomblob(16))), ?)''',
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, COALESCE(?, lower(hex(randomblob(16)))), ?)''',
       [
         cleanName,
         phone?.trim(),
@@ -2234,6 +2250,7 @@ class DatabaseService {
         cedula?.trim(),
         address?.trim(),
         referencias?.trim(),
+        uid?.trim().isNotEmpty == true ? uid!.trim() : null,
         DateTime.now().toIso8601String(),
       ],
     );

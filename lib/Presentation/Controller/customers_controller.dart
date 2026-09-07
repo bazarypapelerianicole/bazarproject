@@ -52,6 +52,7 @@ class CustomersController extends ChangeNotifier {
 
   Future<String> createCustomer({
     required String name,
+    String? uid,
     String? phone,
     String? email,
     String? notes,
@@ -60,8 +61,9 @@ class CustomersController extends ChangeNotifier {
     String? address,
     String? referencias,
   }) async {
-    final uid = await DatabaseService.createCustomer(
+    final savedUid = await DatabaseService.createCustomer(
       name: name,
+      uid: uid,
       phone: phone,
       email: email,
       notes: notes,
@@ -71,7 +73,7 @@ class CustomersController extends ChangeNotifier {
       referencias: referencias,
     );
     await loadCustomers(searchValue: search);
-    return uid;
+    return savedUid;
   }
 
   Future<void> selectCustomer(Map<String, dynamic> customer) async {
@@ -80,5 +82,42 @@ class CustomersController extends ChangeNotifier {
       (customer['id'] as num).toInt(),
     );
     notifyListeners();
+  }
+
+  Future<void> updateCustomer({
+    required int id,
+    required String name,
+    String? uid,
+    String? phone,
+    String? email,
+    String? notes,
+    String? apellidos,
+    String? cedula,
+    String? address,
+    String? referencias,
+  }) async {
+    await DatabaseService.updateCustomer(
+      id: id,
+      name: name,
+      uid: uid,
+      phone: phone,
+      email: email,
+      notes: notes,
+      apellidos: apellidos,
+      cedula: cedula,
+      address: address,
+      referencias: referencias,
+    );
+    selectedCustomer = null;
+    await loadCustomers(searchValue: search);
+  }
+
+  Future<void> deleteCustomer(int id) async {
+    await DatabaseService.deleteCustomer(id);
+    if (selectedCustomer?['id'] == id) {
+      selectedCustomer = null;
+      history = [];
+    }
+    await loadCustomers(searchValue: search);
   }
 }
