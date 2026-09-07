@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:bazarnicole/Presentation/Services/auth_service.dart';
+import 'package:bazarnicole/Presentation/Services/audit_service.dart';
 
 class AuthProvider extends ChangeNotifier {
   final AuthService _authService = AuthService();
@@ -18,16 +19,30 @@ class AuthProvider extends ChangeNotifier {
 
     _loading = false;
     if (user != null) {
+      await AuditService.log(
+        action: AuditAction.loginSuccess, module: 'Auth', page: 'LoginView',
+        entity: 'user', entityId: user['uid'],
+        metadata: {'email': email}, controller: 'AuthProvider',
+      );
       _user = user;
       notifyListeners();
       return true;
     }
 
+    await AuditService.log(
+      action: AuditAction.loginFailed, module: 'Auth', page: 'LoginView',
+      metadata: {'email': email}, controller: 'AuthProvider', success: false,
+      error: 'Credenciales invalidas',
+    );
     notifyListeners();
     return false;
   }
 
   Future<void> signOut() async {
+    await AuditService.log(
+      action: AuditAction.logout, module: 'Auth', page: 'AuthView',
+      controller: 'AuthProvider',
+    );
     await _authService.logout();
     _user = null;
     notifyListeners();

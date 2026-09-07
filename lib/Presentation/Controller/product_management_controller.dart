@@ -1,4 +1,5 @@
 import 'package:bazarnicole/Presentation/Services/catalog_sync_service.dart';
+import 'package:bazarnicole/Presentation/Services/audit_service.dart';
 import 'package:bazarnicole/Presentation/Services/database_service.dart';
 import 'package:bazarnicole/Presentation/Services/google_drive_backup_service.dart';
 import 'package:bazarnicole/Presentation/Services/image_optimizer_service.dart';
@@ -110,7 +111,8 @@ class ProductManagementController extends ChangeNotifier {
     List<String> images = const [],
     Map<int, int> initialStock = const {},
   }) async {
-    await DatabaseService.createProduct(
+    try {
+      await DatabaseService.createProduct(
       name: name,
       price: price,
       costPrice: costPrice,
@@ -125,8 +127,26 @@ class ProductManagementController extends ChangeNotifier {
       images: images,
       initialStock: initialStock,
     );
-    await loadCatalog();
-    CatalogSyncService.instance.markDirty(); // ← Producto creado
+      final created = await DatabaseService.rawQuery(
+        'SELECT * FROM products WHERE name = ? ORDER BY id DESC LIMIT 1', [name],
+      );
+      await AuditService.log(
+        action: AuditAction.createProduct, module: 'Products',
+        page: 'ProductManagementView', entity: 'product',
+        entityId: created.isEmpty ? null : created.first['id'],
+        newData: created.isEmpty ? null : created.first,
+        controller: 'ProductManagementController',
+      );
+      await loadCatalog();
+      CatalogSyncService.instance.markDirty();
+    } catch (error) {
+      await AuditService.log(
+        action: AuditAction.createProduct, module: 'Products',
+        page: 'ProductManagementView', controller: 'ProductManagementController',
+        success: false, error: error,
+      );
+      rethrow;
+    }
   }
 
   Future<void> updateProduct({
@@ -145,7 +165,11 @@ class ProductManagementController extends ChangeNotifier {
     List<String>? images,
   }) async {
     final previousImages = await DatabaseService.getProductImageIds(productId);
-    await DatabaseService.updateProduct(
+    final before = await DatabaseService.rawQuery(
+      'SELECT * FROM products WHERE id = ? LIMIT 1', [productId],
+    );
+    try {
+      await DatabaseService.updateProduct(
       productId: productId,
       name: name,
       categoryName: category,
@@ -160,14 +184,33 @@ class ProductManagementController extends ChangeNotifier {
       storeId: storeId,
       images: images,
     );
-    if (images != null) {
+      if (images != null) {
       final current = images.toSet();
       for (final oldId in previousImages.where((id) => !current.contains(id))) {
         await GoogleDriveBackupService.deleteProductImage(oldId);
       }
+      }
+      final after = await DatabaseService.rawQuery(
+        'SELECT * FROM products WHERE id = ? LIMIT 1', [productId],
+      );
+      await AuditService.log(
+        action: AuditAction.updateProduct, module: 'Products',
+        page: 'ProductManagementView', entity: 'product', entityId: productId,
+        oldData: before.isEmpty ? null : before.first,
+        newData: after.isEmpty ? null : after.first,
+        controller: 'ProductManagementController',
+      );
+      await loadCatalog();
+      CatalogSyncService.instance.markDirty();
+    } catch (error) {
+      await AuditService.log(
+        action: AuditAction.updateProduct, module: 'Products',
+        page: 'ProductManagementView', entity: 'product', entityId: productId,
+        oldData: before.isEmpty ? null : before.first,
+        controller: 'ProductManagementController', success: false, error: error,
+      );
+      rethrow;
     }
-    await loadCatalog();
-    CatalogSyncService.instance.markDirty(); // ← Producto actualizado
   }
 
   Future<void> updateProductWithStock({
@@ -248,7 +291,26 @@ class ProductManagementController extends ChangeNotifier {
 
   Future<void> deleteProduct(int productId) async {
     final imageIds = await DatabaseService.getProductImageIds(productId);
-    await DatabaseService.deleteProduct(productId);
+    final before = await DatabaseService.rawQuery(
+      'SELECT * FROM products WHERE id = ? LIMIT 1', [productId],
+    );
+    try {
+      await DatabaseService.deleteProduct(productId);
+      await AuditService.log(
+        action: AuditAction.deleteProduct, module: 'Products',
+        page: 'ProductManagementView', entity: 'product', entityId: productId,
+        oldData: before.isEmpty ? null : before.first,
+        controller: 'ProductManagementController',
+      );
+    } catch (error) {
+      await AuditService.log(
+        action: AuditAction.deleteProduct, module: 'Products',
+        page: 'ProductManagementView', entity: 'product', entityId: productId,
+        oldData: before.isEmpty ? null : before.first,
+        controller: 'ProductManagementController', success: false, error: error,
+      );
+      rethrow;
+    }
     for (final id in imageIds) {
       await GoogleDriveBackupService.deleteProductImage(id);
     }

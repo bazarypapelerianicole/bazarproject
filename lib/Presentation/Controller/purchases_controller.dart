@@ -1,5 +1,6 @@
 import 'package:bazarnicole/Presentation/Services/database_service.dart';
 import 'package:flutter/foundation.dart';
+import 'package:bazarnicole/Presentation/Services/audit_service.dart';
 
 enum PurchaseHistoryPeriod { all, today, week, month }
 
@@ -252,6 +253,14 @@ class PurchasesController extends ChangeNotifier {
             },
           )
           .toList(),
+    );
+
+    await AuditService.log(
+      action: AuditAction.createPurchase, module: 'Purchases',
+      page: 'PurchasesView', entity: 'purchase', entityId: purchaseId,
+      newData: {'purchase_id': purchaseId, 'products': cart,
+        'supplier': supplierName, 'payment_method': selectedPaymentMethodName},
+      controller: 'PurchasesController',
     );
 
     cart.clear();

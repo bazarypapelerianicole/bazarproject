@@ -12,6 +12,7 @@ import 'package:bazarnicole/Presentation/View/Reports/reports_view.dart';
 import 'package:bazarnicole/Presentation/View/Users/users_view.dart';
 import 'package:bazarnicole/Presentation/View/Suppliers/suppliers_view.dart';
 import 'package:bazarnicole/Presentation/admin/AdminDBPage.dart';
+import 'package:bazarnicole/Presentation/View/Admin/audit_logs_page.dart';
 import 'package:bazarnicole/Presentation/Widgets/legal_page_widget.dart';
 
 class AppRoutes {
@@ -33,6 +34,7 @@ class AppRoutes {
   static const users = '/users';
   static const suppliers = '/suppliers';
   static const adminDb = '/admin-db';
+  static const auditLogs = '/audit-logs';
   static const catalog = '/catalog';
   static const terms = '/terms';
   static const privacy = '/privacy';
@@ -51,6 +53,7 @@ class AppRoutes {
     users: (context) => const UsersView(),
     suppliers: (context) => const SuppliersView(),
     adminDb: (context) => const AdminDBPage(),
+    auditLogs: (context) => const AuditLogsPage(),
 
     if (kIsWeb)
       terms: (context) => const LegalPageWidget(type: LegalDocType.terms),
@@ -77,6 +80,7 @@ class AppRoutes {
       users,
       suppliers,
       adminDb,
+      auditLogs,
     ],
     // Administrador: sin gestión de usuarios
     'administrador': [
@@ -111,6 +115,7 @@ class AppRoutes {
       users,
       suppliers,
       adminDb,
+      auditLogs,
     ],
   };
 

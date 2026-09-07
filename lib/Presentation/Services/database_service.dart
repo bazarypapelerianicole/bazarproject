@@ -415,7 +415,7 @@ class DatabaseService {
     final db = await databaseFactory.openDatabase(
       path,
       options: OpenDatabaseOptions(
-        version: 2,
+        version: 3,
         onCreate: (db, version) async => _ensureBusinessSchema(db),
         onUpgrade: (db, oldVersion, newVersion) async =>
             _ensureBusinessSchema(db),
@@ -842,6 +842,43 @@ class DatabaseService {
         created_at TEXT NOT NULL
       )
     ''');
+
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS audit_logs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id TEXT,
+        user_name TEXT,
+        user_email TEXT,
+        user_role TEXT,
+        action TEXT NOT NULL,
+        module TEXT,
+        page TEXT,
+        entity TEXT,
+        entity_id TEXT,
+        description TEXT,
+        old_data TEXT,
+        new_data TEXT,
+        metadata TEXT,
+        controller TEXT,
+        service TEXT,
+        platform TEXT,
+        created_at TEXT NOT NULL,
+        success INTEGER NOT NULL DEFAULT 1,
+        error_message TEXT,
+        ip_address TEXT,
+        device_info TEXT
+      )
+    ''');
+    for (final index in [
+      'CREATE INDEX IF NOT EXISTS idx_audit_created_at ON audit_logs(created_at)',
+      'CREATE INDEX IF NOT EXISTS idx_audit_user_id ON audit_logs(user_id)',
+      'CREATE INDEX IF NOT EXISTS idx_audit_action ON audit_logs(action)',
+      'CREATE INDEX IF NOT EXISTS idx_audit_module ON audit_logs(module)',
+      'CREATE INDEX IF NOT EXISTS idx_audit_entity ON audit_logs(entity)',
+      'CREATE INDEX IF NOT EXISTS idx_audit_entity_id ON audit_logs(entity_id)',
+    ]) {
+      await db.execute(index);
+    }
 
     await _seedAdminUser(db);
     await _seedPaymentMethods(db);
@@ -2657,6 +2694,57 @@ class DatabaseService {
   static bool get isOpen => _database != null && _database!.isOpen;
 
   static Future<void> closeDatabase() async => close();
+
+  static Future<int> insertAuditLog(Map<String, dynamic> values) async {
+    final db = await database;
+    return db.insert('audit_logs', values);
+  }
+
+  static Future<List<Map<String, dynamic>>> getAuditLogs({
+    String? search,
+    String? userId,
+    String? action,
+    String? module,
+    String? entity,
+    DateTime? from,
+    DateTime? to,
+    bool? success,
+    int limit = 100,
+    int offset = 0,
+  }) async {
+    final db = await database;
+    final conditions = <String>[];
+    final args = <Object?>[];
+
+    void add(String condition, Object? value) {
+      conditions.add(condition);
+      args.add(value);
+    }
+
+    if (search?.trim().isNotEmpty == true) {
+      final value = '%${search!.trim()}%';
+      conditions.add(
+        '(user_name LIKE ? OR user_email LIKE ? OR action LIKE ? OR module LIKE ? OR entity LIKE ? OR description LIKE ?)',
+      );
+      args.addAll([value, value, value, value, value, value]);
+    }
+    if (userId != null) add('user_id = ?', userId);
+    if (action != null) add('action = ?', action);
+    if (module != null) add('module = ?', module);
+    if (entity != null) add('entity = ?', entity);
+    if (from != null) add('created_at >= ?', from.toUtc().toIso8601String());
+    if (to != null) add('created_at <= ?', to.toUtc().toIso8601String());
+    if (success != null) add('success = ?', success ? 1 : 0);
+
+    return db.query(
+      'audit_logs',
+      where: conditions.isEmpty ? null : conditions.join(' AND '),
+      whereArgs: args,
+      orderBy: 'created_at DESC, id DESC',
+      limit: limit,
+      offset: offset,
+    );
+  }
 
   static Future<List<Map<String, dynamic>>> rawQuery(
     String sql, [
