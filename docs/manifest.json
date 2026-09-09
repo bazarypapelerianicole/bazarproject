@@ -1,0 +1,35 @@
+{
+    "name": "Bazar y Papelería Nicole",
+    "short_name": "Nicole",
+    "start_url": ".",
+    "display": "standalone",
+    "background_color": "#131a1f",
+    "theme_color": "#131a1f",
+    "description": "Bazar y Papelería Nicole ofrece útiles escolares, artículos de oficina, papelería, bazar, impresiones, juguetes y mucho más al mejor precio.",
+    "orientation": "portrait-primary",
+    "prefer_related_applications": false,
+    "icons": [
+        {
+            "src": "icons/Icon-192.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        },
+        {
+            "src": "icons/Icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        },
+        {
+            "src": "icons/Icon-maskable-192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "maskable"
+        },
+        {
+            "src": "icons/Icon-maskable-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "maskable"
+        }
+    ]
+}
