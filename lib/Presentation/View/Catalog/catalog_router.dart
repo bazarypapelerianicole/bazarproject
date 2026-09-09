@@ -11,59 +11,72 @@ class CatalogRouter {
       routes: [
         GoRoute(
           path: '/catalog',
-          builder: (context, state) => WebCatalogView(controller: controller),
+          builder: (context, state) =>
+              _selectable(WebCatalogView(controller: controller)),
         ),
         GoRoute(
           path: '/catalog/:sku',
-          builder: (context, state) => _CatalogDetailRoute(
-            controller: controller,
-            sku: Uri.decodeComponent(state.pathParameters['sku'] ?? ''),
+          builder: (context, state) => _selectable(
+            _CatalogDetailRoute(
+              controller: controller,
+              sku: Uri.decodeComponent(state.pathParameters['sku'] ?? ''),
+            ),
           ),
         ),
         GoRoute(
           path: '/category/:categoryId',
-          builder: (context, state) => WebCatalogView(
-            controller: controller,
-            initialCategoryId: state.pathParameters['categoryId'],
+          builder: (context, state) => _selectable(
+            WebCatalogView(
+              controller: controller,
+              initialCategoryId: state.pathParameters['categoryId'],
+            ),
           ),
         ),
         GoRoute(
           path: '/store/:storeId',
-          builder: (context, state) => WebCatalogView(
-            controller: controller,
-            initialStoreId: state.pathParameters['storeId'],
+          builder: (context, state) => _selectable(
+            WebCatalogView(
+              controller: controller,
+              initialStoreId: state.pathParameters['storeId'],
+            ),
           ),
         ),
         GoRoute(
           path: '/search/:text',
-          builder: (context, state) => WebCatalogView(
-            controller: controller,
-            initialSearch: Uri.decodeComponent(
-              state.pathParameters['text'] ?? '',
+          builder: (context, state) => _selectable(
+            WebCatalogView(
+              controller: controller,
+              initialSearch: Uri.decodeComponent(
+                state.pathParameters['text'] ?? '',
+              ),
+              initialStoreId: null,
             ),
-            initialStoreId: null,
           ),
         ),
       ],
-      errorBuilder: (context, state) => Scaffold(
-        appBar: AppBar(title: const Text('Ruta no encontrada')),
-        body: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text('La ruta solicitada no existe.'),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: () => context.go('/catalog'),
-                child: const Text('Volver al catálogo'),
-              ),
-            ],
+      errorBuilder: (context, state) => _selectable(
+        Scaffold(
+          appBar: AppBar(title: const Text('Ruta no encontrada')),
+          body: Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text('La ruta solicitada no existe.'),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: () => context.go('/catalog'),
+                  child: const Text('Volver al catálogo'),
+                ),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 }
+
+Widget _selectable(Widget child) => SelectionArea(child: child);
 
 class _CatalogDetailRoute extends StatefulWidget {
   final CatalogController controller;

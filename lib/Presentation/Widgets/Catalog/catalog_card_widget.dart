@@ -77,7 +77,9 @@ class _CatalogCategoryCardState extends State<CatalogCategoryCard>
                 borderRadius: BorderRadius.circular(24),
                 boxShadow: [
                   BoxShadow(
-                    color: _accentColor.withValues(alpha: _isHovered ? 0.16 : 0.08),
+                    color: _accentColor.withValues(
+                      alpha: _isHovered ? 0.16 : 0.08,
+                    ),
                     blurRadius: _isHovered ? 24 : 14,
                     offset: const Offset(0, 10),
                   ),
@@ -126,7 +128,12 @@ class _CatalogCategoryCardState extends State<CatalogCategoryCard>
                                   runSpacing: 6,
                                   children: widget.info.tags
                                       .take(2)
-                                      .map((tag) => _TagChip(label: tag, color: _accentColor))
+                                      .map(
+                                        (tag) => _TagChip(
+                                          label: tag,
+                                          color: _accentColor,
+                                        ),
+                                      )
                                       .toList(),
                                 ),
                               const SizedBox(height: 10),
@@ -135,7 +142,10 @@ class _CatalogCategoryCardState extends State<CatalogCategoryCard>
                                 height: 42,
                                 child: FilledButton.icon(
                                   onPressed: () => _openDetail(context),
-                                  icon: const Icon(Icons.visibility_outlined, size: 18),
+                                  icon: const Icon(
+                                    Icons.visibility_outlined,
+                                    size: 18,
+                                  ),
                                   label: const Text('Ver detalle'),
                                   style: FilledButton.styleFrom(
                                     backgroundColor: _accentColor,
@@ -143,7 +153,9 @@ class _CatalogCategoryCardState extends State<CatalogCategoryCard>
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(14),
                                     ),
-                                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                    ),
                                   ),
                                 ),
                               ),
@@ -167,10 +179,12 @@ class _CatalogCategoryCardState extends State<CatalogCategoryCard>
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => CatalogDetailWidget(
-        name: widget.name,
-        storeName: widget.storeName,
-        info: widget.info,
+      builder: (_) => SelectionArea(
+        child: CatalogDetailWidget(
+          name: widget.name,
+          storeName: widget.storeName,
+          info: widget.info,
+        ),
       ),
     );
   }
@@ -211,7 +225,9 @@ class _CardImage extends StatelessWidget {
                         initialIndex: index,
                       ),
                       child: Hero(
-                        tag: ProductGalleryViewer.heroTagFor(image.thumbnailLink),
+                        tag: ProductGalleryViewer.heroTagFor(
+                          image.thumbnailLink,
+                        ),
                         child: DriveImage(
                           key: ValueKey(image.id),
                           url: image.thumbnailLink,
@@ -263,7 +279,11 @@ class _CardImage extends StatelessWidget {
       color: accentColor.withValues(alpha: 0.95),
     ),
     child: const Center(
-      child: Icon(Icons.image_not_supported_outlined, color: Colors.white70, size: 40),
+      child: Icon(
+        Icons.image_not_supported_outlined,
+        color: Colors.white70,
+        size: 40,
+      ),
     ),
   );
 }

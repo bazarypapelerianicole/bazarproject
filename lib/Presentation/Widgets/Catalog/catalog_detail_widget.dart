@@ -521,7 +521,9 @@ class _ProductRow extends StatelessWidget {
     return InkWell(
       onTap: () {
         if (kIsWeb) {
-          final sku = product.sku.isNotEmpty ? product.sku : product.id.toString();
+          final sku = product.sku.isNotEmpty
+              ? product.sku
+              : product.id.toString();
           final url = '/catalog/${Uri.encodeComponent(sku)}';
           try {
             GoRouter.of(context).go(url);
@@ -608,7 +610,10 @@ class _ProductRow extends StatelessWidget {
                   if (product.sku.isNotEmpty)
                     Text(
                       'SKU: ${product.sku}',
-                      style: TextStyle(fontSize: 10, color: AppColors.mediumGray),
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: AppColors.mediumGray,
+                      ),
                     ),
                 ],
               ),
@@ -662,53 +667,170 @@ class _ProductRow extends StatelessWidget {
   void _showQrDialog(BuildContext context) {
     showDialog(
       context: context,
-      builder: (_) => Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                product.name,
-                style: const TextStyle(
-                  fontWeight: FontWeight.w700,
-                  fontSize: 15,
-                ),
-                textAlign: TextAlign.center,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
+      builder: (dialogContext) => SelectionArea(
+        child: Dialog(
+          backgroundColor: AppColors.lightGray,
+          insetPadding: const EdgeInsets.symmetric(
+            horizontal: 20,
+            vertical: 24,
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 420),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(24, 22, 24, 18),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        width: 42,
+                        height: 42,
+                        decoration: BoxDecoration(
+                          color: color.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(13),
+                        ),
+                        child: Icon(
+                          Icons.qr_code_2_rounded,
+                          color: color,
+                          size: 25,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Código QR del producto',
+                              style: TextStyle(
+                                fontSize: 17,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                            const SizedBox(height: 3),
+                            Text(
+                              'Escanea para ver el producto en el catálogo',
+                              style: TextStyle(
+                                fontSize: 12,
+                                height: 1.3,
+                                color: AppColors.mediumGray,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: () => Navigator.of(dialogContext).pop(),
+                        tooltip: 'Cerrar',
+                        visualDensity: VisualDensity.compact,
+                        icon: const Icon(Icons.close_rounded),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: color.withValues(alpha: 0.16)),
+                      boxShadow: [
+                        BoxShadow(
+                          color: color.withValues(alpha: 0.10),
+                          blurRadius: 18,
+                          offset: const Offset(0, 8),
+                        ),
+                      ],
+                    ),
+                    child: QrImageView(
+                      data: _qrUrl,
+                      version: QrVersions.auto,
+                      size: 228,
+                      eyeStyle: QrEyeStyle(
+                        eyeShape: QrEyeShape.square,
+                        color: color,
+                      ),
+                      dataModuleStyle: QrDataModuleStyle(
+                        dataModuleShape: QrDataModuleShape.square,
+                        color: color,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      product.name,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  if (product.sku.isNotEmpty) ...[
+                    const SizedBox(height: 3),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        'SKU: ${product.sku}',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: AppColors.mediumGray,
+                        ),
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 12),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 10,
+                    ),
+                    decoration: BoxDecoration(
+                      color: color.withValues(alpha: 0.06),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      _qrUrl,
+                      style: TextStyle(
+                        fontSize: 10,
+                        height: 1.35,
+                        color: AppColors.mediumGray,
+                      ),
+                      textAlign: TextAlign.center,
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    width: double.infinity,
+                    child: FilledButton.icon(
+                      onPressed: () => Navigator.of(dialogContext).pop(),
+                      icon: const Icon(Icons.check_rounded, size: 18),
+                      label: const Text('Listo'),
+                      style: FilledButton.styleFrom(
+                        backgroundColor: color,
+                        foregroundColor: Colors.white,
+                        minimumSize: const Size.fromHeight(44),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
-              if (product.sku.isNotEmpty) ...[
-                const SizedBox(height: 4),
-                Text(
-                  'SKU: ${product.sku}',
-                  style: TextStyle(fontSize: 11, color: AppColors.mediumGray),
-                ),
-              ],
-              const SizedBox(height: 16),
-              QrImageView(
-                data: _qrUrl,
-                version: QrVersions.auto,
-                size: 220,
-                eyeStyle: QrEyeStyle(eyeShape: QrEyeShape.square, color: color),
-                dataModuleStyle: QrDataModuleStyle(
-                  dataModuleShape: QrDataModuleShape.square,
-                  color: color,
-                ),
-              ),
-              const SizedBox(height: 10),
-              Text(
-                _qrUrl,
-                style: TextStyle(fontSize: 10, color: AppColors.mediumGray),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 16),
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: const Text('Cerrar'),
-              ),
-            ],
+            ),
           ),
         ),
       ),

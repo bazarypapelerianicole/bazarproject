@@ -31,71 +31,79 @@ class LegalPageWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        backgroundColor: AppColors.primaryLogo,
-        foregroundColor: Colors.white,
-        leading: const BackButton(),
-        title: Row(
+    return SelectionArea(
+      child: Scaffold(
+        backgroundColor: Colors.white,
+        appBar: AppBar(
+          backgroundColor: AppColors.primaryLogo,
+          foregroundColor: Colors.white,
+          leading: const BackButton(),
+          title: Row(
+            children: [
+              Icon(_icon, size: 20),
+              const SizedBox(width: 10),
+              Text(
+                _title,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+        ),
+        body: Column(
           children: [
-            Icon(_icon, size: 20),
-            const SizedBox(width: 10),
-            Text(
-              _title,
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            // Fecha de vigencia
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 4),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.calendar_today_outlined,
+                    size: 13,
+                    color: AppColors.mediumGray,
+                  ),
+                  const SizedBox(width: 6),
+                  const Text(
+                    'Última actualización: 17 de abril de 2026',
+                    style: TextStyle(fontSize: 11, color: AppColors.mediumGray),
+                  ),
+                ],
+              ),
+            ),
+            Divider(
+              color: AppColors.greyOverlay.withValues(alpha: 0.4),
+              height: 1,
+              indent: 20,
+              endIndent: 20,
+            ),
+
+            // Contenido
+            Expanded(
+              child: ListView.builder(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 8,
+                ),
+                itemCount: _sections.length,
+                itemBuilder: (_, i) => _SectionTile(section: _sections[i]),
+              ),
+            ),
+
+            // Pie
+            Container(
+              color: AppColors.primaryLogo,
+              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
+              width: double.infinity,
+              child: const Text(
+                '© 2026 Bazar & Tienda Nicole · Todos los derechos reservados',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: Colors.white54, fontSize: 11),
+              ),
             ),
           ],
         ),
-      ),
-      body: Column(
-        children: [
-          // Fecha de vigencia
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 12, 20, 4),
-            child: Row(
-              children: [
-                Icon(
-                  Icons.calendar_today_outlined,
-                  size: 13,
-                  color: AppColors.mediumGray,
-                ),
-                const SizedBox(width: 6),
-                const Text(
-                  'Última actualización: 17 de abril de 2026',
-                  style: TextStyle(fontSize: 11, color: AppColors.mediumGray),
-                ),
-              ],
-            ),
-          ),
-          Divider(
-            color: AppColors.greyOverlay.withValues(alpha: 0.4),
-            height: 1,
-            indent: 20,
-            endIndent: 20,
-          ),
-
-          // Contenido
-          Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-              itemCount: _sections.length,
-              itemBuilder: (_, i) => _SectionTile(section: _sections[i]),
-            ),
-          ),
-
-          // Pie
-          Container(
-            color: AppColors.primaryLogo,
-            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
-            width: double.infinity,
-            child: const Text(
-              '© 2026 Bazar & Tienda Nicole · Todos los derechos reservados',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.white54, fontSize: 11),
-            ),
-          ),
-        ],
       ),
     );
   }
