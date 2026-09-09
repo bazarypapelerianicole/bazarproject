@@ -544,7 +544,7 @@ class _CustomersViewState extends State<CustomersView> {
               borderRadius: BorderRadius.circular(24),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.12),
+                  color: Colors.black.withValues(alpha: 12),
                   blurRadius: 30,
                   offset: const Offset(0, 12),
                 ),
@@ -558,7 +558,7 @@ class _CustomersViewState extends State<CustomersView> {
                   width: 64,
                   height: 64,
                   decoration: BoxDecoration(
-                    color: AppColors.primaryRed.withOpacity(0.10),
+                    color: AppColors.primaryRed.withValues(alpha: 10),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
