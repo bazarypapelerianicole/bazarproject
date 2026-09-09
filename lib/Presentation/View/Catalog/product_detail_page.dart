@@ -171,7 +171,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                           } else {
                             if (kIsWeb) {
                               navigateToExternalCatalog(
-                                'https://bazarypapelerianicole.github.io/PlatformWeb/#/catalog',
+                                'https://bazarypapelerianicole.github.io/bazarproject/#/catalog',
                               );
                             } else {
                               Navigator.pushReplacementNamed(
@@ -798,7 +798,7 @@ class _DetailPanel extends StatelessWidget {
                 } else {
                   if (kIsWeb) {
                     navigateToExternalCatalog(
-                      'https://bazarypapelerianicole.github.io/PlatformWeb/#/catalog',
+                      'https://bazarypapelerianicole.github.io/bazarproject/#/catalog',
                     );
                   } else {
                     Navigator.pushReplacementNamed(context, '/catalog');
