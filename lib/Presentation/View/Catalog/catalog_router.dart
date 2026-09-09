@@ -79,15 +79,22 @@ class _CatalogDetailRouteState extends State<_CatalogDetailRoute> {
   @override
   void initState() {
     super.initState();
+    widget.controller.addListener(_onControllerChanged);
     widget.controller.initialize();
   }
 
   @override
-  Widget build(BuildContext context) {
-    if (widget.controller.isLoading && !widget.controller.isReady) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
-    }
+  void dispose() {
+    widget.controller.removeListener(_onControllerChanged);
+    super.dispose();
+  }
 
+  void _onControllerChanged() {
+    if (mounted) setState(() {});
+  }
+
+  @override
+  Widget build(BuildContext context) {
     if (widget.controller.errorMessage != null) {
       return Scaffold(
         appBar: AppBar(title: const Text('Error de catálogo')),
@@ -109,7 +116,18 @@ class _CatalogDetailRouteState extends State<_CatalogDetailRoute> {
       );
     }
 
-    final product = widget.controller.productBySku(widget.sku);
+    if (!widget.controller.isReady) {
+      return const Scaffold(body: CatalogLoadingState());
+    }
+
+    debugPrint('[CatalogDetail] route key: ${widget.sku}');
+    debugPrint('[CatalogDetail] isLoading: ${widget.controller.isLoading}');
+    debugPrint('[CatalogDetail] isReady: ${widget.controller.isReady}');
+    debugPrint('[CatalogDetail] buscando producto...');
+    final product = widget.controller.productByRouteKey(widget.sku);
+    debugPrint(
+      '[CatalogDetail] ${product == null ? 'producto NO encontrado' : 'producto encontrado: ${product.name}'}',
+    );
     if (product == null) {
       return Scaffold(
         appBar: AppBar(title: const Text('Producto no encontrado')),
@@ -117,7 +135,9 @@ class _CatalogDetailRouteState extends State<_CatalogDetailRoute> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text('No se encontró el producto para el SKU solicitado.'),
+              const Text('Producto no encontrado'),
+              const SizedBox(height: 8),
+              Text('Clave: ${widget.sku}'),
               const SizedBox(height: 16),
               ElevatedButton(
                 onPressed: () => context.go('/catalog'),

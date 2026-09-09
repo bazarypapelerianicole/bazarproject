@@ -26,6 +26,7 @@ class CatalogController extends ChangeNotifier {
     if (isReady && !forceRefresh) return;
     if (isLoading) return;
 
+    debugPrint('[CatalogController] initialize START');
     isLoading = true;
     errorMessage = null;
     notifyListeners();
@@ -35,8 +36,10 @@ class CatalogController extends ChangeNotifier {
       isReady = true;
     } catch (error) {
       errorMessage = error.toString();
+      debugPrint('[CatalogController] initialize ERROR: $error');
     } finally {
       isLoading = false;
+      debugPrint('[CatalogController] initialize END');
       notifyListeners();
     }
   }
@@ -46,6 +49,52 @@ class CatalogController extends ChangeNotifier {
   CatalogProductEntry? productBySku(String sku) {
     final searchKey = sku.trim().toLowerCase();
     return _catalogData?.skuIndex[searchKey];
+  }
+
+  CatalogProductEntry? productByRouteKey(String key) {
+    final data = _catalogData;
+    if (data == null) return null;
+
+    final trimmedKey = key.trim();
+    final lowerKey = trimmedKey.toLowerCase();
+    final skuMatch = data.skuIndex[lowerKey];
+    if (skuMatch != null) return skuMatch;
+
+    final products = data.driveData.sections
+        .expand((section) => section.categories)
+        .expand((category) => category.products)
+        .toList();
+    for (final product in products) {
+      if (product.id.toString() == trimmedKey) return product;
+    }
+
+    final routeKey = _normalizeRouteKey(key);
+    if (routeKey.isEmpty) return null;
+
+    for (final product in products) {
+      if (_normalizeRouteKey(product.name) == routeKey) {
+        return product;
+      }
+    }
+    return null;
+  }
+
+  static String _normalizeRouteKey(String value) {
+    var normalized = value.trim().toLowerCase();
+    const replacements = {
+      'á': 'a',
+      'é': 'e',
+      'í': 'i',
+      'ó': 'o',
+      'ú': 'u',
+      'ü': 'u',
+      'ñ': 'n',
+    };
+    replacements.forEach((from, to) {
+      normalized = normalized.replaceAll(from, to);
+    });
+    normalized = normalized.replaceAll(RegExp(r'[^a-z0-9]+'), '-');
+    return normalized.replaceAll(RegExp(r'^-+|-+$'), '');
   }
 
   CatalogCategory? categoryById(String categoryId) {
@@ -69,9 +118,11 @@ class CatalogController extends ChangeNotifier {
     }
 
     return productLists
-        .where((product) =>
-            product.name.toLowerCase().contains(trimmed) ||
-            product.sku.toLowerCase().contains(trimmed))
+        .where(
+          (product) =>
+              product.name.toLowerCase().contains(trimmed) ||
+              product.sku.toLowerCase().contains(trimmed),
+        )
         .toList();
   }
 }
