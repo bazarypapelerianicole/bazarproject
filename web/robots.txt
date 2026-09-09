@@ -2,4 +2,4 @@ User-agent: *
 
 Allow: /
 
-Sitemap: https://bazarypapelerianicole.github.io/PlatformWeb/sitemap.xml
+Sitemap: https://bazarypapelerianicole.github.io/bazarproject/sitemap.xml

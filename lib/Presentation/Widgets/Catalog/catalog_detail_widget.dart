@@ -507,7 +507,7 @@ class _ProductRow extends StatelessWidget {
   const _ProductRow({required this.product, required this.color});
 
   String get _qrUrl =>
-      'https://bazarypapelerianicole.github.io/PlatformWeb/catalog/${Uri.encodeComponent(product.sku.isNotEmpty ? product.sku : product.id.toString())}';
+      'https://bazarypapelerianicole.github.io/PlatformWeb/#/catalog/${Uri.encodeComponent(product.sku.isNotEmpty ? product.sku : product.id.toString())}';
 
   @override
   Widget build(BuildContext context) {
