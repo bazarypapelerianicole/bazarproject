@@ -128,3 +128,4 @@ installer_output/
 .env
 .env.*
 *.env
+.venv
