@@ -76,6 +76,7 @@ class CatalogDetailWidget extends StatelessWidget {
                     // ── Imagen hero ────────────────────────────────
                     _HeroImage(
                       imageFiles: galleryImages,
+                      imageUrl: info.imageUrl,
                       accentColor: _accent,
                       height: isWide ? screenHeight * 0.3 : screenHeight * 0.26,
                     ),
@@ -236,11 +237,13 @@ class CatalogDetailWidget extends StatelessWidget {
 /// Imagen hero en la parte superior del detalle.
 class _HeroImage extends StatelessWidget {
   final List<CatalogImageFile> imageFiles;
+  final String imageUrl;
   final Color accentColor;
   final double height;
 
   const _HeroImage({
     required this.imageFiles,
+    required this.imageUrl,
     required this.accentColor,
     required this.height,
   });
@@ -248,6 +251,29 @@ class _HeroImage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final file = imageFiles.isEmpty ? null : imageFiles.first;
+    if (imageUrl.trim().isNotEmpty) {
+      return SizedBox(
+        height: height,
+        child: Image.network(
+          imageUrl,
+          fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) => Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [accentColor, accentColor.withValues(alpha: 0.5)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+            ),
+            child: const Icon(
+              Icons.photo_library_outlined,
+              color: Colors.white38,
+              size: 64,
+            ),
+          ),
+        ),
+      );
+    }
     return SizedBox(
       height: height,
       child: Stack(

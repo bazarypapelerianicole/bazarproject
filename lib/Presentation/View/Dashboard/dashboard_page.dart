@@ -25,6 +25,7 @@ class _DashboardPageState extends State<DashboardPage> {
     'Compras': AppRoutes.purchases,
     'Inventario': AppRoutes.inventory,
     'Productos': AppRoutes.products,
+    'Categorías': AppRoutes.categories,
     'Clientes': AppRoutes.customers,
     'Caja': AppRoutes.cash,
     'Reportes': AppRoutes.reports,
@@ -265,6 +266,8 @@ class _DashboardPageState extends State<DashboardPage> {
         return Icons.shopping_bag_outlined;
       case 'Productos':
         return Icons.inventory_2_outlined;
+      case 'Categorías':
+        return Icons.category_outlined;
       case 'Inventario':
         return Icons.storefront_outlined;
       case 'Clientes':

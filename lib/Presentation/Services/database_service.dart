@@ -550,6 +550,12 @@ class DatabaseService {
       column: 'slug',
       definition: 'TEXT NOT NULL DEFAULT ""',
     );
+    await _ensureColumn(
+      db,
+      table: 'categories',
+      column: 'image_url',
+      definition: 'TEXT NOT NULL DEFAULT ""',
+    );
 
     await db.execute(
       'CREATE INDEX IF NOT EXISTS idx_categories_slug ON categories(slug)',
@@ -1760,7 +1766,59 @@ class DatabaseService {
 
   static Future<List<Map<String, dynamic>>> getCategories() async {
     final db = await database;
-    return db.rawQuery('SELECT id, name FROM categories ORDER BY name');
+    return db.rawQuery('''
+      SELECT c.id, c.name, c.slug, c.store_id, c.image_url,
+        (SELECT COUNT(*) FROM products p WHERE p.category_id = c.id) AS product_count
+      FROM categories c
+      ORDER BY c.name
+    ''');
+  }
+
+  static Future<int> createCategory({
+    required String name,
+    int? storeId,
+    String imageUrl = '',
+  }) async {
+    final db = await database;
+    final cleanName = _cleanName(name);
+    if (cleanName.isEmpty) throw Exception('El nombre de la categoría es obligatorio.');
+    final slug = _buildCategorySlug(cleanName);
+    final id = await db.rawInsert(
+      'INSERT INTO categories (name, slug, store_id, image_url) VALUES (?, ?, ?, ?)',
+      [cleanName, slug, storeId, imageUrl.trim()],
+    );
+    notifyDatabaseChanged();
+    return id;
+  }
+
+  static Future<void> updateCategory({
+    required int categoryId,
+    required String name,
+    int? storeId,
+    String imageUrl = '',
+  }) async {
+    final db = await database;
+    final cleanName = _cleanName(name);
+    if (cleanName.isEmpty) throw Exception('El nombre de la categoría es obligatorio.');
+    await db.rawUpdate(
+      'UPDATE categories SET name = ?, slug = ?, store_id = ?, image_url = ? WHERE id = ?',
+      [cleanName, _buildCategorySlug(cleanName), storeId, imageUrl.trim(), categoryId],
+    );
+    notifyDatabaseChanged();
+  }
+
+  static Future<void> deleteCategory(int categoryId) async {
+    final db = await database;
+    final products = await db.rawQuery(
+      'SELECT COUNT(*) AS total FROM products WHERE category_id = ?',
+      [categoryId],
+    );
+    final total = (products.first['total'] as num?)?.toInt() ?? 0;
+    if (total > 0) {
+      throw Exception('No puedes eliminar esta categoría porque tiene $total producto(s) asociado(s).');
+    }
+    await db.rawDelete('DELETE FROM categories WHERE id = ?', [categoryId]);
+    notifyDatabaseChanged();
   }
 
   static ProductQueryFilters buildProductQueryFilters({

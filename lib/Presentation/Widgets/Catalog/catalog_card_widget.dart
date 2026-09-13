@@ -97,6 +97,7 @@ class _CatalogCategoryCardState extends State<CatalogCategoryCard>
                       children: [
                         _CardImage(
                           heroImages: widget.info.heroImages,
+                          imageUrl: widget.info.imageUrl,
                           accentColor: _accentColor,
                         ),
                         Padding(
@@ -193,9 +194,14 @@ class _CatalogCategoryCardState extends State<CatalogCategoryCard>
 /// Imagen superior de la card con gradiente overlay y badge de la tienda.
 class _CardImage extends StatelessWidget {
   final List<CatalogImageFile> heroImages;
+  final String imageUrl;
   final Color accentColor;
 
-  const _CardImage({required this.heroImages, required this.accentColor});
+  const _CardImage({
+    required this.heroImages,
+    required this.imageUrl,
+    required this.accentColor,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -204,8 +210,15 @@ class _CardImage extends StatelessWidget {
       child: Stack(
         fit: StackFit.expand,
         children: [
-          if (heroImages.isEmpty) _imageFallback(),
-          if (heroImages.isNotEmpty)
+          if (imageUrl.trim().isNotEmpty)
+            Image.network(
+              imageUrl,
+              fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) => _imageFallback(),
+            )
+          else if (heroImages.isEmpty)
+            _imageFallback()
+          else
             PageView.builder(
               itemCount: heroImages.length,
               itemBuilder: (context, index) {

@@ -33,6 +33,9 @@ class CatalogProductEntry {
   final int? categoryId;
   final String categoryName;
 
+  /// Portada remota definida en categories.json para el encabezado del detalle.
+  final String categoryImageUrl;
+
   /// Archivos de Drive asociados al producto, con su thumbnail original.
   final List<CatalogImageFile> imageFiles;
 
@@ -45,6 +48,7 @@ class CatalogProductEntry {
     this.stock = 0,
     this.categoryId,
     this.categoryName = 'Sin categoría',
+    this.categoryImageUrl = '',
     this.imageFiles = const [],
   });
 }
@@ -56,6 +60,7 @@ class CatalogCategory {
   final int storeId;
   final String storeName;
   final CatalogImageFile? imageFile;
+  final String imageUrl;
 
   /// Imágenes de todos los productos de la categoría para su encabezado.
   ///
@@ -71,6 +76,7 @@ class CatalogCategory {
     required this.storeId,
     this.storeName = '',
     this.imageFile,
+    this.imageUrl = '',
     this.heroImages = const [],
     this.description = '',
     this.tags = const [],
@@ -80,6 +86,7 @@ class CatalogCategory {
   CatalogCategory copyWith({
     List<CatalogProductEntry>? products,
     CatalogImageFile? imageFile,
+    String? imageUrl,
     List<CatalogImageFile>? heroImages,
     String? description,
     List<String>? tags,
@@ -89,6 +96,7 @@ class CatalogCategory {
     storeId: storeId,
     storeName: storeName,
     imageFile: imageFile ?? this.imageFile,
+    imageUrl: imageUrl ?? this.imageUrl,
     heroImages: heroImages ?? this.heroImages,
     description: description ?? this.description,
     tags: tags ?? this.tags,
@@ -215,6 +223,9 @@ class CatalogBuilder {
       final categoryName = categoryId != null
           ? (categoryIndex[categoryId]!['name'] as String? ?? 'Sin categoría')
           : 'Sin categoría';
+        final categoryImageUrl = categoryId != null
+          ? _categoryImageUrl(categoryIndex[categoryId]!)
+          : '';
       final productImageFiles = _imageIds(p['images'])
           .map((imageId) => _findImageById(imageFiles, imageId))
           .whereType<CatalogImageFile>()
@@ -233,6 +244,7 @@ class CatalogBuilder {
               stock: stock,
               categoryId: categoryId,
               categoryName: categoryName,
+              categoryImageUrl: categoryImageUrl,
               imageFiles: productImageFiles,
             ),
           );
@@ -247,6 +259,7 @@ class CatalogBuilder {
       final storeId = (catData['store_id'] as num?)?.toInt() ?? 0;
       final storeName = storeNames[storeId] ?? getStoreName(storeId);
       final prods = productsByCatId[catId] ?? const [];
+      final imageUrl = _categoryImageUrl(catData);
       final heroImages = _heroImages(prods);
       sectionMap
           .putIfAbsent(storeId, () => [])
@@ -257,6 +270,7 @@ class CatalogBuilder {
               storeId: storeId,
               storeName: storeName,
               imageFile: heroImages.isEmpty ? null : heroImages.first,
+              imageUrl: imageUrl,
               heroImages: heroImages,
               products: prods,
             ),
@@ -298,6 +312,14 @@ class CatalogBuilder {
     };
 
     return values.map((id) => id.trim()).where((id) => id.isNotEmpty);
+  }
+
+  static String _categoryImageUrl(Map<String, dynamic> category) {
+    for (final key in const ['imageUrl', 'image_url', 'coverUrl', 'cover_url']) {
+      final value = category[key];
+      if (value is String && value.trim().isNotEmpty) return value.trim();
+    }
+    return '';
   }
 
   // ── Helpers ───────────────────────────────────────────────────────────────

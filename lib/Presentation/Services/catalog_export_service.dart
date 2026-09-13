@@ -80,15 +80,22 @@ class CatalogProductJson {
 class CatalogCategoryJson {
   final int id;
   final String name;
+  final String? imageUrl;
 
-  const CatalogCategoryJson({required this.id, required this.name});
+  const CatalogCategoryJson({required this.id, required this.name, this.imageUrl});
 
-  Map<String, dynamic> toJson() => {'id': id, 'name': name};
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'name': name,
+        if (imageUrl != null && imageUrl!.trim().isNotEmpty)
+          'imageUrl': imageUrl,
+      };
 
   factory CatalogCategoryJson.fromDbRow(Map<String, dynamic> row) =>
       CatalogCategoryJson(
         id: (row['id'] as num).toInt(),
         name: row['name'] as String,
+        imageUrl: row['imageUrl'] as String? ?? row['image_url'] as String?,
       );
 }
 

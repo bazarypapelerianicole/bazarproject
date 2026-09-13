@@ -127,6 +127,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                   children: [
                     _HeroSection(
                       heroImage: currentImage,
+                      categoryImageUrl: widget.product.categoryImageUrl,
                       accentColor: accentColor,
                       product: widget.product,
                       heroHeight: heroHeight,
@@ -181,39 +182,6 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                             }
                           }
                         },
-                      ),
-                    ),
-                    Positioned(
-                      left: 20,
-                      right: 20,
-                      bottom: 24,
-                      child: Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 14,
-                              vertical: 10,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.92),
-                              borderRadius: BorderRadius.circular(999),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.06),
-                                  blurRadius: 18,
-                                  offset: const Offset(0, 8),
-                                ),
-                              ],
-                            ),
-                            child: Text(
-                              categoryLabel,
-                              style: theme.textTheme.labelLarge?.copyWith(
-                                color: AppColors.darkGray,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          ),
-                        ],
                       ),
                     ),
                   ],
@@ -370,6 +338,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
 class _HeroSection extends StatelessWidget {
   const _HeroSection({
     required this.heroImage,
+    required this.categoryImageUrl,
     required this.accentColor,
     required this.product,
     required this.heroHeight,
@@ -377,6 +346,7 @@ class _HeroSection extends StatelessWidget {
   });
 
   final CatalogImageFile? heroImage;
+  final String categoryImageUrl;
   final Color accentColor;
   final CatalogProductEntry product;
   final double heroHeight;
@@ -385,11 +355,30 @@ class _HeroSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final imageUrl = heroImage?.thumbnailLink ?? '';
+    final hasCategoryCover = categoryImageUrl.trim().isNotEmpty;
+    final cover = hasCategoryCover
+        ? Image.network(
+            categoryImageUrl,
+            fit: BoxFit.cover,
+            errorBuilder: (_, __, ___) => _fallbackDecoration(accentColor),
+          )
+        : imageUrl.isNotEmpty
+        ? DriveImage(
+            url: imageUrl,
+            fit: BoxFit.cover,
+            errorWidget: _fallbackDecoration(accentColor),
+          )
+        : _fallbackDecoration(accentColor);
 
     return Stack(
       fit: StackFit.expand,
       children: [
-        if (imageUrl.isNotEmpty)
+        if (hasCategoryCover)
+          Semantics(
+            label: 'Portada de la categoría ${product.categoryName}',
+            child: cover,
+          )
+        else if (imageUrl.isNotEmpty)
           Semantics(
             button: true,
             label: 'Ampliar imágenes de ${product.name}',
@@ -399,17 +388,13 @@ class _HeroSection extends StatelessWidget {
                 onTap: onImageTap,
                 child: Hero(
                   tag: ProductGalleryViewer.heroTagFor(imageUrl),
-                  child: DriveImage(
-                    url: imageUrl,
-                    fit: BoxFit.cover,
-                    errorWidget: _fallbackDecoration(accentColor),
-                  ),
+                  child: cover,
                 ),
               ),
             ),
           )
         else
-          _fallbackDecoration(accentColor),
+          cover,
         Positioned(
           bottom: 0,
           left: 0,
