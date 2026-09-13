@@ -55,10 +55,13 @@ class DriveImage extends StatelessWidget {
           ..width = '100%'
           ..height = '100%'
           ..display = 'block'
+          ..opacity = '0'
           ..objectFit = _objectFit(fit)
           ..objectPosition = 'center'
           ..pointerEvents = 'none';
         img.setAttribute('decoding', 'async');
+        img.onLoad.listen((_) => img.style.opacity = '1');
+        img.onError.listen((_) => img.style.opacity = '0');
         if (borderRadius != null) {
           img.style.setProperty(
             'border-radius',
@@ -68,12 +71,15 @@ class DriveImage extends StatelessWidget {
       },
     );
 
+    final fallback = errorWidget ?? placeholder ?? const SizedBox.shrink();
+    final renderedImage = borderRadius == null
+        ? image
+        : ClipRRect(borderRadius: borderRadius!, child: image);
+
     return SizedBox(
       width: width,
       height: height,
-      child: borderRadius == null
-          ? image
-          : ClipRRect(borderRadius: borderRadius!, child: image),
+      child: Stack(fit: StackFit.expand, children: [fallback, renderedImage]),
     );
   }
 }
