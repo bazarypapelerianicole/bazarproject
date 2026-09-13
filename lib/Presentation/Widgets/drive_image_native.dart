@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 
-/// Implementación nativa de [DriveImage].
-///
-/// La carga remota se implementa exclusivamente en la variante web mediante
-/// `HTMLImageElement`. En otras plataformas este widget muestra su fallback.
+/// Implementación de [DriveImage] para plataformas que usan el pipeline nativo
+/// de imágenes de Flutter.
 class DriveImage extends StatelessWidget {
   const DriveImage({
     super.key,
@@ -26,10 +24,30 @@ class DriveImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
+    if (url.trim().isEmpty) {
+      return SizedBox(
+        width: width,
+        height: height,
+        child: errorWidget ?? placeholder ?? const SizedBox.shrink(),
+      );
+    }
+
+    final image = Image.network(
+      url,
+      fit: fit,
       width: width,
       height: height,
-      child: errorWidget ?? placeholder ?? const SizedBox.shrink(),
+      errorBuilder: (_, __, ___) => errorWidget ?? const SizedBox.shrink(),
+      frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
+        if (wasSynchronouslyLoaded || frame != null || placeholder == null) {
+          return child;
+        }
+        return placeholder!;
+      },
     );
+
+    return borderRadius == null
+        ? image
+        : ClipRRect(borderRadius: borderRadius!, child: image);
   }
 }

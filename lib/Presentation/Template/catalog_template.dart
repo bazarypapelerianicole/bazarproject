@@ -8,8 +8,7 @@
 
 /// Archivo de imagen tal como lo devuelve la API de Google Drive.
 ///
-/// [thumbnailLink] se conserva sin transformaciones para que el navegador
-/// cargue directamente la URL de Drive.
+/// [thumbnailLink] contiene la URL pública de miniatura usada por la UI.
 class CatalogImageFile {
   final String id;
   final String name;
@@ -36,7 +35,7 @@ class CatalogProductEntry {
   /// Portada remota definida en categories.json para el encabezado del detalle.
   final String categoryImageUrl;
 
-  /// Archivos de Drive asociados al producto, con su thumbnail original.
+  /// Archivos de Drive asociados al producto, con su thumbnail público.
   final List<CatalogImageFile> imageFiles;
 
   const CatalogProductEntry({

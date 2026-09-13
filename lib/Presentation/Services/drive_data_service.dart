@@ -272,6 +272,9 @@ class DriveDataService {
     ).replace(queryParameters: {'alt': 'media', 'key': _apiKey});
   }
 
+  static String _publicThumbnailUrl(String fileId) =>
+      'https://drive.google.com/thumbnail?id=$fileId&sz=w1000';
+
   static Future<Map<String, dynamic>> _publicGet(Uri uri) async {
     final resp = await http.get(uri).timeout(
       const Duration(seconds: 15),
@@ -371,7 +374,7 @@ class DriveDataService {
     }
   }
 
-  /// Lista thumbnails de imágenes en un folder usando API Key.
+  /// Lista miniaturas públicas de imágenes en un folder usando API Key.
   static Future<List<CatalogImageFile>> _publicListImageThumbnails(
     String folderId,
   ) async {
@@ -394,14 +397,11 @@ class DriveDataService {
       for (final f in files) {
         final id = f['id'] as String?;
         final name = f['name'] as String?;
-        final thumbnailLink = (f['thumbnailLink'] as String?)?.trim();
         if (id == null || name == null) {
           continue;
         }
 
-        final effectiveThumbnailLink = thumbnailLink?.isNotEmpty == true
-            ? thumbnailLink!
-            : 'https://drive.google.com/thumbnail?id=$id&sz=w400';
+        final effectiveThumbnailLink = _publicThumbnailUrl(id);
 
         result.add(
           CatalogImageFile(
@@ -573,7 +573,7 @@ class DriveDataService {
     return [];
   }
 
-  /// Lista los archivos de imagen en el folder con el thumbnail original.
+  /// Lista los archivos de imagen en el folder con una miniatura pública estable.
   static Future<List<CatalogImageFile>> _listImageThumbnails(
     drive.DriveApi api,
     String folderId,
@@ -592,15 +592,15 @@ class DriveDataService {
       for (final f in list.files ?? []) {
         final id = f.id;
         final name = f.name;
-        final thumbnailLink = f.thumbnailLink;
-        if (id == null ||
-            name == null ||
-            thumbnailLink == null ||
-            thumbnailLink.isEmpty) {
+        if (id == null || name == null) {
           continue;
         }
         result.add(
-          CatalogImageFile(id: id, name: name, thumbnailLink: thumbnailLink),
+          CatalogImageFile(
+            id: id,
+            name: name,
+            thumbnailLink: _publicThumbnailUrl(id),
+          ),
         );
       }
 
