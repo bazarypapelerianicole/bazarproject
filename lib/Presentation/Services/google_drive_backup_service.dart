@@ -8,8 +8,6 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:googleapis/drive/v3.dart' as drive;
 import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:sqflite/sqflite.dart';
-import 'database_location_service.dart';
 import 'database_service.dart';
 
 /// Resultado de una operación de backup.
@@ -310,8 +308,10 @@ class GoogleDriveBackupService {
         ),
       );
 
-      final dbPath = await _getDbPath();
-      final db = await _openDb(dbPath);
+      // Reutilizar la conexión administrada por DatabaseService. Abrir la
+      // misma ruta con otra instancia FFI y cerrarla después puede cerrar la
+      // conexión compartida que usa CatalogSyncService.
+      final db = await DatabaseService.database;
 
       // Se exportan productos, categorías, tiendas e inventario al catálogo de Drive.
       const tables = ['products', 'categories', 'stores', 'inventory'];
@@ -333,8 +333,6 @@ class GoogleDriveBackupService {
         await _uploadTextFile(driveApi, fileName, jsonContent, jsonFolderId);
         uploadedFiles.add(fileName);
       }
-
-      await db.close();
 
       // Las imágenes se mantienen solamente en /Imagenes. No se duplican
       // dentro de Backup porque SQLite ya guarda los fileId de Drive.
@@ -374,16 +372,6 @@ class GoogleDriveBackupService {
   }
 
   // ─── Métodos privados ──────────────────────────────────────────────────────
-
-  static Future<String> _getDbPath() async {
-    return DatabaseLocationService.getDatabasePath();
-  }
-
-  static Future<Database> _openDb(String path) async {
-    debugPrint('Opening database:');
-    debugPrint(path);
-    return DatabaseService.openReadOnlyDatabase(path);
-  }
 
   static Future<String> _createDriveFolder(
     drive.DriveApi driveApi,
